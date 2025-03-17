@@ -54,7 +54,6 @@
             jq
 
             postgresql_15
-            cloudflared
 
             _1password-cli
           ];
@@ -148,6 +147,11 @@
 
               homebrew = {
                 enable = true;
+
+                brews = [
+                  "cloudflared"
+                ];
+
                 casks = [
                   "orbstack"
                   "ghostty"
