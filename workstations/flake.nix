@@ -8,6 +8,16 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+
   };
 
   outputs =
@@ -16,6 +26,9 @@
       nix-darwin,
       nixpkgs,
       home-manager,
+      nix-homebrew,
+      homebrew-core,
+      homebrew-cask,
       ...
     }@inputs:
     let
@@ -54,6 +67,9 @@
             jq
 
             postgresql_15
+
+            cargo
+            rustc
 
             _1password-cli
           ];
@@ -148,6 +164,16 @@
               homebrew = {
                 enable = true;
 
+                onActivation = {
+                  autoUpdate = true;
+                  # cleanup = "zap";
+                  upgrade = true;
+                };
+
+                global = {
+                  brewfile = true;
+                };
+
                 brews = [
                   "cloudflared"
                 ];
@@ -160,11 +186,29 @@
                   "amethyst"
                   "alfred"
                   "slack"
+                  "microsoft-auto-update" # needed for teams I guess?
+                  "microsoft-teams"
                   "drata-agent"
+                  "ngrok"
                 ];
               };
             }
           )
+          nix-homebrew.darwinModules.nix-homebrew
+          {
+            nix-homebrew = {
+              enable = true;
+              user = "mikaelsiidorow";
+
+              taps = {
+                "homebrew/homebrew-core" = homebrew-core;
+                "homebrew/homebrew-cask" = homebrew-cask;
+              };
+              mutableTaps = false;
+
+              autoMigrate = true;
+            };
+          }
 
           home-manager.darwinModules.home-manager
           {
