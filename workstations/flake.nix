@@ -8,7 +8,8 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    # pinned to drop 24.11 support branch
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/605b9354efdadc6d14d754784003898e230519ba";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -67,10 +68,12 @@
             jq
 
             postgresql_15
+            pgadmin4-desktopmode
 
-            cargo
-            rustc
+            bun
 
+            rustup
+            imagemagick
             _1password-cli
           ];
 
@@ -109,16 +112,15 @@
                 theme = "agnoster";
               };
 
-              initExtraFirst = ''
-                if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
-                  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-                  . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
-                fi
-              '';
-
-              initExtra = ''
-                eval "$(fnm env --use-on-cd --shell zsh)"
-              '';
+              initContent = lib.mkMerge [
+                (lib.mkBefore ''
+                  if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
+                    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+                    . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+                  fi
+                '')
+                (''eval "$(fnm env --use-on-cd --shell zsh)"'')
+              ];
             };
             vscode = {
               enable = true;
@@ -154,6 +156,7 @@
               system.configurationRevision = self.rev or self.dirtyRev or null;
 
               system.stateVersion = 6;
+              system.primaryUser = "mikaelsiidorow";
 
               nix.enable = false;
 
