@@ -9,7 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # pinned to drop 24.11 support branch
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/605b9354efdadc6d14d754784003898e230519ba";
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -71,6 +71,8 @@
             pgadmin4-desktopmode
 
             bun
+
+            redis
 
             rustup
             imagemagick
