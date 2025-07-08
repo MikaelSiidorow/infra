@@ -125,6 +125,9 @@
             vscode = {
               enable = true;
             };
+            firefox = {
+              enable = true;
+            };
           };
 
         };
