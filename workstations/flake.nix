@@ -137,7 +137,7 @@
     {
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#Mikaels-MacBook-Air
-      darwinConfigurations."Mikaels-MacBook-Air" = nix-darwin.lib.darwinSystem {
+      darwinConfigurations."MacBook-Air" = nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
           (
@@ -159,6 +159,8 @@
               programs.zsh.enable = true;
 
               system.configurationRevision = self.rev or self.dirtyRev or null;
+
+              time.timeZone = "Europe/Helsinki";
 
               system.stateVersion = 6;
               system.primaryUser = "mikaelsiidorow";
