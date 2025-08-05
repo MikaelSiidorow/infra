@@ -8,7 +8,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # pinned to drop 24.11 support branch
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -49,7 +48,7 @@
         }:
         {
           home = {
-            stateVersion = "24.11";
+            stateVersion = "25.05";
             username = "mikaelsiidorow";
           };
 
@@ -135,8 +134,6 @@
         };
     in
     {
-      # Build darwin flake using:
-      # $ darwin-rebuild build --flake .#Mikaels-MacBook-Air
       darwinConfigurations."MacBook-Air" = nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
@@ -162,6 +159,45 @@
 
               time.timeZone = "Europe/Helsinki";
 
+              system.defaults = {
+                NSGlobalDomain.AppleICUForce24HourTime = true;
+                dock = {
+                  launchanim = false;
+                  tilesize = 48;
+                  autohide = true;
+                  show-recents = false;
+                  orientation = "bottom";
+                  persistent-apps = [
+                    {
+                      app = "/System/Library/CoreServices/Finder.app";
+                    }
+                    {
+                      app = "/System/Applications/Notes.app";
+                    }
+                    {
+                      app = "/System/Applications/System Settings.app";
+                    }
+                    {
+                      app = "/Applications/Slack.app";
+                    }
+                    {
+                      app = "/Applications/1Password.app";
+                    }
+                    {
+                      app = "/Applications/Google Chrome.app";
+                    }
+                    {
+                      app = "/Applications/Ghostty.app";
+                    }
+                    {
+                      app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
+                    }
+                  ];
+                  persistent-others = [
+                    "/Users/mikaelsiidorow/Downloads"
+                  ];
+                };
+              };
               system.stateVersion = 6;
               system.primaryUser = "mikaelsiidorow";
 
