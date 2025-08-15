@@ -176,6 +176,7 @@
 
               system.defaults = {
                 NSGlobalDomain.AppleICUForce24HourTime = true;
+                menuExtraClock.ShowSeconds = true;
                 dock = {
                   launchanim = false;
                   tilesize = 48;
