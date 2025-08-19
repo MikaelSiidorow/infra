@@ -1,0 +1,19 @@
+- hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure bash script is executable
+      copy:
+        src: files/coolify-install.sh
+        dest: /root/coolify-install.sh
+        mode: "0755"
+
+    - name: Run Coolify installer
+      command: /root/coolify-install.sh
+
+    - name: Print next steps
+      debug:
+        msg: |
+          Coolify installed. Visit http://{{ ansible_host }}:8000 to complete setup.
+          After onboarding, add a domain in Coolify for automatic SSL.

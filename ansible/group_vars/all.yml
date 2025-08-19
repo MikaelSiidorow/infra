@@ -1,0 +1,3 @@
+coolify_domain: "cool.siidorow.com"
+letsencrypt_email: ""
+ansible_user: root

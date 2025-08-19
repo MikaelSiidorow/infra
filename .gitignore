@@ -1,0 +1,22 @@
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars
+terraform/*.tfvars.json
+
+# Ansible
+ansible/inventory.ini
+
+# Logs
+*.log
+
+# Local overrides
+.env
+.vscode/
+.idea/
+*.swp
+
+# Coolify app secrets (if you export them)
+coolify/app-configs/*secrets*.json
