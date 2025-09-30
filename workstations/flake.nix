@@ -134,6 +134,12 @@
                   fi
                 '')
                 (''eval "$(fnm env --use-on-cd --shell zsh)"'')
+                (''
+                  # Set up pnpm environment (not nix-like, but whatever for now)
+                  export PNPM_HOME="$HOME/.local/share/pnpm"
+                  mkdir -p "$PNPM_HOME"
+                  export PATH="$PNPM_HOME:$PATH"
+                '')
               ];
             };
             vscode = {
