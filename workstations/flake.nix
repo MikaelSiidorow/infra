@@ -96,6 +96,9 @@
               enable = true;
               ignores = [
                 ".DS_STORE"
+                "CLAUDE.md"
+                ".claude"
+                ".github/copilot-instructions.md"
               ];
               userName = "Mikael Siidorow";
               userEmail = "mikael.siidorow@teamspective.com";
