@@ -99,6 +99,7 @@
                 "CLAUDE.md"
                 ".claude"
                 ".github/copilot-instructions.md"
+                "todo.md"
               ];
               userName = "Mikael Siidorow";
               userEmail = "mikael.siidorow@teamspective.com";
