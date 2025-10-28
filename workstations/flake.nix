@@ -71,6 +71,8 @@
 
             bun
 
+            ffmpeg
+
             redis
 
             rustup
@@ -151,6 +153,7 @@
             };
             firefox = {
               enable = true;
+              package = pkgs.firefox;
             };
           };
 
@@ -217,6 +220,9 @@
                     }
                     {
                       app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
+                    }
+                    {
+                      app = "${pkgs.firefox}/Applications/Firefox.app";
                     }
                   ];
                   persistent-others = [
