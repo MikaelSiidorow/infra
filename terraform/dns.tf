@@ -260,3 +260,82 @@ resource "cloudflare_dns_record" "miksu_app_turbodoc" {
   proxied = true
   ttl     = 1
 }
+
+# =============================================================================
+# pluck.pics records
+# =============================================================================
+
+resource "cloudflare_dns_record" "pluck_pics_mx_route3" {
+  zone_id  = cloudflare_zone.pluck_pics.id
+  type     = "MX"
+  name     = "pluck.pics"
+  content  = "route3.mx.cloudflare.net"
+  proxied  = false
+  ttl      = 1
+  priority = 47
+}
+
+resource "cloudflare_dns_record" "pluck_pics_mx_route2" {
+  zone_id  = cloudflare_zone.pluck_pics.id
+  type     = "MX"
+  name     = "pluck.pics"
+  content  = "route2.mx.cloudflare.net"
+  proxied  = false
+  ttl      = 1
+  priority = 96
+}
+
+resource "cloudflare_dns_record" "pluck_pics_mx_route1" {
+  zone_id  = cloudflare_zone.pluck_pics.id
+  type     = "MX"
+  name     = "pluck.pics"
+  content  = "route1.mx.cloudflare.net"
+  proxied  = false
+  ttl      = 1
+  priority = 51
+}
+
+resource "cloudflare_dns_record" "pluck_pics_dkim" {
+  zone_id = cloudflare_zone.pluck_pics.id
+  type    = "TXT"
+  name    = "cf2024-1._domainkey.pluck.pics"
+  content = "\"v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiweykoi+o48IOGuP7GR3X0MOExCUDY/BCRHoWBnh3rChl7WhdyCxW3jgq1daEjPPqoi7sJvdg5hEQVsgVRQP4DcnQDVjGMbASQtrY4WmB1VebF+RPJB2ECPsEDTpeiI5ZyUAwJaVX7r6bznU67g7LvFq35yIo4sdlmtZGV+i0H4cpYH9+3JJ78k\" \"m4KXwaf9xUJCWF6nxeD+qG6Fyruw1Qlbds2r85U9dkNDVAS3gioCvELryh1TxKGiVTkg4wqHTyHfWsp7KD3WQHYJn0RyfJJu6YEmL77zonn7p2SRMvTMP3ZEXibnC9gz3nnhR6wcYL8Q7zXypKTMD58bTixDSJwIDAQAB\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "pluck_pics_dmarc" {
+  zone_id = cloudflare_zone.pluck_pics.id
+  type    = "TXT"
+  name    = "_dmarc.pluck.pics"
+  content = "\"v=DMARC1; p=none; rua=mailto:1670034898de41e9aac244d3998aeb8e@dmarc-reports.cloudflare.net\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "pluck_pics_google_verification" {
+  zone_id = cloudflare_zone.pluck_pics.id
+  type    = "TXT"
+  name    = "pluck.pics"
+  content = "\"google-site-verification=Qu4l-Y6pyiEPtghS_3Y63R41v3CCwI717dXqlidaTbU\""
+  proxied = false
+  ttl     = 3600
+}
+
+resource "cloudflare_dns_record" "pluck_pics_spf" {
+  zone_id = cloudflare_zone.pluck_pics.id
+  type    = "TXT"
+  name    = "pluck.pics"
+  content = "\"v=spf1 include:_spf.mx.cloudflare.net ~all\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "pluck_pics_root_aaaa" {
+  zone_id = cloudflare_zone.pluck_pics.id
+  type    = "AAAA"
+  name    = "pluck.pics"
+  content = "100::"
+  proxied = true
+  ttl     = 1
+}
