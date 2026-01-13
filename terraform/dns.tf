@@ -339,3 +339,241 @@ resource "cloudflare_dns_record" "pluck_pics_root_aaaa" {
   proxied = true
   ttl     = 1
 }
+
+# =============================================================================
+# siidorow.com records
+# =============================================================================
+
+# A records
+resource "cloudflare_dns_record" "siidorow_com_cool_a" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "A"
+  name    = "cool.siidorow.com"
+  content = "46.62.146.3"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_root_a" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "A"
+  name    = "siidorow.com"
+  content = "76.76.21.21"
+  proxied = false
+  ttl     = 1
+}
+
+# CNAME records
+resource "cloudflare_dns_record" "siidorow_com_2048" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "2048.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_accounts" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "accounts.siidorow.com"
+  content = "accounts.clerk.services"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_arkisto" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "arkisto.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_axe" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "axe.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_birdrust" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "birdrust.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_clerk" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "clerk.siidorow.com"
+  content = "frontend-api.clerk.services"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_clk2_domainkey" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "clk2._domainkey.siidorow.com"
+  content = "dkim2.gqet7bdihfm4.clerk.services"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_clk_domainkey" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "clk._domainkey.siidorow.com"
+  content = "dkim1.gqet7bdihfm4.clerk.services"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_clkmail" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "clkmail.siidorow.com"
+  content = "mail.gqet7bdihfm4.clerk.services"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_food" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "food.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_ig" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "ig.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_index" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "index.siidorow.com"
+  content = "index-c3m5.onrender.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_new" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "new.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_www" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "CNAME"
+  name    = "www.siidorow.com"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+# MX records (Google Workspace)
+resource "cloudflare_dns_record" "siidorow_com_mx_alt3" {
+  zone_id  = cloudflare_zone.siidorow_com.id
+  type     = "MX"
+  name     = "siidorow.com"
+  content  = "alt3.aspmx.l.google.com"
+  proxied  = false
+  ttl      = 3600
+  priority = 10
+}
+
+resource "cloudflare_dns_record" "siidorow_com_mx_primary" {
+  zone_id  = cloudflare_zone.siidorow_com.id
+  type     = "MX"
+  name     = "siidorow.com"
+  content  = "aspmx.l.google.com"
+  proxied  = false
+  ttl      = 3600
+  priority = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_mx_alt4" {
+  zone_id  = cloudflare_zone.siidorow_com.id
+  type     = "MX"
+  name     = "siidorow.com"
+  content  = "alt4.aspmx.l.google.com"
+  proxied  = false
+  ttl      = 3600
+  priority = 10
+}
+
+resource "cloudflare_dns_record" "siidorow_com_mx_alt1" {
+  zone_id  = cloudflare_zone.siidorow_com.id
+  type     = "MX"
+  name     = "siidorow.com"
+  content  = "alt1.aspmx.l.google.com"
+  proxied  = false
+  ttl      = 3600
+  priority = 5
+}
+
+resource "cloudflare_dns_record" "siidorow_com_mx_alt2" {
+  zone_id  = cloudflare_zone.siidorow_com.id
+  type     = "MX"
+  name     = "siidorow.com"
+  content  = "alt2.aspmx.l.google.com"
+  proxied  = false
+  ttl      = 3600
+  priority = 5
+}
+
+# TXT records
+resource "cloudflare_dns_record" "siidorow_com_dkim" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "TXT"
+  name    = "cf2024-1._domainkey.siidorow.com"
+  content = "\"v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiweykoi+o48IOGuP7GR3X0MOExCUDY/BCRHoWBnh3rChl7WhdyCxW3jgq1daEjPPqoi7sJvdg5hEQVsgVRQP4DcnQDVjGMbASQtrY4WmB1VebF+RPJB2ECPsEDTpeiI5ZyUAwJaVX7r6bznU67g7LvFq35yIo4sdlmtZGV+i0H4cpYH9+3JJ78k\" \"m4KXwaf9xUJCWF6nxeD+qG6Fyruw1Qlbds2r85U9dkNDVAS3gioCvELryh1TxKGiVTkg4wqHTyHfWsp7KD3WQHYJn0RyfJJu6YEmL77zonn7p2SRMvTMP3ZEXibnC9gz3nnhR6wcYL8Q7zXypKTMD58bTixDSJwIDAQAB\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_dmarc" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "TXT"
+  name    = "_dmarc.siidorow.com"
+  content = "\"v=DMARC1; p=none; rua=mailto:bfc996ec26d74328985ccdce900879a8@dmarc-reports.cloudflare.net\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_com_spf" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "TXT"
+  name    = "siidorow.com"
+  content = "\"v=spf1 include:_spf.google.com -all\""
+  proxied = false
+  ttl     = 3600
+}
+
+resource "cloudflare_dns_record" "siidorow_com_google_verification" {
+  zone_id = cloudflare_zone.siidorow_com.id
+  type    = "TXT"
+  name    = "siidorow.com"
+  content = "\"google-site-verification=mse43FSKT_uszYVj1W6MpwXPs0DPfiXgol8lUgXWqAo\""
+  proxied = false
+  ttl     = 1
+}
