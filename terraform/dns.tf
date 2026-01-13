@@ -238,3 +238,25 @@ resource "cloudflare_dns_record" "miksu_link_t_aaaa" {
   proxied = true
   ttl     = 1
 }
+
+# =============================================================================
+# miksu.app records
+# =============================================================================
+
+resource "cloudflare_dns_record" "miksu_app_jono" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "AAAA"
+  name    = "jono.miksu.app"
+  content = "100::"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "miksu_app_turbodoc" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "AAAA"
+  name    = "turbodoc.miksu.app"
+  content = "100::"
+  proxied = true
+  ttl     = 1
+}
