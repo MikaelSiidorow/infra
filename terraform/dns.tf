@@ -46,3 +46,61 @@ resource "cloudflare_zone" "sweepmail_app" {
   account = { id = local.account_id }
   name    = "sweepmail.app"
 }
+
+# =============================================================================
+# siidorow.dev records
+# =============================================================================
+
+resource "cloudflare_dns_record" "siidorow_dev_root_a" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "A"
+  name    = "siidorow.dev"
+  content = "76.76.21.21"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_dev_www" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "CNAME"
+  name    = "www.siidorow.dev"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_dev_atproto" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "TXT"
+  name    = "_atproto.siidorow.dev"
+  content = "\"did=did:plc:7ajjqbub3qxysvscwvugeq5z\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_dev_dmarc" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "TXT"
+  name    = "_dmarc.siidorow.dev"
+  content = "\"v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_dev_domainkey_wildcard" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "TXT"
+  name    = "*._domainkey.siidorow.dev"
+  content = "\"v=DKIM1; p=\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "siidorow_dev_spf" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "TXT"
+  name    = "siidorow.dev"
+  content = "\"v=spf1 -all\""
+  proxied = false
+  ttl     = 1
+}
