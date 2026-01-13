@@ -135,3 +135,16 @@ resource "cloudflare_dns_record" "sweepmail_app_www" {
   proxied = true
   ttl     = 1
 }
+
+# =============================================================================
+# seiska.lol records
+# =============================================================================
+
+resource "cloudflare_dns_record" "seiska_lol_www" {
+  zone_id = cloudflare_zone.seiska_lol.id
+  type    = "CNAME"
+  name    = "www.seiska.lol"
+  content = "seiskadmin.pages.dev"
+  proxied = true
+  ttl     = 1
+}
