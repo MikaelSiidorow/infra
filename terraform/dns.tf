@@ -206,3 +206,35 @@ resource "cloudflare_dns_record" "m12w_me_spf" {
   proxied = false
   ttl     = 1
 }
+
+# =============================================================================
+# miksu.link records
+# =============================================================================
+
+resource "cloudflare_dns_record" "miksu_link_root_a" {
+  zone_id = cloudflare_zone.miksu_link.id
+  type    = "A"
+  name    = "miksu.link"
+  content = "76.76.21.21"
+  proxied = false
+  ttl     = 1
+  comment = "Vercel root"
+}
+
+resource "cloudflare_dns_record" "miksu_link_www" {
+  zone_id = cloudflare_zone.miksu_link.id
+  type    = "CNAME"
+  name    = "www.miksu.link"
+  content = "cname.vercel-dns.com"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "miksu_link_t_aaaa" {
+  zone_id = cloudflare_zone.miksu_link.id
+  type    = "AAAA"
+  name    = "t.miksu.link"
+  content = "100::"
+  proxied = true
+  ttl     = 1
+}
