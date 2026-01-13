@@ -104,3 +104,34 @@ resource "cloudflare_dns_record" "siidorow_dev_spf" {
   proxied = false
   ttl     = 1
 }
+
+# =============================================================================
+# sweepmail.app records
+# =============================================================================
+
+resource "cloudflare_dns_record" "sweepmail_app_wildcard" {
+  zone_id = cloudflare_zone.sweepmail_app.id
+  type    = "CNAME"
+  name    = "*.sweepmail.app"
+  content = "pixie.porkbun.com"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "sweepmail_app_root" {
+  zone_id = cloudflare_zone.sweepmail_app.id
+  type    = "CNAME"
+  name    = "sweepmail.app"
+  content = "sweepmail.pages.dev"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "sweepmail_app_www" {
+  zone_id = cloudflare_zone.sweepmail_app.id
+  type    = "CNAME"
+  name    = "www.sweepmail.app"
+  content = "pixie.porkbun.com"
+  proxied = true
+  ttl     = 1
+}
