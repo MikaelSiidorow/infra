@@ -1,2 +1,3 @@
-provider "hcloud" {
-}
+provider "hcloud" {}
+
+provider "cloudflare" {}

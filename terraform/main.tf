@@ -48,6 +48,14 @@ resource "hcloud_firewall" "default" {
   #   port       = "6002"
   #   source_ips = ["0.0.0.0/0", "::/0"]
   # }
+
+  # Postgres
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "5432"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
 }
 
 resource "hcloud_server" "coolify_server" {
@@ -58,4 +66,10 @@ resource "hcloud_server" "coolify_server" {
   ssh_keys    = [data.hcloud_ssh_key.this.id]
 
   firewall_ids = [hcloud_firewall.default.id]
+}
+
+
+resource "cloudflare_r2_bucket" "coolify_backups" {
+  account_id = "0d7cd4f74493972b3d64775916c9f6ed"
+  name       = "coolify-backups"
 }
