@@ -73,3 +73,9 @@ resource "cloudflare_r2_bucket" "coolify_backups" {
   account_id = "0d7cd4f74493972b3d64775916c9f6ed"
   name       = "coolify-backups"
 }
+
+resource "cloudflare_r2_bucket" "terraform_state" {
+  account_id   = "0d7cd4f74493972b3d64775916c9f6ed"
+  name         = "terraform-state"
+  jurisdiction = "eu"
+}
