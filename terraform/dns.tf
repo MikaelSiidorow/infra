@@ -148,3 +148,61 @@ resource "cloudflare_dns_record" "seiska_lol_www" {
   proxied = true
   ttl     = 1
 }
+
+# =============================================================================
+# m12w.me records
+# =============================================================================
+
+resource "cloudflare_dns_record" "m12w_me_wildcard_a" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "A"
+  name    = "*.m12w.me"
+  content = "46.62.146.3"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_root_a" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "A"
+  name    = "m12w.me"
+  content = "46.62.146.3"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_atproto" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "_atproto.m12w.me"
+  content = "\"did=did:plc:7ajjqbub3qxysvscwvugeq5z\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_dmarc" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "_dmarc.m12w.me"
+  content = "\"v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s; rua=mailto:mikael@siidorow.com\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_domainkey_wildcard" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "*._domainkey.m12w.me"
+  content = "\"v=DKIM1; p=\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_spf" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "m12w.me"
+  content = "\"v=spf1 -all\""
+  proxied = false
+  ttl     = 1
+}
