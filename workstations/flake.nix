@@ -48,7 +48,7 @@
         }:
         {
           home = {
-            stateVersion = "25.05";
+            stateVersion = "25.11";
             username = "mikaelsiidorow";
           };
 
@@ -66,19 +66,37 @@
             gh
             jq
 
-            postgresql_15
+            postgresql_18
             pgadmin4-desktopmode
 
             bun
+
+            google-cloud-sdk
+
+            shellcheck
 
             ffmpeg
 
             redis
 
+            # Convert Markdown to PDF
+            # pandoc input.md -o output.pdf --pdf-engine=typst
+            pandoc
+            typst
+
+            gettext
+
             rustup
             imagemagick
             _1password-cli
+            mergiraf
           ];
+
+          home.file.".config/git/attributes" = {
+            text = ''
+              * merge=mergiraf
+            '';
+          };
 
           xdg.configFile."skhd/skhdrc" = {
             text = ''
@@ -115,6 +133,11 @@
                 pull.ff = "only";
                 rebase.autoStash = true;
                 rerere.enabled = true;
+
+                "merge \"mergiraf\"" = {
+                  name = "mergiraf";
+                  driver = "${pkgs.mergiraf}/bin/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";
+                };
               };
             };
             zsh = {
