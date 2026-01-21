@@ -168,6 +168,7 @@
                   export PNPM_HOME="$HOME/.local/share/pnpm"
                   mkdir -p "$PNPM_HOME"
                   export PATH="$PNPM_HOME:$PATH"
+                  export PATH="$HOME/.local/bin:$PATH"
                 '')
               ];
             };
@@ -290,7 +291,7 @@
                   "microsoft-auto-update" # needed for teams I guess?
                   "microsoft-teams"
                   "drata-agent"
-                  "ngrok"
+                  "claude-code"
                 ];
               };
             }
