@@ -1,6 +1,11 @@
+# Default target for macOS
+.PHONY: switch
+switch:
+	sudo darwin-rebuild switch --flake .#MacBook-Air
+
+# Alias for backwards compatibility
 .PHONY: update
-update:
-	sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .
+update: switch
 
 .PHONY: clean
 clean:

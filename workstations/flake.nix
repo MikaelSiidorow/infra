@@ -1,13 +1,22 @@
 {
-  description = "Example nix-darwin system flake";
+  description = "Mikael's multi-platform Nix configuration";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-darwin.url = "github:LnL7/nix-darwin/master";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Darwin (macOS) support
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Home-manager for user environment
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Homebrew integration for macOS
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -17,14 +26,13 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
-
   };
 
   outputs =
     {
       self,
-      nix-darwin,
       nixpkgs,
+      nix-darwin,
       home-manager,
       nix-homebrew,
       homebrew-core,
@@ -32,297 +40,113 @@
       ...
     }@inputs:
     let
-      lib = nixpkgs.lib;
-      system = "aarch64-darwin";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
+      # User configuration - change this for different users
+      username = "mikaelsiidorow";
 
-      homeManagerConfig =
+      # Helper function to create a darwin system
+      mkDarwinSystem =
         {
-          config,
-          lib,
-          pkgs,
-          ...
+          system,
+          hostname,
+          extraModules ? [ ],
         }:
-        {
-          home = {
-            stateVersion = "25.11";
-            username = "mikaelsiidorow";
+        nix-darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = {
+            inherit
+              self
+              inputs
+              username
+              ;
           };
+          modules = [
+            # Host-specific configuration
+            ./hosts/${hostname}
 
-          programs.home-manager.enable = true;
-
-          home.packages = with pkgs; [
-            coreutils
-            wget
-
-            python3
-            fnm
-            uv
-            nixfmt-rfc-style
-            git
-            gh
-            jq
-
-            postgresql_18
-            pgadmin4-desktopmode
-
-            bun
-
-            google-cloud-sdk
-
-            shellcheck
-
-            ffmpeg
-
-            redis
-
-            # Convert Markdown to PDF
-            # pandoc input.md -o output.pdf --pdf-engine=typst
-            pandoc
-            typst
-
-            gettext
-
-            rustup
-            imagemagick
-            _1password-cli
-            mergiraf
-          ];
-
-          home.file.".config/git/attributes" = {
-            text = ''
-              * merge=mergiraf
-            '';
-          };
-
-          xdg.configFile."skhd/skhdrc" = {
-            text = ''
-              # -- App Switching Hotkeys --
-              # Switches to an application, opening it if it's not already running.
-
-              ctrl + cmd - 1 : open -a "Ghostty"
-              ctrl + cmd - 2 : open -a "Visual Studio Code"
-              ctrl + cmd - 3 : open -a "Google Chrome"
-              ctrl + cmd - 4 : open -a "Slack"
-
-            '';
-          };
-
-          programs = {
-            git = {
-              enable = true;
-              ignores = [
-                ".DS_STORE"
-                "CLAUDE.md"
-                ".claude"
-                ".github/copilot-instructions.md"
-                "todo.md"
-              ];
-              userName = "Mikael Siidorow";
-              userEmail = "mikael.siidorow@teamspective.com";
-              extraConfig = {
-                init.defaultBranch = "main";
-                core = {
-                  autocrlf = "input";
-                };
-                branch.sort = "-committerdate";
-                merge.conflictstyle = "zdiff3";
-                pull.ff = "only";
-                rebase.autoStash = true;
-                rerere.enabled = true;
-
-                "merge \"mergiraf\"" = {
-                  name = "mergiraf";
-                  driver = "${pkgs.mergiraf}/bin/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";
-                };
-              };
-            };
-            zsh = {
-              enable = true;
-              enableCompletion = true;
-              autosuggestion.enable = true;
-              syntaxHighlighting.enable = true;
-
-              oh-my-zsh = {
+            # Homebrew integration
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
                 enable = true;
-                plugins = [
-                  "git"
-                  "docker"
-                ];
-                theme = "agnoster";
+                user = username;
+                taps = {
+                  "homebrew/homebrew-core" = homebrew-core;
+                  "homebrew/homebrew-cask" = homebrew-cask;
+                };
+                mutableTaps = false;
+                autoMigrate = true;
               };
+            }
 
-              initContent = lib.mkMerge [
-                (lib.mkBefore ''
-                  if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
-                    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-                    . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
-                  fi
-                '')
-                (''eval "$(fnm env --use-on-cd --shell zsh)"'')
-                (''
-                  # Set up pnpm environment (not nix-like, but whatever for now)
-                  export PNPM_HOME="$HOME/.local/share/pnpm"
-                  mkdir -p "$PNPM_HOME"
-                  export PATH="$PNPM_HOME:$PATH"
-                  export PATH="$HOME/.local/bin:$PATH"
-                '')
-              ];
-            };
-            vscode = {
-              enable = true;
-            };
-            firefox = {
-              enable = true;
-              package = pkgs.firefox;
-            };
+            # Home-manager integration
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                extraSpecialArgs = {
+                  inherit inputs;
+                  isDarwin = true;
+                };
+                users.${username} = import ./home;
+              };
+            }
+          ] ++ extraModules;
+        };
+
+      # Helper function to create a NixOS system (for future use)
+      mkNixosSystem =
+        {
+          system,
+          hostname,
+          extraModules ? [ ],
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit
+              self
+              inputs
+              username
+              ;
           };
+          modules = [
+            # Host-specific configuration
+            ./hosts/${hostname}
 
+            # Home-manager integration
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                extraSpecialArgs = {
+                  inherit inputs;
+                  isDarwin = false;
+                };
+                users.${username} = import ./home;
+              };
+            }
+          ] ++ extraModules;
         };
     in
     {
-      darwinConfigurations."MacBook-Air" = nix-darwin.lib.darwinSystem {
-        inherit system;
-        modules = [
-          (
-            { pkgs, ... }:
-            {
-              environment.systemPackages = [
-                pkgs.vim
-              ];
-
-              services.skhd.enable = true;
-
-              nix.settings.experimental-features = "nix-command flakes";
-
-              nixpkgs = {
-                config = {
-                  allowUnfree = true;
-                };
-                hostPlatform = system;
-              };
-
-              programs.zsh.enable = true;
-
-              system.configurationRevision = self.rev or self.dirtyRev or null;
-
-              time.timeZone = "Europe/Helsinki";
-
-              system.defaults = {
-                NSGlobalDomain.AppleICUForce24HourTime = true;
-                menuExtraClock.ShowSeconds = true;
-                dock = {
-                  launchanim = false;
-                  tilesize = 48;
-                  autohide = true;
-                  show-recents = false;
-                  orientation = "bottom";
-                  persistent-apps = [
-                    {
-                      app = "/System/Library/CoreServices/Finder.app";
-                    }
-                    {
-                      app = "/System/Applications/Notes.app";
-                    }
-                    {
-                      app = "/System/Applications/System Settings.app";
-                    }
-                    {
-                      app = "/Applications/Slack.app";
-                    }
-                    {
-                      app = "/Applications/1Password.app";
-                    }
-                    {
-                      app = "/Applications/Google Chrome.app";
-                    }
-                    {
-                      app = "/Applications/Ghostty.app";
-                    }
-                    {
-                      app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
-                    }
-                    {
-                      app = "${pkgs.firefox}/Applications/Firefox.app";
-                    }
-                  ];
-                  persistent-others = [
-                    "/Users/mikaelsiidorow/Downloads"
-                  ];
-                };
-              };
-              system.stateVersion = 6;
-              system.primaryUser = "mikaelsiidorow";
-
-              nix.enable = false;
-
-              users.users.mikaelsiidorow.home = "/Users/mikaelsiidorow";
-
-              security.pam.services.sudo_local.touchIdAuth = true;
-
-              homebrew = {
-                enable = true;
-
-                onActivation = {
-                  autoUpdate = true;
-                  # cleanup = "zap";
-                  upgrade = true;
-                };
-
-                global = {
-                  brewfile = true;
-                };
-
-                brews = [
-                  "cloudflared"
-                ];
-
-                casks = [
-                  "orbstack"
-                  "ghostty"
-                  "google-chrome"
-                  "1password"
-                  "amethyst"
-                  "alfred"
-                  "slack"
-                  "microsoft-auto-update" # needed for teams I guess?
-                  "microsoft-teams"
-                  "drata-agent"
-                  "claude-code"
-                ];
-              };
-            }
-          )
-          nix-homebrew.darwinModules.nix-homebrew
-          {
-            nix-homebrew = {
-              enable = true;
-              user = "mikaelsiidorow";
-
-              taps = {
-                "homebrew/homebrew-core" = homebrew-core;
-                "homebrew/homebrew-cask" = homebrew-cask;
-              };
-              mutableTaps = false;
-
-              autoMigrate = true;
-            };
-          }
-
-          home-manager.darwinModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              backupFileExtension = "backup";
-              extraSpecialArgs = { inherit inputs; };
-              users.mikaelsiidorow = homeManagerConfig;
-            };
-          }
-        ];
+      # Darwin (macOS) configurations
+      darwinConfigurations = {
+        "MacBook-Air" = mkDarwinSystem {
+          system = "aarch64-darwin";
+          hostname = "macbook-air";
+        };
       };
+
+      # NixOS configurations (uncomment when ready)
+      # nixosConfigurations = {
+      #   "nixos-laptop" = mkNixosSystem {
+      #     system = "x86_64-linux";  # or "aarch64-linux" for ARM
+      #     hostname = "nixos-laptop";
+      #   };
+      # };
     };
 }
