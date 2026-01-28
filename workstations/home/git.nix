@@ -1,14 +1,9 @@
 # Git configuration - platform-agnostic
 { pkgs, ... }:
 {
-  home.file.".config/git/attributes" = {
-    text = ''
-      * merge=mergiraf
-    '';
-  };
-
   programs.git = {
     enable = true;
+    attributes = [ "* merge=mergiraf" ];
     ignores = [
       ".DS_STORE"
       "CLAUDE.md"
@@ -16,9 +11,11 @@
       ".github/copilot-instructions.md"
       "todo.md"
     ];
-    userName = "Mikael Siidorow";
-    userEmail = "mikael.siidorow@teamspective.com";
-    extraConfig = {
+    settings = {
+      user = {
+        name = "Mikael Siidorow";
+        email = "mikael.siidorow@teamspective.com";
+      };
       init.defaultBranch = "main";
       core = {
         autocrlf = "input";

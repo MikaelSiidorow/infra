@@ -92,7 +92,8 @@
                 users.${username} = import ./home;
               };
             }
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
       # Helper function to create a NixOS system (for future use)
@@ -129,7 +130,8 @@
                 users.${username} = import ./home;
               };
             }
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
     in
     {

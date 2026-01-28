@@ -36,7 +36,7 @@
           app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
         }
         {
-          app = "${pkgs.firefox}/Applications/Firefox.app";
+          app = "/Applications/Firefox.app";
         }
       ];
       persistent-others = [

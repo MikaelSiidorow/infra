@@ -1,6 +1,21 @@
 # Common packages - platform-agnostic
 { pkgs, ... }:
 {
+  programs.bat = {
+    enable = true;
+  };
+
+  programs.eza = {
+    enable = true;
+    enableZshIntegration = true;
+    git = true;
+    icons = "auto";
+  };
+
+  programs.ripgrep = {
+    enable = true;
+  };
+
   home.packages = with pkgs; [
     # Core utilities
     coreutils
@@ -9,7 +24,6 @@
     gettext
 
     # Version control
-    git
     gh
 
     # Languages & runtimes
@@ -22,11 +36,10 @@
     uv
 
     # Nix tooling
-    nixfmt-rfc-style
+    nixfmt
 
     # Databases
     postgresql_18
-    pgadmin4-desktopmode
     redis
 
     # Cloud

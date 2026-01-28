@@ -5,16 +5,15 @@
   ...
 }:
 {
-  imports =
-    [
-      ./packages.nix
-      ./git.nix
-      ./zsh.nix
-      ./applications.nix
-    ]
-    ++ lib.optionals isDarwin [
-      ./skhd.nix
-    ];
+  imports = [
+    ./packages.nix
+    ./git.nix
+    ./zsh.nix
+    ./applications.nix
+  ]
+  ++ lib.optionals isDarwin [
+    ./skhd.nix
+  ];
 
   home = {
     stateVersion = "25.11";

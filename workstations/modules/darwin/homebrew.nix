@@ -19,6 +19,7 @@
     ];
 
     casks = [
+      "firefox"
       "orbstack"
       "ghostty"
       "google-chrome"

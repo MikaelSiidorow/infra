@@ -5,6 +5,19 @@
   ...
 }:
 {
+  home.sessionVariables = {
+    PNPM_HOME = "$HOME/.local/share/pnpm";
+  };
+
+  home.sessionPath = [
+    "$HOME/.local/share/pnpm"
+    "$HOME/.local/bin"
+  ];
+
+  home.activation.createPnpmHome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    mkdir -p "$HOME/.local/share/pnpm"
+  '';
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -31,14 +44,7 @@
         '')
       ])
       ++ [
-        (''eval "$(fnm env --use-on-cd --shell zsh)"'')
-        (''
-          # Set up pnpm environment (not nix-like, but whatever for now)
-          export PNPM_HOME="$HOME/.local/share/pnpm"
-          mkdir -p "$PNPM_HOME"
-          export PATH="$PNPM_HOME:$PATH"
-          export PATH="$HOME/.local/bin:$PATH"
-        '')
+        ''eval "$(fnm env --use-on-cd --shell zsh)"''
       ]
     );
   };

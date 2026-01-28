@@ -19,7 +19,11 @@
   users.users.${username} = {
     isNormalUser = true;
     description = "Mikael Siidorow";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+    ];
     shell = pkgs.zsh;
   };
 
