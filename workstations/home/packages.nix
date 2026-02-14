@@ -1,5 +1,11 @@
 # Common packages - platform-agnostic
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  inputs,
+  isDarwin ? false,
+  ...
+}:
 {
   programs.bat = {
     enable = true;
@@ -16,49 +22,57 @@
     enable = true;
   };
 
-  home.packages = with pkgs; [
-    # Core utilities
-    coreutils
-    wget
-    jq
-    gettext
+  home.packages =
+    with pkgs;
+    [
+      # Core utilities
+      coreutils
+      wget
+      jq
+      gettext
 
-    # Version control
-    gh
+      # Version control
+      gh
 
-    # Languages & runtimes
-    python3
-    fnm
-    bun
-    rustup
+      # Languages & runtimes
+      python3
+      fnm
+      bun
+      rustup
 
-    # Package managers & tools
-    uv
+      # Package managers & tools
+      uv
 
-    # Nix tooling
-    nixfmt-tree
+      # Nix tooling
+      nixfmt-tree
 
-    # Databases
-    postgresql_18
-    redis
+      # Databases
+      postgresql_18
+      redis
 
-    # Cloud
-    google-cloud-sdk
+      # Cloud
+      google-cloud-sdk
 
-    # Media
-    ffmpeg
-    imagemagick
+      # Media
+      ffmpeg
+      imagemagick
 
-    # Document processing
-    # Convert Markdown to PDF: pandoc input.md -o output.pdf --pdf-engine=typst
-    pandoc
-    typst
+      # Document processing
+      # Convert Markdown to PDF: pandoc input.md -o output.pdf --pdf-engine=typst
+      pandoc
+      typst
 
-    # Development tools
-    shellcheck
-    mergiraf
+      # Development tools
+      shellcheck
+      shfmt
+      mergiraf
 
-    # Security
-    _1password-cli
-  ];
+      # Security
+      _1password-cli
+    ]
+    # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
+    ++ lib.optionals (!isDarwin) [
+      # AI tools
+      inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ];
 }

@@ -9,6 +9,7 @@
     ./packages.nix
     ./git.nix
     ./zsh.nix
+    ./scripts.nix
     ./applications.nix
   ]
   ++ lib.optionals isDarwin [

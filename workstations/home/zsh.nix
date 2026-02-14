@@ -39,6 +39,11 @@
       theme = "agnoster";
     };
 
+    shellAliases = {
+      # Claude worktree shortcut
+      cwt = "claude-worktree";
+    };
+
     initContent = lib.mkMerge (
       # Darwin-specific nix-daemon setup
       (lib.optionals isDarwin [
