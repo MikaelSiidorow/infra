@@ -28,6 +28,13 @@
       p = "pnpm";
       tf = "terraform";
       bb = "bun --bun";
+
+      # Claude
+      c = "claude";
+      cco = "claude --continue";
+      cres = "claude --resume";
+      crew = "claude /review";
+      cwt = "claude-worktree";
     };
 
     oh-my-zsh = {
@@ -37,11 +44,6 @@
         "docker"
       ];
       theme = "agnoster";
-    };
-
-    shellAliases = {
-      # Claude worktree shortcut
-      cwt = "claude-worktree";
     };
 
     initContent = lib.mkMerge (
