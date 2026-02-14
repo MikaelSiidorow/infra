@@ -7,7 +7,7 @@
 }:
 {
   imports = [
-    (import ./system.nix { inherit pkgs username; })
+    ./system.nix
     ./homebrew.nix
   ];
 
@@ -29,6 +29,7 @@
 
   system.stateVersion = 6;
 
+  # Disable nix-darwin's Nix daemon management (using Determinate Systems installer)
   nix.enable = false;
 
   security.pam.services.sudo_local.touchIdAuth = true;

@@ -8,7 +8,7 @@
 }:
 {
   imports = [
-    (import ../../modules/darwin { inherit self pkgs username; })
+    ../../modules/darwin
   ];
 
   # Host-specific settings

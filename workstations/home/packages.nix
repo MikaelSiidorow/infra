@@ -36,7 +36,7 @@
     uv
 
     # Nix tooling
-    nixfmt
+    nixfmt-tree
 
     # Databases
     postgresql_18

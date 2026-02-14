@@ -5,7 +5,7 @@
     enable = true;
     attributes = [ "* merge=mergiraf" ];
     ignores = [
-      ".DS_STORE"
+      ".DS_Store"
       "CLAUDE.md"
       ".claude"
       ".github/copilot-instructions.md"
