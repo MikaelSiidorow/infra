@@ -12,6 +12,9 @@
     # Productivity
     obsidian
 
+    # Screenshot
+    flameshot
+
     # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
     (config.lib.nixGL.wrap ghostty)
   ];
