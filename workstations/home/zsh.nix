@@ -24,6 +24,12 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
+    shellAliases = {
+      p = "pnpm";
+      tf = "terraform";
+      bb = "bun --bun";
+    };
+
     oh-my-zsh = {
       enable = true;
       plugins = [
@@ -44,7 +50,16 @@
         '')
       ])
       ++ [
-        ''eval "$(fnm env --use-on-cd --shell zsh)"''
+        ''
+          # GPG TTY for signing
+          export GPG_TTY=$(tty)
+
+          # Hide user@host in agnoster prompt for local sessions
+          export DEFAULT_USER=$(whoami)
+
+          # fnm (Fast Node Manager) integration
+          eval "$(fnm env --use-on-cd --shell zsh)"
+        ''
       ]
     );
   };

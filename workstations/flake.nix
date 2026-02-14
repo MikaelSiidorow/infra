@@ -16,6 +16,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # OpenGL wrapper for non-NixOS Linux
+    nixgl = {
+      url = "github:nix-community/nixGL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Homebrew integration for macOS
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
@@ -133,6 +139,35 @@
           ]
           ++ extraModules;
         };
+
+      # Helper function to create a home-manager standalone config
+      mkHomeConfig =
+        {
+          system,
+          hostname,
+          extraModules ? [ ],
+        }:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.${system};
+          extraSpecialArgs = {
+            inherit
+              self
+              inputs
+              ;
+            isDarwin = false;
+          };
+          modules = [
+            ./hosts/${hostname}
+            ./home
+            {
+              home = {
+                inherit username;
+                homeDirectory = "/home/${username}";
+              };
+            }
+          ]
+          ++ extraModules;
+        };
     in
     {
       # Darwin (macOS) configurations
@@ -150,5 +185,19 @@
       #     hostname = "nixos-laptop";
       #   };
       # };
+
+      # Home-manager standalone configurations (for non-NixOS systems)
+      homeConfigurations = {
+        "mikaelsiidorow@pop-os" = mkHomeConfig {
+          system = "x86_64-linux";
+          hostname = "pop-os";
+        };
+      };
+
+      # Formatter configuration for `nix fmt`
+      formatter = {
+        aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-tree;
+        x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
+      };
     };
 }
