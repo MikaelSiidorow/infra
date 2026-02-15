@@ -14,8 +14,14 @@
     # Keyboard layouts: Finnish + Pinyin
     "org/gnome/desktop/input-sources" = {
       sources = [
-        (lib.gvariant.mkTuple [ "xkb" "fi+classic" ])
-        (lib.gvariant.mkTuple [ "ibus" "libpinyin" ])
+        (lib.gvariant.mkTuple [
+          "xkb"
+          "fi+classic"
+        ])
+        (lib.gvariant.mkTuple [
+          "ibus"
+          "libpinyin"
+        ])
       ];
       per-window = false;
     };

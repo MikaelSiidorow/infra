@@ -29,6 +29,10 @@
       tf = "terraform";
       bb = "bun --bun";
 
+      # Safety
+      rm = "rm -i";
+      tp = "trash-put";
+
       # Claude
       c = "claude";
       cco = "claude --continue";

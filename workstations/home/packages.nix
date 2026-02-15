@@ -22,6 +22,16 @@
     enable = true;
   };
 
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
   home.packages =
     with pkgs;
     [
@@ -30,6 +40,10 @@
       wget
       jq
       gettext
+      fd
+      btop
+      tldr
+      trash-cli
 
       # Version control
       gh
