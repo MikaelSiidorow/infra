@@ -3,7 +3,7 @@
 {
   home.packages = with pkgs; [
     # Communication
-    discord
+    vesktop
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
     # Gaming

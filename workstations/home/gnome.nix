@@ -69,7 +69,7 @@
         "com.google.Chrome.desktop"
         "com.mitchellh.ghostty.desktop"
         "code.desktop"
-        "discord.desktop"
+        "vesktop.desktop"
         "org.telegram.desktop.desktop"
       ];
     };
