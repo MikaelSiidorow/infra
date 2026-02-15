@@ -12,6 +12,9 @@
     # Productivity
     obsidian
 
+    # Cloud
+    azure-cli
+
     # Document processing
     texliveFull
 
