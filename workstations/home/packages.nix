@@ -66,6 +66,7 @@
 
       # Cloud
       google-cloud-sdk
+      terraform
 
       # Media
       ffmpeg
