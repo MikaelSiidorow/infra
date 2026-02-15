@@ -24,4 +24,9 @@
     # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
     (config.lib.nixGL.wrap ghostty)
   ];
+
+  programs.zed-editor = {
+    enable = true;
+    package = config.lib.nixGL.wrap pkgs.zed-editor;
+  };
 }

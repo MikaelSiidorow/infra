@@ -13,9 +13,10 @@
   # Allow unfree packages (needed for Discord, Steam, etc.)
   nixpkgs.config.allowUnfree = true;
 
-  # nixGL for OpenGL support on non-NixOS Linux
+  # nixGL for OpenGL + Vulkan support on non-NixOS Linux
   # Wraps Nix GUI apps to use system graphics drivers
   targets.genericLinux.nixGL.packages = inputs.nixgl.packages;
   targets.genericLinux.nixGL.defaultWrapper = "mesa";
   targets.genericLinux.nixGL.installScripts = [ "mesa" ];
+  targets.genericLinux.nixGL.vulkan.enable = true;
 }
