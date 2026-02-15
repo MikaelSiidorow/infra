@@ -12,6 +12,9 @@
     # Productivity
     obsidian
 
+    # Document processing
+    texliveFull
+
     # Screenshot
     flameshot
 
