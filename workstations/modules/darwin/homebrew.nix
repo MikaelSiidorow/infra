@@ -31,6 +31,7 @@
       "microsoft-teams"
       "drata-agent"
       "claude-code"
+      "obs"
     ];
   };
 }
