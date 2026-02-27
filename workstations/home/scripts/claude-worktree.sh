@@ -253,7 +253,7 @@ open_ghostty() {
 		log_info "Opening new Ghostty window..."
 		if [[ "$OSTYPE" == "darwin"* ]]; then
 			# macOS: Use open command to launch Ghostty
-			open -na Ghostty --args --working-directory="$worktree_dir"
+			open -na Ghostty --args --working-directory="$worktree_dir" --window-save-state=never
 		else
 			# Linux: Launch Ghostty directly in background
 			nohup ghostty --working-directory="$worktree_dir" &>/dev/null &
@@ -346,12 +346,33 @@ cmd_create() {
 		git worktree add -b "$worktree_name" "$worktree_dir" "$base_branch"
 	fi
 
-	# Copy .env file if it exists
-	if [[ -f "$repo_root/.env" ]]; then
-		log_info "Copying .env file..."
-		cp "$repo_root/.env" "$worktree_dir/"
-	else
-		log_warn "No .env file found in repository root"
+	# Copy .env files recursively (preserving directory structure)
+	log_info "Looking for .env files to copy..."
+	local env_found=false
+	while IFS= read -r -d '' env_file; do
+		local rel_path="${env_file#$repo_root/}"
+		mkdir -p "$(dirname "$worktree_dir/$rel_path")"
+		cp "$env_file" "$worktree_dir/$rel_path"
+		log_info "  Copied $rel_path"
+		env_found=true
+	done < <(find "$repo_root" \
+		-path "$repo_root/.git" -prune -o \
+		-path "$repo_root/.claude/worktrees" -prune -o \
+		-path "*/node_modules" -prune -o \
+		\( -name ".env" -o -name ".env.*" \) -type f -print0)
+	if [[ "$env_found" == false ]]; then
+		log_warn "No .env files found"
+	fi
+
+	# Copy .claude local settings (pre-approved commands, etc.)
+	if [[ -f "$repo_root/.claude/settings.local.json" ]]; then
+		log_info "Copying .claude/settings.local.json..."
+		mkdir -p "$worktree_dir/.claude"
+		cp "$repo_root/.claude/settings.local.json" "$worktree_dir/.claude/"
+	fi
+	if [[ -f "$repo_root/CLAUDE.local.md" ]]; then
+		log_info "Copying CLAUDE.local.md..."
+		cp "$repo_root/CLAUDE.local.md" "$worktree_dir/"
 	fi
 
 	# Change to worktree directory for package installation
