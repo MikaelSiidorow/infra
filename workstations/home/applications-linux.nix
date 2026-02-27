@@ -34,8 +34,14 @@
     icon = "steam";
     terminal = false;
     type = "Application";
-    categories = [ "Game" "Network" ];
-    mimeType = [ "x-scheme-handler/steam" "x-scheme-handler/steamlink" ];
+    categories = [
+      "Game"
+      "Network"
+    ];
+    mimeType = [
+      "x-scheme-handler/steam"
+      "x-scheme-handler/steamlink"
+    ];
   };
 
   programs.zed-editor = {

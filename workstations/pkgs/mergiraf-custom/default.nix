@@ -98,20 +98,20 @@ rustPlatform.buildRustPackage {
   # validation) so the vendor Cargo.lock matches the unmodified source Cargo.lock.
   # Path deps aren't vendored, so cargo resolves tree-sitter-po from the source tree.
   preBuild = ''
-    sed -i '/^tree-sitter-starlark/a tree-sitter-po = { path = "./tree-sitter-po" }' Cargo.toml
+        sed -i '/^tree-sitter-starlark/a tree-sitter-po = { path = "./tree-sitter-po" }' Cargo.toml
 
-    sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-po",' Cargo.lock
+        sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-po",' Cargo.lock
 
-    cat >> Cargo.lock << 'LOCKEOF'
+        cat >> Cargo.lock << 'LOCKEOF'
 
-[[package]]
-name = "tree-sitter-po"
-version = "0.1.0"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-LOCKEOF
+    [[package]]
+    name = "tree-sitter-po"
+    version = "0.1.0"
+    dependencies = [
+     "cc",
+     "tree-sitter-language",
+    ]
+    LOCKEOF
   '';
 
   cargoBuildFlags = [
