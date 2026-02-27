@@ -76,6 +76,7 @@
       # Convert Markdown to PDF: pandoc input.md -o output.pdf --pdf-engine=typst
       pandoc
       typst
+      poppler-utils
 
       # Development tools
       shellcheck
