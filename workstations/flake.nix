@@ -56,6 +56,11 @@
       # User configuration - change this for different users
       username = "mikaelsiidorow";
 
+      # Custom mergiraf with tree-sitter-po grammar for PO/gettext merge support
+      mergirafOverlay = final: prev: {
+        mergiraf = final.callPackage ./pkgs/mergiraf-custom { };
+      };
+
       # Helper function to create a darwin system
       mkDarwinSystem =
         {
@@ -73,6 +78,9 @@
               ;
           };
           modules = [
+            # Custom package overlays
+            { nixpkgs.overlays = [ mergirafOverlay ]; }
+
             # Host-specific configuration
             ./hosts/${hostname}
 
@@ -126,6 +134,9 @@
               ;
           };
           modules = [
+            # Custom package overlays
+            { nixpkgs.overlays = [ mergirafOverlay ]; }
+
             # Host-specific configuration
             ./hosts/${hostname}
 
@@ -184,6 +195,27 @@
           hostname = "macbook-air";
         };
       };
+
+      # Standalone package for testing: nix build .#packages.aarch64-darwin.mergiraf
+      packages =
+        let
+          systems = [
+            "aarch64-darwin"
+            "x86_64-linux"
+          ];
+        in
+        builtins.listToAttrs (
+          map (system: {
+            name = system;
+            value = {
+              mergiraf =
+                let
+                  pkgs = import nixpkgs { inherit system; };
+                in
+                pkgs.callPackage ./pkgs/mergiraf-custom { };
+            };
+          }) systems
+        );
 
       # NixOS configurations (uncomment when ready)
       # nixosConfigurations = {
