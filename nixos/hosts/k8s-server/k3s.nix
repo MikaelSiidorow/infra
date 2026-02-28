@@ -41,6 +41,45 @@ let
           enabled: true
   '';
 
+  argocdChart = pkgs.writeText "argocd-helmchart.yaml" ''
+    apiVersion: helm.cattle.io/v1
+    kind: HelmChart
+    metadata:
+      name: argocd
+      namespace: kube-system
+    spec:
+      chart: argo-cd
+      repo: https://argoproj.github.io/argo-helm
+      targetNamespace: argocd
+      createNamespace: true
+      version: 9.0.5
+      valuesContent: |-
+        configs:
+          params:
+            server.insecure: "true"
+  '';
+
+  argocdBootstrap = pkgs.writeText "argocd-bootstrap.yaml" ''
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: bootstrap
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/MikaelSiidorow/infra.git
+        targetRevision: main
+        path: k8s/apps
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+  '';
+
   clusterIssuer = pkgs.writeText "cluster-issuer.yaml" ''
     apiVersion: cert-manager.io/v1
     kind: ClusterIssuer
@@ -73,6 +112,8 @@ in
     "L+ ${manifestDir}/traefik-helmchart.yaml - - - - ${traefikChart}"
     "L+ ${manifestDir}/cert-manager-helmchart.yaml - - - - ${certManagerChart}"
     "L+ ${manifestDir}/cluster-issuer.yaml - - - - ${clusterIssuer}"
+    "L+ ${manifestDir}/argocd-helmchart.yaml - - - - ${argocdChart}"
+    "L+ ${manifestDir}/argocd-bootstrap.yaml - - - - ${argocdBootstrap}"
   ];
 
   # Ensure k3s can manage iptables

@@ -53,7 +53,6 @@
   users.users.root = {
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBHSw1Hq0dCnEC2j78BqNKzP+hrn+MLppWELfHgVNCaG" # personal
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOia2sNQKFyftl4aDTHLGRhL3l54oPQRB49LVLWyevg7" # deploy key
     ];
   };
 

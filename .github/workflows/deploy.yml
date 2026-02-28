@@ -10,11 +10,14 @@ on:
         options:
           - all
           - nixos
-          - k8s
+          - k8s-terraform
           - terraform
   pull_request:
     branches: [main]
     paths:
+      - "nixos/**"
+      - "flake.nix"
+      - "flake.lock"
       - "terraform/**"
   push:
     branches: [main]
@@ -22,7 +25,6 @@ on:
       - "nixos/**"
       - "flake.nix"
       - "flake.lock"
-      - "k8s/**"
       - "terraform/**"
 
 permissions:
@@ -37,28 +39,132 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       nixos: ${{ steps.filter.outputs.nixos }}
-      k8s: ${{ steps.filter.outputs.k8s }}
       terraform: ${{ steps.filter.outputs.terraform }}
+      k8s_terraform: ${{ steps.filter.outputs.k8s_terraform }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
-        if: github.event_name == 'push'
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             nixos:
               - 'nixos/**'
               - 'flake.nix'
               - 'flake.lock'
-            k8s:
-              - 'k8s/**'
             terraform:
               - 'terraform/**'
+              - '!terraform/k8s/**'
+            k8s_terraform:
+              - 'terraform/k8s/**'
+
+  nixos-preview:
+    needs: changes
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.changes.outputs.nixos == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/checkout@v4
+        with:
+          path: pr
+
+      - uses: cachix/install-nix-action@v30
+
+      - name: Build base config
+        id: build-base
+        run: nix build ./base#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-base
+        continue-on-error: true
+
+      - name: Build PR config
+        id: build-pr
+        run: nix build ./pr#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-pr
+        continue-on-error: true
+
+      - name: Diff closures
+        id: diff
+        if: steps.build-base.outcome == 'success' && steps.build-pr.outcome == 'success'
+        run: |
+          output=$(nix store diff-closures ./result-base ./result-pr 2>&1) || true
+          if [ -z "$output" ]; then
+            output="No changes detected."
+          fi
+          {
+            echo "diff<<EOF"
+            echo "$output"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        env:
+          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
+        with:
+          script: |
+            const buildBase = '${{ steps.build-base.outcome }}';
+            const buildPr = '${{ steps.build-pr.outcome }}';
+            const diff = '${{ steps.diff.outcome }}';
+            const diffOutput = process.env.DIFF_OUTPUT || 'No diff output available.';
+
+            const s = (v) => v === 'success' ? '✅' : '❌';
+
+            const body = [
+              '### NixOS Preview',
+              '',
+              '| Step | Status |',
+              '|------|--------|',
+              `| Build (base) | ${s(buildBase)} |`,
+              `| Build (PR) | ${s(buildPr)} |`,
+              `| Diff | ${s(diff)} |`,
+              '',
+              '<details><summary>Show Changes</summary>',
+              '',
+              '```',
+              diffOutput,
+              '```',
+              '',
+              '</details>',
+              '',
+              `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes('### NixOS Preview'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
+      - name: Fail on build error
+        if: steps.build-base.outcome == 'failure' || steps.build-pr.outcome == 'failure'
+        run: exit 1
 
   terraform:
     needs: changes
     if: |
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' && needs.changes.outputs.terraform == 'true') ||
       (github.event_name == 'push' && needs.changes.outputs.terraform == 'true') ||
       (github.event_name == 'workflow_dispatch' && contains(fromJSON('["terraform", "all"]'), github.event.inputs.component))
     runs-on: ubuntu-latest
@@ -123,12 +229,27 @@ jobs:
 
             *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
+              issue_number: context.issue.number,
             });
+            const existing = comments.find(c => c.body.includes('### Terraform Results'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
 
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
@@ -152,59 +273,132 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H $K3S_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ env.K3S_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy with deploy-rs
         run: nix run github:serokell/deploy-rs/77c906c0ba56aabdbc72041bf9111b565cdd6171 -- --skip-checks .#k8s-server
 
-  k8s:
+  k8s-terraform:
     needs: [changes, nixos]
     if: |
       always() &&
       (needs.nixos.result == 'success' || needs.nixos.result == 'skipped') &&
-      ((github.event_name == 'push' && needs.changes.outputs.k8s == 'true') ||
-      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["k8s", "all"]'), github.event.inputs.component)))
+      ((github.event_name == 'pull_request' && needs.changes.outputs.k8s_terraform == 'true') ||
+      (github.event_name == 'push' && needs.changes.outputs.k8s_terraform == 'true') ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["k8s-terraform", "all"]'), github.event.inputs.component)))
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/k8s
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.12
 
-      - name: Setup SSH
+      - name: Setup SSH and K8s access
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H $K3S_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ env.K3S_HOST }} >> ~/.ssh/known_hosts
+          ssh -fN -L 6443:127.0.0.1:6443 root@${{ env.K3S_HOST }}
+          ssh root@${{ env.K3S_HOST }} cat /etc/rancher/k3s/k3s.yaml > /tmp/kubeconfig
+          chmod 600 /tmp/kubeconfig
 
-      - name: Copy manifests to server
-        run: |
-          ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy && mkdir -p /tmp/k8s-deploy/refinery"
-          scp -r k8s/refinery/ root@$K3S_HOST:/tmp/k8s-deploy/
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
 
-      - name: Apply namespace
-        run: ssh root@$K3S_HOST "kubectl apply -f /tmp/k8s-deploy/refinery/namespace.yaml"
+      - name: Terraform Init
+        id: init
+        run: terraform init
 
-      - name: Apply secrets
-        run: |
-          ssh root@$K3S_HOST "kubectl create secret generic refinery-secrets \
-            --namespace=refinery \
-            --from-literal=POSTGRES_PASSWORD='${REFINERY_POSTGRES_PASSWORD}' \
-            --from-literal=DATABASE_URL='postgresql://refinery:${REFINERY_POSTGRES_PASSWORD}@refinery-db:5432/refinery' \
-            --from-literal=ENCRYPTION_KEY='${REFINERY_ENCRYPTION_KEY}' \
-            --from-literal=GITHUB_CLIENT_SECRET='${REFINERY_GITHUB_CLIENT_SECRET}' \
-            --from-literal=LINKEDIN_CLIENT_SECRET='${REFINERY_LINKEDIN_CLIENT_SECRET}' \
-            --from-literal=ZERO_ADMIN_PASSWORD='${REFINERY_ZERO_ADMIN_PASSWORD}' \
-            --dry-run=client -o yaml | kubectl apply -f -"
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
         env:
-          REFINERY_POSTGRES_PASSWORD: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
-          REFINERY_ENCRYPTION_KEY: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
-          REFINERY_GITHUB_CLIENT_SECRET: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
-          REFINERY_LINKEDIN_CLIENT_SECRET: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
-          REFINERY_ZERO_ADMIN_PASSWORD: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
+          KUBECONFIG: /tmp/kubeconfig
+          TF_VAR_refinery_postgres_password: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
+          TF_VAR_refinery_encryption_key: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
+          TF_VAR_refinery_github_client_secret: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
+          TF_VAR_refinery_linkedin_client_secret: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
+          TF_VAR_refinery_zero_admin_password: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
 
-      - name: Apply manifests
-        run: ssh root@$K3S_HOST "kubectl apply -f /tmp/k8s-deploy/refinery/"
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fmt = '${{ steps.fmt.outcome }}';
+            const init = '${{ steps.init.outcome }}';
+            const validate = '${{ steps.validate.outcome }}';
+            const plan = '${{ steps.plan.outcome }}';
 
-      - name: Cleanup
-        if: always()
-        run: ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy" || true
+            const output = `### K8s Terraform Results
+
+            | Step | Status |
+            |------|--------|
+            | Format | ${fmt === 'success' ? '✅' : '❌'} |
+            | Init | ${init === 'success' ? '✅' : '❌'} |
+            | Validate | ${validate === 'success' ? '✅' : '❌'} |
+            | Plan | ${plan === 'success' ? '✅' : '❌'} |
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes('### K8s Terraform Results'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
+
+      - name: Fail on format or plan error
+        if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: terraform apply -auto-approve tfplan
+        env:
+          KUBECONFIG: /tmp/kubeconfig
+          TF_VAR_refinery_postgres_password: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
+          TF_VAR_refinery_encryption_key: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
+          TF_VAR_refinery_github_client_secret: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
+          TF_VAR_refinery_linkedin_client_secret: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
+          TF_VAR_refinery_zero_admin_password: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
