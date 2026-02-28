@@ -44,7 +44,7 @@ resource "hcloud_firewall" "k3s" {
 
 resource "hcloud_server" "k3s_server" {
   name        = "k3s-server"
-  server_type = "cx23"      # 2 vCPU / 4GB RAM / 40GB (shared)
+  server_type = "cx33"      # 4 vCPU / 8GB RAM / 80GB (shared)
   image       = "debian-12" # Will be replaced with NixOS via nixos-anywhere
   location    = "hel1"
   ssh_keys    = [data.hcloud_ssh_key.this.id]
