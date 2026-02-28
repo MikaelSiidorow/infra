@@ -28,7 +28,16 @@ let
       # Only allow kubectl commands
       case "$cmd" in
         kubectl\ *)
-          exec ${kubectl} ''${cmd#kubectl }
+          read -ra args <<< "''${cmd#kubectl }"
+          case "''${args[0]}" in
+            get|patch|rollout|apply|diff)
+              exec ${kubectl} "''${args[@]}"
+              ;;
+            *)
+              echo "Subcommand '''''${args[0]}' not allowed" >&2
+              exit 1
+              ;;
+          esac
           ;;
         *)
           echo "Only kubectl commands are allowed" >&2
@@ -69,7 +78,7 @@ let
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
-      name: deployer
+      name: ${name}-deployer
       namespace: ${project.namespace}
     rules:
       - apiGroups: ["apps"]
@@ -90,7 +99,7 @@ let
         namespace: ${project.namespace}
     roleRef:
       kind: Role
-      name: deployer
+      name: ${name}-deployer
       apiGroup: rbac.authorization.k8s.io
     YAML
 

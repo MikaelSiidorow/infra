@@ -61,7 +61,10 @@ jobs:
 
   nixos-preview:
     needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.nixos == 'true'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.changes.outputs.nixos == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -133,12 +136,27 @@ jobs:
               `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
             ].join('\n');
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body
+              issue_number: context.issue.number,
             });
+            const existing = comments.find(c => c.body.includes('### NixOS Preview'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
 
       - name: Fail on build error
         if: steps.build-base.outcome == 'failure' || steps.build-pr.outcome == 'failure'
@@ -146,7 +164,10 @@ jobs:
 
   k8s-preview:
     needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.k8s == 'true'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.changes.outputs.k8s == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -216,12 +237,27 @@ jobs:
               `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
             ].join('\n');
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body
+              issue_number: context.issue.number,
             });
+            const existing = comments.find(c => c.body.includes('### K8s Preview'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
 
       - name: Cleanup
         if: always()
@@ -299,12 +335,27 @@ jobs:
 
             *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
+              issue_number: context.issue.number,
             });
+            const existing = comments.find(c => c.body.includes('### Terraform Results'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
 
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
