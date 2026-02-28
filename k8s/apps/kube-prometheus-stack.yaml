@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 82.4.3
+    helm:
+      values: |
+        grafana:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts:
+              - grafana.miksu.app
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-dns
+            tls:
+              - secretName: grafana-tls
+                hosts:
+                  - grafana.miksu.app
+          persistence:
+            enabled: false
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              url: http://loki.loki.svc.cluster.local:3100
+              access: proxy
+              isDefault: false
+
+        prometheus:
+          prometheusSpec:
+            scrapeInterval: 60s
+            retention: 7d
+            resources:
+              requests:
+                memory: 512Mi
+              limits:
+                memory: 1Gi
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: local-path
+                  resources:
+                    requests:
+                      storage: 10Gi
+
+        alertmanager:
+          alertmanagerSpec:
+            resources:
+              requests:
+                memory: 32Mi
+              limits:
+                memory: 64Mi
+
+        prometheusOperator:
+          resources:
+            requests:
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+
+        prometheus-node-exporter:
+          resources:
+            requests:
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+
+        kube-state-metrics:
+          resources:
+            requests:
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+
+        kubeEtcd:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeProxy:
+          enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
