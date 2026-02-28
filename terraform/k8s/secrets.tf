@@ -1,3 +1,14 @@
+resource "kubernetes_secret_v1" "cloudflare_api_token" {
+  metadata {
+    name      = "cloudflare-api-token"
+    namespace = "cert-manager"
+  }
+
+  data = {
+    api-token = var.cloudflare_api_token
+  }
+}
+
 resource "kubernetes_secret_v1" "refinery_secrets" {
   metadata {
     name      = "refinery-secrets"

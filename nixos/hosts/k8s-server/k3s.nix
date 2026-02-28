@@ -16,21 +16,13 @@ let
       createNamespace: true
       version: 39.0.2
       valuesContent: |-
-        deployment:
-          strategy:
-            type: Recreate
-        service:
-          type: ClusterIP
         ports:
           web:
-            hostPort: 80
             http:
               redirections:
                 entryPoint:
                   to: websecure
                   scheme: https
-          websecure:
-            hostPort: 443
   '';
 
   certManagerChart = pkgs.writeText "cert-manager-helmchart.yaml" ''
@@ -162,6 +154,23 @@ let
           - http01:
               ingress:
                 ingressClassName: traefik
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt-dns
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        email: mikael@siidorow.com
+        privateKeySecretRef:
+          name: letsencrypt-dns-account-key
+        solvers:
+          - dns01:
+              cloudflare:
+                apiTokenSecretRef:
+                  name: cloudflare-api-token
+                  key: api-token
   '';
 in
 {
@@ -170,8 +179,7 @@ in
     enable = true;
     role = "server";
     extraFlags = toString [
-      "--disable=traefik"   # Deploy our own Traefik via HelmChart CRD
-      "--disable=servicelb" # Use hostPort instead of Klipper LB for source IP preservation
+      "--disable=traefik" # Deploy our own Traefik via HelmChart CRD
     ];
   };
 

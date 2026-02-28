@@ -1,3 +1,8 @@
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
+}
+
 variable "refinery_postgres_password" {
   type      = string
   sensitive = true

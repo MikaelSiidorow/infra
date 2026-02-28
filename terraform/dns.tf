@@ -234,15 +234,6 @@ resource "cloudflare_dns_record" "miksu_app_headscale" {
   ttl     = 1
 }
 
-resource "cloudflare_dns_record" "miksu_app_argocd" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "A"
-  name    = "argocd.miksu.app"
-  content = hcloud_server.k3s_server.ipv4_address
-  proxied = false
-  ttl     = 1
-}
-
 resource "cloudflare_dns_record" "miksu_app_refinery" {
   zone_id = cloudflare_zone.miksu_app.id
   type    = "A"
