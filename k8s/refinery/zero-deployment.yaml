@@ -49,6 +49,8 @@ spec:
           env:
             - name: NODE_ENV
               value: production
+            - name: ZERO_LOG_FORMAT
+              value: json
             - name: ZERO_APP_ID
               value: refinery
             - name: ZERO_UPSTREAM_DB

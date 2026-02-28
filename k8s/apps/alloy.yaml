@@ -52,6 +52,31 @@ spec:
               // Collect logs from pods
               loki.source.kubernetes "pods" {
                 targets    = discovery.relabel.pods.output
+                forward_to = [loki.process.json_logs.receiver]
+              }
+
+              // Parse JSON logs and extract level
+              loki.process "json_logs" {
+                // Try to parse as JSON and extract level field
+                stage.json {
+                  expressions = {
+                    level_raw = "level",
+                    severity  = "severity",
+                  }
+                }
+
+                // Map pino numeric levels to strings
+                stage.template {
+                  source   = "level_label"
+                  template = "{{ if .severity }}{{ .severity }}{{ else if eq .level_raw \"10\" }}trace{{ else if eq .level_raw \"20\" }}debug{{ else if eq .level_raw \"30\" }}info{{ else if eq .level_raw \"40\" }}warn{{ else if eq .level_raw \"50\" }}error{{ else if eq .level_raw \"60\" }}fatal{{ else if .level_raw }}{{ .level_raw }}{{ else }}unknown{{ end }}"
+                }
+
+                stage.labels {
+                  values = {
+                    level = "level_label",
+                  }
+                }
+
                 forward_to = [loki.write.default.receiver]
               }
 
