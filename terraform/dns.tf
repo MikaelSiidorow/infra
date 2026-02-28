@@ -27,11 +27,6 @@ resource "cloudflare_zone" "pluck_pics" {
   name    = "pluck.pics"
 }
 
-resource "cloudflare_zone" "seiska_lol" {
-  account = { id = local.account_id }
-  name    = "seiska.lol"
-}
-
 resource "cloudflare_zone" "siidorow_com" {
   account = { id = local.account_id }
   name    = "siidorow.com"
@@ -137,39 +132,8 @@ resource "cloudflare_dns_record" "sweepmail_app_www" {
 }
 
 # =============================================================================
-# seiska.lol records
-# =============================================================================
-
-resource "cloudflare_dns_record" "seiska_lol_www" {
-  zone_id = cloudflare_zone.seiska_lol.id
-  type    = "CNAME"
-  name    = "www.seiska.lol"
-  content = "seiskadmin.pages.dev"
-  proxied = true
-  ttl     = 1
-}
-
-# =============================================================================
 # m12w.me records
 # =============================================================================
-
-resource "cloudflare_dns_record" "m12w_me_wildcard_a" {
-  zone_id = cloudflare_zone.m12w_me.id
-  type    = "A"
-  name    = "*.m12w.me"
-  content = "46.62.146.3"
-  proxied = true
-  ttl     = 1
-}
-
-resource "cloudflare_dns_record" "m12w_me_root_a" {
-  zone_id = cloudflare_zone.m12w_me.id
-  type    = "A"
-  name    = "m12w.me"
-  content = "46.62.146.3"
-  proxied = true
-  ttl     = 1
-}
 
 resource "cloudflare_dns_record" "m12w_me_atproto" {
   zone_id = cloudflare_zone.m12w_me.id
@@ -261,6 +225,24 @@ resource "cloudflare_dns_record" "miksu_app_turbodoc" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "miksu_app_refinery" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "refinery.miksu.app"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "miksu_app_refinery_zero" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "refinery-zero.miksu.app"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = true
+  ttl     = 1
+}
+
 # =============================================================================
 # pluck.pics records
 # =============================================================================
@@ -343,16 +325,6 @@ resource "cloudflare_dns_record" "pluck_pics_root_aaaa" {
 # =============================================================================
 # siidorow.com records
 # =============================================================================
-
-# A records
-resource "cloudflare_dns_record" "siidorow_com_cool_a" {
-  zone_id = cloudflare_zone.siidorow_com.id
-  type    = "A"
-  name    = "cool.siidorow.com"
-  content = "46.62.146.3"
-  proxied = true
-  ttl     = 1
-}
 
 resource "cloudflare_dns_record" "siidorow_com_root_a" {
   zone_id = cloudflare_zone.siidorow_com.id

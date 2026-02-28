@@ -1,10 +1,10 @@
 # Terraform
 terraform/.terraform/
 terraform/.terraform.lock.hcl
-terraform/terraform.tfstate
-terraform/terraform.tfstate.backup
 terraform/*.tfvars
 terraform/*.tfvars.json
+*.tfstate
+*.tfstate.*
 
 # Ansible
 ansible/inventory.ini
@@ -18,5 +18,5 @@ ansible/inventory.ini
 .idea/
 *.swp
 
-# Coolify app secrets (if you export them)
-coolify/app-configs/*secrets*.json
+# K8s secrets (applied manually)
+k8s/**/secrets.yaml
