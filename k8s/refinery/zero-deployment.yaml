@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: refinery-zero
+  namespace: refinery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: refinery-zero
+  template:
+    metadata:
+      labels:
+        app: refinery-zero
+    spec:
+      containers:
+        - name: zero
+          image: ghcr.io/mikaelsiidorow/refinery/zero:latest
+          ports:
+            - containerPort: 4848
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /keepalive
+              port: 4848
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /keepalive
+              port: 4848
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: ZERO_APP_ID
+              value: refinery
+            - name: ZERO_UPSTREAM_DB
+              valueFrom:
+                secretKeyRef:
+                  name: refinery-secrets
+                  key: DATABASE_URL
+            - name: ZERO_REPLICA_FILE
+              value: /data/sync-replica.db
+            - name: ZERO_GET_QUERIES_URL
+              value: http://refinery-app/api/zero/get-queries
+            - name: ZERO_GET_QUERIES_FORWARD_COOKIES
+              value: "true"
+            - name: ZERO_MUTATE_URL
+              value: http://refinery-app/api/zero/mutate
+            - name: ZERO_MUTATE_FORWARD_COOKIES
+              value: "true"
+            - name: ZERO_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: refinery-secrets
+                  key: ZERO_ADMIN_PASSWORD
+          volumeMounts:
+            - name: replica-data
+              mountPath: /data
+      volumes:
+        - name: replica-data
+          persistentVolumeClaim:
+            claimName: zero-replica-data

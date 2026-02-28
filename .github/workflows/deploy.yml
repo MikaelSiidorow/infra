@@ -1,0 +1,210 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: "Component to deploy"
+        required: true
+        type: choice
+        options:
+          - all
+          - nixos
+          - k8s
+          - terraform
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+  push:
+    branches: [main]
+    paths:
+      - "nixos/**"
+      - "flake.nix"
+      - "flake.lock"
+      - "k8s/**"
+      - "terraform/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  K3S_HOST: ${{ vars.K3S_HOST }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      nixos: ${{ steps.filter.outputs.nixos }}
+      k8s: ${{ steps.filter.outputs.k8s }}
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            nixos:
+              - 'nixos/**'
+              - 'flake.nix'
+              - 'flake.lock'
+            k8s:
+              - 'k8s/**'
+            terraform:
+              - 'terraform/**'
+
+  terraform:
+    needs: changes
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && needs.changes.outputs.terraform == 'true') ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["terraform", "all"]'), github.event.inputs.component))
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.12
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fmt = '${{ steps.fmt.outcome }}';
+            const init = '${{ steps.init.outcome }}';
+            const validate = '${{ steps.validate.outcome }}';
+            const plan = '${{ steps.plan.outcome }}';
+
+            const output = `### Terraform Results
+
+            | Step | Status |
+            |------|--------|
+            | Format | ${fmt === 'success' ? '✅' : '❌'} |
+            | Init | ${init === 'success' ? '✅' : '❌'} |
+            | Validate | ${validate === 'success' ? '✅' : '❌'} |
+            | Plan | ${plan === 'success' ? '✅' : '❌'} |
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Fail on format or plan error
+        if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: terraform apply -auto-approve tfplan
+
+  nixos:
+    needs: [changes, terraform]
+    if: |
+      always() &&
+      (needs.terraform.result == 'success' || needs.terraform.result == 'skipped') &&
+      ((github.event_name == 'push' && needs.changes.outputs.nixos == 'true') ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["nixos", "all"]'), github.event.inputs.component)))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H $K3S_HOST >> ~/.ssh/known_hosts
+      - name: Deploy with deploy-rs
+        run: nix run github:serokell/deploy-rs/77c906c0ba56aabdbc72041bf9111b565cdd6171 -- --skip-checks .#k8s-server
+
+  k8s:
+    needs: [changes, nixos]
+    if: |
+      always() &&
+      (needs.nixos.result == 'success' || needs.nixos.result == 'skipped') &&
+      ((github.event_name == 'push' && needs.changes.outputs.k8s == 'true') ||
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["k8s", "all"]'), github.event.inputs.component)))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H $K3S_HOST >> ~/.ssh/known_hosts
+
+      - name: Copy manifests to server
+        run: |
+          ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy && mkdir -p /tmp/k8s-deploy"
+          scp -r k8s/refinery/ root@$K3S_HOST:/tmp/k8s-deploy/refinery/
+
+      - name: Apply namespace
+        run: ssh root@$K3S_HOST "kubectl apply -f /tmp/k8s-deploy/refinery/namespace.yaml"
+
+      - name: Apply secrets
+        run: |
+          ssh root@$K3S_HOST "kubectl create secret generic refinery-secrets \
+            --namespace=refinery \
+            --from-literal=POSTGRES_PASSWORD='${REFINERY_POSTGRES_PASSWORD}' \
+            --from-literal=DATABASE_URL='postgresql://refinery:${REFINERY_POSTGRES_PASSWORD}@refinery-db:5432/refinery' \
+            --from-literal=ENCRYPTION_KEY='${REFINERY_ENCRYPTION_KEY}' \
+            --from-literal=GITHUB_CLIENT_SECRET='${REFINERY_GITHUB_CLIENT_SECRET}' \
+            --from-literal=LINKEDIN_CLIENT_SECRET='${REFINERY_LINKEDIN_CLIENT_SECRET}' \
+            --from-literal=ZERO_ADMIN_PASSWORD='${REFINERY_ZERO_ADMIN_PASSWORD}' \
+            --dry-run=client -o yaml | kubectl apply -f -"
+        env:
+          REFINERY_POSTGRES_PASSWORD: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
+          REFINERY_ENCRYPTION_KEY: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
+          REFINERY_GITHUB_CLIENT_SECRET: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
+          REFINERY_LINKEDIN_CLIENT_SECRET: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
+          REFINERY_ZERO_ADMIN_PASSWORD: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
+
+      - name: Apply manifests
+        run: ssh root@$K3S_HOST "kubectl apply -f /tmp/k8s-deploy/refinery/"
+
+      - name: Cleanup
+        if: always()
+        run: ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy" || true
