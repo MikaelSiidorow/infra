@@ -16,6 +16,9 @@ let
       createNamespace: true
       version: 39.0.2
       valuesContent: |-
+        service:
+          spec:
+            externalTrafficPolicy: Local
         ports:
           web:
             http:

@@ -1,9 +1,15 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [
     ./disko.nix
     ./k3s.nix
+    ./headscale.nix
   ];
 
   # System
@@ -13,7 +19,10 @@
   # Nix settings
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       auto-optimise-store = true;
     };
     gc = {
@@ -26,7 +35,14 @@
   # Boot - disko handles grub configuration for BIOS/GPT
 
   # Hetzner Cloud VM settings
-  boot.initrd.availableKernelModules = [ "ata_piix" "virtio_pci" "virtio_scsi" "xhci_pci" "sd_mod" "sr_mod" ];
+  boot.initrd.availableKernelModules = [
+    "ata_piix"
+    "virtio_pci"
+    "virtio_scsi"
+    "xhci_pci"
+    "sd_mod"
+    "sr_mod"
+  ];
   boot.kernelModules = [ ];
 
   # Networking
@@ -36,12 +52,12 @@
     firewall = {
       enable = true;
       allowedTCPPorts = [
-        22    # SSH
-        80    # HTTP
-        443   # HTTPS
+        22 # SSH
+        80 # HTTP
+        443 # HTTPS
       ];
       interfaces."cni0".allowedTCPPorts = [
-        5432  # PostgreSQL from K8s pods only
+        5432 # PostgreSQL from K8s pods only
       ];
     };
   };

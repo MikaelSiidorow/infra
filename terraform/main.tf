@@ -32,6 +32,14 @@ resource "hcloud_firewall" "k3s" {
     port       = "443"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
+
+  # STUN (Headscale DERP)
+  rule {
+    direction  = "in"
+    protocol   = "udp"
+    port       = "3478"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
 }
 
 resource "hcloud_server" "k3s_server" {
