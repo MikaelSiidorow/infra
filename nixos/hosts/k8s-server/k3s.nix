@@ -137,7 +137,7 @@ let
     rules:
       - apiGroups: ["apps"]
         resources: ["deployments"]
-        verbs: ["get", "patch"]
+        verbs: ["get", "list", "watch", "patch"]
         resourceNames: ["refinery-app", "refinery-zero"]
     ---
     apiVersion: rbac.authorization.k8s.io/v1
