@@ -16,9 +16,11 @@ let
       createNamespace: true
       version: 39.0.2
       valuesContent: |-
+        deployment:
+          strategy:
+            type: Recreate
         service:
-          spec:
-            externalTrafficPolicy: Local
+          type: ClusterIP
         ports:
           web:
             hostPort: 80
@@ -168,7 +170,8 @@ in
     enable = true;
     role = "server";
     extraFlags = toString [
-      "--disable=traefik" # Deploy our own Traefik via HelmChart CRD
+      "--disable=traefik"   # Deploy our own Traefik via HelmChart CRD
+      "--disable=servicelb" # Use hostPort instead of Klipper LB for source IP preservation
     ];
   };
 
