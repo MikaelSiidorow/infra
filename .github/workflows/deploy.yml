@@ -330,7 +330,7 @@ jobs:
         run: terraform plan -no-color -out=tfplan
         continue-on-error: true
         env:
-          KUBECONFIG: /tmp/kubeconfig
+          KUBE_CONFIG_PATH: /tmp/kubeconfig
           TF_VAR_refinery_postgres_password: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
           TF_VAR_refinery_encryption_key: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
           TF_VAR_refinery_github_client_secret: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
@@ -396,7 +396,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: terraform apply -auto-approve tfplan
         env:
-          KUBECONFIG: /tmp/kubeconfig
+          KUBE_CONFIG_PATH: /tmp/kubeconfig
           TF_VAR_refinery_postgres_password: ${{ secrets.REFINERY_POSTGRES_PASSWORD }}
           TF_VAR_refinery_encryption_key: ${{ secrets.REFINERY_ENCRYPTION_KEY }}
           TF_VAR_refinery_github_client_secret: ${{ secrets.REFINERY_GITHUB_CLIENT_SECRET }}
