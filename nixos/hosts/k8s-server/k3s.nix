@@ -83,6 +83,65 @@ let
           selfHeal: true
   '';
 
+  # Host service endpoints — managed by NixOS instead of ArgoCD because
+  # ArgoCD excludes Endpoints/EndpointSlice resources by default.
+  headscaleService = pkgs.writeText "headscale-service.yaml" ''
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: headscale
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: headscale
+      namespace: headscale
+    spec:
+      ports:
+        - port: 8080
+          targetPort: 8080
+    ---
+    apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: headscale
+      namespace: headscale
+      labels:
+        kubernetes.io/service-name: headscale
+    addressType: IPv4
+    ports:
+      - port: 8080
+    endpoints:
+      - addresses:
+          - 10.42.0.1
+  '';
+
+  refineryDbService = pkgs.writeText "refinery-db-service.yaml" ''
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: refinery-db
+      namespace: refinery
+    spec:
+      ports:
+        - port: 5432
+          targetPort: 5432
+    ---
+    apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: refinery-db
+      namespace: refinery
+      labels:
+        kubernetes.io/service-name: refinery-db
+    addressType: IPv4
+    ports:
+      - port: 5432
+    endpoints:
+      - addresses:
+          - 10.42.0.1
+  '';
+
   clusterIssuer = pkgs.writeText "cluster-issuer.yaml" ''
     apiVersion: cert-manager.io/v1
     kind: ClusterIssuer
@@ -117,6 +176,8 @@ in
     "L+ ${manifestDir}/cluster-issuer.yaml - - - - ${clusterIssuer}"
     "L+ ${manifestDir}/argocd-helmchart.yaml - - - - ${argocdChart}"
     "L+ ${manifestDir}/argocd-bootstrap.yaml - - - - ${argocdBootstrap}"
+    "L+ ${manifestDir}/headscale-service.yaml - - - - ${headscaleService}"
+    "L+ ${manifestDir}/refinery-db-service.yaml - - - - ${refineryDbService}"
   ];
 
   # Ensure k3s can manage iptables
