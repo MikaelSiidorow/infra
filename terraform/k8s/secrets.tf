@@ -9,6 +9,17 @@ resource "kubernetes_secret_v1" "cloudflare_api_token" {
   }
 }
 
+resource "kubernetes_secret_v1" "alertmanager_telegram_token" {
+  metadata {
+    name      = "alertmanager-telegram-token"
+    namespace = "monitoring"
+  }
+
+  data = {
+    bot-token = var.telegram_bot_token
+  }
+}
+
 resource "kubernetes_secret_v1" "refinery_secrets" {
   metadata {
     name      = "refinery-secrets"

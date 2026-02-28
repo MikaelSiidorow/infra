@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app: refinery-zero
+        app.kubernetes.io/name: refinery-zero
+        app.kubernetes.io/component: zero
+        app.kubernetes.io/part-of: refinery
     spec:
       containers:
         - name: zero

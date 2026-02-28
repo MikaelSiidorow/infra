@@ -56,11 +56,49 @@ spec:
 
         alertmanager:
           alertmanagerSpec:
+            secrets:
+              - alertmanager-telegram-token
             resources:
               requests:
                 memory: 32Mi
               limits:
                 memory: 64Mi
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              receiver: telegram
+              group_by: ['alertname', 'namespace']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              routes:
+                - receiver: 'null'
+                  matchers:
+                    - alertname = "Watchdog"
+                - receiver: 'null'
+                  matchers:
+                    - alertname = "InfoInhibitor"
+            receivers:
+              - name: 'null'
+              - name: telegram
+                telegram_configs:
+                  - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram-token/bot-token
+                    chat_id: 3049249814
+                    parse_mode: HTML
+                    message: |-
+                      {{ range .Alerts }}
+                      {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Labels.alertname }}</b>
+                      <b>Severity:</b> {{ .Labels.severity }}
+                      <b>Namespace:</b> {{ .Labels.namespace }}
+                      {{ if .Annotations.description }}{{ .Annotations.description }}{{ else }}{{ .Annotations.summary }}{{ end }}
+                      {{ end }}
+            inhibit_rules:
+              - source_matchers:
+                  - severity = "critical"
+                target_matchers:
+                  - severity = "warning"
+                equal: ['alertname', 'namespace']
 
         prometheusOperator:
           resources:

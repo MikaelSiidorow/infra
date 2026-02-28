@@ -12,6 +12,9 @@ spec:
     metadata:
       labels:
         app: refinery-app
+        app.kubernetes.io/name: refinery-app
+        app.kubernetes.io/component: app
+        app.kubernetes.io/part-of: refinery
     spec:
       containers:
         - name: app
