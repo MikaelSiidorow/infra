@@ -4,7 +4,6 @@
   imports = [
     ./disko.nix
     ./k3s.nix
-    ./deploy-users.nix
   ];
 
   # System
