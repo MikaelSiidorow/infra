@@ -21,11 +21,14 @@ let
             externalTrafficPolicy: Local
         ports:
           web:
+            hostPort: 80
             http:
               redirections:
                 entryPoint:
                   to: websecure
                   scheme: https
+          websecure:
+            hostPort: 443
   '';
 
   certManagerChart = pkgs.writeText "cert-manager-helmchart.yaml" ''
