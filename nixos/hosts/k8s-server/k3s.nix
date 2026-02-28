@@ -59,7 +59,7 @@ let
       valuesContent: |-
         configs:
           params:
-            server.insecure: "true"
+            server.insecure: "true" # TLS terminated by Traefik ingress
   '';
 
   argocdBootstrap = pkgs.writeText "argocd-bootstrap.yaml" ''
