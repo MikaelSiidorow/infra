@@ -178,8 +178,8 @@ jobs:
 
       - name: Copy manifests to server
         run: |
-          ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy && mkdir -p /tmp/k8s-deploy"
-          scp -r k8s/refinery/ root@$K3S_HOST:/tmp/k8s-deploy/refinery/
+          ssh root@$K3S_HOST "rm -rf /tmp/k8s-deploy && mkdir -p /tmp/k8s-deploy/refinery"
+          scp -r k8s/refinery/ root@$K3S_HOST:/tmp/k8s-deploy/
 
       - name: Apply namespace
         run: ssh root@$K3S_HOST "kubectl apply -f /tmp/k8s-deploy/refinery/namespace.yaml"
