@@ -113,6 +113,48 @@ let
           - 10.42.0.1
   '';
 
+  ciDeployRbac = pkgs.writeText "ci-deploy-rbac.yaml" ''
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: ci-deploy
+      namespace: refinery
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ci-deploy-token
+      namespace: refinery
+      annotations:
+        kubernetes.io/service-account.name: ci-deploy
+    type: kubernetes.io/service-account-token
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: ci-deploy
+      namespace: refinery
+    rules:
+      - apiGroups: ["apps"]
+        resources: ["deployments"]
+        verbs: ["get", "patch"]
+        resourceNames: ["refinery-app", "refinery-zero"]
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: ci-deploy
+      namespace: refinery
+    subjects:
+      - kind: ServiceAccount
+        name: ci-deploy
+        namespace: refinery
+    roleRef:
+      kind: Role
+      name: ci-deploy
+      apiGroup: rbac.authorization.k8s.io
+  '';
+
   refineryDbService = pkgs.writeText "refinery-db-service.yaml" ''
     apiVersion: v1
     kind: Service
@@ -180,6 +222,7 @@ in
     role = "server";
     extraFlags = toString [
       "--disable=traefik" # Deploy our own Traefik via HelmChart CRD
+      "--tls-san=100.64.0.1" # Allow API access over Tailscale VPN
     ];
   };
 
@@ -192,6 +235,7 @@ in
     "L+ ${manifestDir}/argocd-bootstrap.yaml - - - - ${argocdBootstrap}"
     "L+ ${manifestDir}/headscale-service.yaml - - - - ${headscaleService}"
     "L+ ${manifestDir}/refinery-db-service.yaml - - - - ${refineryDbService}"
+    "L+ ${manifestDir}/ci-deploy-rbac.yaml - - - - ${ciDeployRbac}"
   ];
 
   # Ensure k3s can manage iptables
