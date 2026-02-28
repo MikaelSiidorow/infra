@@ -84,7 +84,7 @@ spec:
               - name: telegram
                 telegram_configs:
                   - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram-token/bot-token
-                    chat_id: 3049249814
+                    chat_id: -1003049249814
                     parse_mode: HTML
                     message: |-
                       {{ range .Alerts }}
