@@ -338,6 +338,7 @@ jobs:
           TF_VAR_refinery_linkedin_client_secret: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
           TF_VAR_refinery_zero_admin_password: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
           TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TF_VAR_grafana_admin_password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
 
       - name: Comment PR
         if: github.event_name == 'pull_request'
@@ -408,3 +409,4 @@ jobs:
           TF_VAR_refinery_linkedin_client_secret: ${{ secrets.REFINERY_LINKEDIN_CLIENT_SECRET }}
           TF_VAR_refinery_zero_admin_password: ${{ secrets.REFINERY_ZERO_ADMIN_PASSWORD }}
           TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TF_VAR_grafana_admin_password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}

@@ -9,6 +9,18 @@ resource "kubernetes_secret_v1" "cloudflare_api_token" {
   }
 }
 
+resource "kubernetes_secret_v1" "grafana_admin" {
+  metadata {
+    name      = "grafana-admin"
+    namespace = "monitoring"
+  }
+
+  data = {
+    admin-user     = "admin"
+    admin-password = var.grafana_admin_password
+  }
+}
+
 resource "kubernetes_secret_v1" "alertmanager_telegram_token" {
   metadata {
     name      = "alertmanager-telegram-token"
