@@ -17,7 +17,12 @@
           {
             name = "argocd.miksu.app";
             type = "A";
-            value = "100.64.0.1"; # First IP assigned by Headscale; verify with `headscale nodes list`
+            value = "100.64.0.1";
+          }
+          {
+            name = "grafana.miksu.app";
+            type = "A";
+            value = "100.64.0.1";
           }
         ];
       };
