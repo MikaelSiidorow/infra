@@ -10,3 +10,4 @@ data:
   LINKEDIN_REDIRECT_URL: https://refinery.miksu.app/api/oauth/linkedin/callback
   PUBLIC_SERVER: https://refinery-zero.miksu.app
   COOKIE_DOMAIN: .miksu.app
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy.alloy.svc.cluster.local:4318

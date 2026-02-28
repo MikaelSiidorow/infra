@@ -61,6 +61,26 @@ spec:
                   url = "http://loki.loki.svc.cluster.local:3100/loki/api/v1/push"
                 }
               }
+
+              // Receive OTLP data from applications
+              otelcol.receiver.otlp "default" {
+                http {
+                  endpoint = "0.0.0.0:4318"
+                }
+                output {
+                  logs = [otelcol.exporter.loki.default.input]
+                }
+              }
+
+              // Convert OTLP logs to Loki format
+              otelcol.exporter.loki "default" {
+                forward_to = [loki.write.default.receiver]
+              }
+          extraPorts:
+            - name: otlp-http
+              port: 4318
+              targetPort: 4318
+              protocol: TCP
           resources:
             requests:
               memory: 64Mi
