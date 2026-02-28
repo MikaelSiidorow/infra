@@ -40,6 +40,30 @@ spec:
               url: http://loki.loki.svc.cluster.local:3100
               access: proxy
               isDefault: false
+              jsonData:
+                derivedFields:
+                  - name: TraceID
+                    matcherRegex: '"trace_id":"(\w+)"'
+                    url: '$${__value.raw}'
+                    datasourceUid: tempo
+                    matcherType: regex
+            - name: Tempo
+              type: tempo
+              uid: tempo
+              url: http://tempo.tempo.svc.cluster.local:3100
+              access: proxy
+              isDefault: false
+              jsonData:
+                tracesToLogsV2:
+                  datasourceUid: loki
+                  filterByTraceID: false
+                  filterBySpanID: false
+                tracesToMetrics:
+                  datasourceUid: prometheus
+                nodeGraph:
+                  enabled: true
+                serviceMap:
+                  datasourceUid: prometheus
 
         prometheus:
           prometheusSpec:
