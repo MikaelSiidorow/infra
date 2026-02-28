@@ -270,8 +270,6 @@ jobs:
       (github.event_name == 'workflow_dispatch' && contains(fromJSON('["nixos", "all"]'), github.event.inputs.component)))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -279,8 +277,8 @@ jobs:
           echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ env.K3S_HOST }} >> ~/.ssh/known_hosts
-      - name: Deploy with deploy-rs
-        run: nix run github:serokell/deploy-rs/77c906c0ba56aabdbc72041bf9111b565cdd6171 -- --skip-checks .#k8s-server
+      - name: Deploy NixOS
+        run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/infra/${{ github.sha }}#k8s-server'"
 
   k8s-terraform:
     needs: [changes, nixos]
