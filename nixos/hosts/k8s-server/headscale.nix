@@ -2,7 +2,7 @@
 {
   services.headscale = {
     enable = true;
-    address = "0.0.0.0";
+    address = "0.0.0.0"; # Needs to be reachable from K8s CNI bridge (10.42.0.1); Hetzner firewall blocks 8080 externally
     port = 8080;
     settings = {
       server_url = "https://hs.miksu.app";
@@ -17,7 +17,7 @@
           {
             name = "argocd.miksu.app";
             type = "A";
-            value = "100.64.0.1";
+            value = "100.64.0.1"; # First IP assigned by Headscale; verify with `headscale nodes list`
           }
         ];
       };
