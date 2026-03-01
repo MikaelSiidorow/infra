@@ -1,5 +1,4 @@
 name: K8s Rollout Restart
-
 on:
   workflow_call:
     inputs:
@@ -14,7 +13,6 @@ on:
         required: true
       K8S_DEPLOY_KUBECONFIG:
         required: true
-
 jobs:
   rollout:
     runs-on: ubuntu-latest
@@ -24,16 +22,13 @@ jobs:
         with:
           authkey: ${{ secrets.HEADSCALE_AUTH_KEY }}
           args: "--login-server=https://hs.miksu.app"
-
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
-
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.K8S_DEPLOY_KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
-
       - name: Rollout restart
         run: |
           IFS=',' read -ra DEPS <<< "${{ inputs.deployments }}"

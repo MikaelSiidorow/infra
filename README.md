@@ -19,6 +19,7 @@ ArgoCD auto-syncs from git
 ```
 
 **Separation of concerns:**
+
 - **Terraform** (`terraform/`) provisions cloud infrastructure (Hetzner server, Cloudflare DNS)
 - **NixOS** (`nixos/`) manages the server OS and cluster platform (K3s, Traefik, cert-manager, ArgoCD)
 - **Terraform K8s** (`terraform/k8s/`) manages application secrets (the part that can't be in Git)
@@ -67,6 +68,7 @@ K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes 
 ### Initial setup (new server)
 
 1. Provision server with Terraform:
+
    ```bash
    cd terraform && terraform apply
    terraform output k3s_ipv4_address
@@ -75,17 +77,20 @@ K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes 
 2. Update `flake.nix` with the new IP.
 
 3. Install NixOS via nixos-anywhere:
+
    ```bash
    nix run github:nix-community/nixos-anywhere -- \
      --flake .#k8s-server --target-host root@<IP>
    ```
 
 4. Wait for ArgoCD to start:
+
    ```bash
    ssh root@<IP> "kubectl get pods -n argocd"
    ```
 
 5. Apply K8s secrets via Terraform:
+
    ```bash
    cd terraform/k8s
    terraform init

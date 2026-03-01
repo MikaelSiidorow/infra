@@ -158,7 +158,6 @@ spec:
           enabled: false
         kubeProxy:
           enabled: false
-
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
