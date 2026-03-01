@@ -20,31 +20,40 @@
     };
   };
 
-  outputs = { self, nixpkgs, deploy-rs, disko, sops-nix, ... }: {
-    nixosConfigurations = {
-      k8s-server = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          disko.nixosModules.disko
-          sops-nix.nixosModules.sops
-          ./nixos/hosts/k8s-server/configuration.nix
-        ];
+  outputs =
+    {
+      self,
+      nixpkgs,
+      deploy-rs,
+      disko,
+      sops-nix,
+      ...
+    }:
+    {
+      nixosConfigurations = {
+        k8s-server = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            disko.nixosModules.disko
+            sops-nix.nixosModules.sops
+            ./nixos/hosts/k8s-server/configuration.nix
+          ];
+        };
       };
-    };
 
-    deploy = {
-      nodes = {
-        k8s-server = {
-          hostname = "89.167.124.71";
-          sshUser = "root";
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.k8s-server;
+      deploy = {
+        nodes = {
+          k8s-server = {
+            hostname = "89.167.124.71";
+            sshUser = "root";
+            profiles.system = {
+              user = "root";
+              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.k8s-server;
+            };
           };
         };
       };
-    };
 
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-  };
+      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    };
 }
