@@ -18,7 +18,7 @@ graph TB
             FW_22[TCP 22 SSH]
         end
 
-        subgraph Server["k3s-server (cx23 · Helsinki)<br/>89.167.124.71"]
+        subgraph Server["k3s-server (cx33 · Helsinki)<br/>89.167.124.71"]
             subgraph K8s["Kubernetes (K3s)"]
                 TRAEFIK["Traefik Ingress<br/>hostPort 80/443<br/>TLS termination"]
                 CERTMGR["cert-manager<br/>Let's Encrypt"]

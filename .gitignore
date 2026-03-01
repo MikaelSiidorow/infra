@@ -5,9 +5,6 @@ terraform/*.tfvars.json
 *.tfstate
 *.tfstate.*
 
-# Ansible
-ansible/inventory.ini
-
 # Logs
 *.log
 

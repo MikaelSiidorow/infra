@@ -1,7 +1,6 @@
 .SILENT:
 
 TF=terraform
-ANS=ansible-playbook
 
 # Terraform
 
@@ -16,14 +15,6 @@ tf-apply:
 
 tf-destroy:
 	cd terraform && $(TF) destroy -auto-approve
-
-# Inventory
-inventory:
-	bin/make-inventory.sh
-
-# Provision (Ansible)
-provision:
-	$(ANS) -i ansible/inventory.ini ansible/playbook.yml
 
 # SSH convenience
 ssh:
