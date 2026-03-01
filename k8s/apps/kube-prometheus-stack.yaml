@@ -67,6 +67,7 @@ spec:
 
         prometheus:
           prometheusSpec:
+            enableRemoteWriteReceiver: true
             scrapeInterval: 60s
             retention: 7d
             resources:

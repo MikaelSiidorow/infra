@@ -12,6 +12,9 @@ spec:
     helm:
       values: |
         tempo:
+          metricsGenerator:
+            enabled: true
+            remoteWriteUrl: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
           storage:
             trace:
               backend: local
