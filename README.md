@@ -33,9 +33,14 @@ infra/
 ├── nixos/                   # NixOS server configurations
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests
-│   └── refinery/            # Application K8s manifests
+│   ├── refinery/            # Refinery K8s manifests
+│   ├── headscale/           # Headscale ingress
+│   └── argocd-ingress/      # ArgoCD ingress
+├── docs/                    # Architecture & observability docs
+├── bin/                     # Utility scripts (ssh)
 └── .github/workflows/
-    └── deploy.yml           # CI pipeline
+    ├── deploy.yml           # CI pipeline
+    └── k8s-rollout.yml      # K8s rollout restart (reusable)
 ```
 
 ## Deploying
