@@ -126,8 +126,8 @@
   # oneshot ensures REPLICATION is granted on existing clusters too.
   systemd.services.postgresql-grant-replication = {
     description = "Grant REPLICATION to PostgreSQL roles for zero-cache";
-    after = [ "postgresql.service" ];
-    requires = [ "postgresql.service" ];
+    after = [ "postgresql.service" "postgresql-setup.service" ];
+    requires = [ "postgresql.service" "postgresql-setup.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
