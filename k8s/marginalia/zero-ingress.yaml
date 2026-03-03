@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - marginalia-zero.miksu.app
+        - zero.marginalia.miksu.app
       secretName: marginalia-zero-tls
   rules:
-    - host: marginalia-zero.miksu.app
+    - host: zero.marginalia.miksu.app
       http:
         paths:
           - path: /
