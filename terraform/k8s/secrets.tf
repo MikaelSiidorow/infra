@@ -47,3 +47,40 @@ resource "kubernetes_secret_v1" "refinery_secrets" {
     ZERO_ADMIN_PASSWORD    = var.refinery_zero_admin_password
   }
 }
+
+# Marginalia auto-generated secrets
+resource "random_password" "marginalia_postgres_password" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "marginalia_better_auth_secret" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "marginalia_zero_admin_password" {
+  length  = 32
+  special = false
+}
+
+resource "kubernetes_secret_v1" "marginalia_secrets" {
+  metadata {
+    name      = "marginalia-secrets"
+    namespace = "marginalia"
+  }
+
+  data = {
+    POSTGRES_PASSWORD    = random_password.marginalia_postgres_password.result
+    DATABASE_URL         = "postgresql://marginalia:${random_password.marginalia_postgres_password.result}@marginalia-db:5432/marginalia"
+    DATABASE_CVR_URL     = "postgresql://marginalia:${random_password.marginalia_postgres_password.result}@marginalia-db:5432/marginalia_cvr"
+    DATABASE_CDB_URL     = "postgresql://marginalia:${random_password.marginalia_postgres_password.result}@marginalia-db:5432/marginalia_cdb"
+    BETTER_AUTH_SECRET   = random_password.marginalia_better_auth_secret.result
+    ZERO_ADMIN_PASSWORD  = random_password.marginalia_zero_admin_password.result
+    GITHUB_CLIENT_SECRET = var.marginalia_github_client_secret
+    SMTP_HOST            = var.marginalia_smtp_host
+    SMTP_USER            = var.marginalia_smtp_user
+    SMTP_PASS            = var.marginalia_smtp_pass
+    SMTP_FROM            = var.marginalia_smtp_from
+  }
+}

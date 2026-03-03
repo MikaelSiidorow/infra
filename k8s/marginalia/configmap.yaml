@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marginalia-config
+  namespace: marginalia
+data:
+  PUBLIC_SERVER: https://marginalia-zero.miksu.app
+  BETTER_AUTH_URL: https://marginalia.miksu.app
+  ORIGIN: https://marginalia.miksu.app
+  GITHUB_CLIENT_ID: Ov23liK5nux3U6d5f8MK
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy.alloy.svc.cluster.local:4318

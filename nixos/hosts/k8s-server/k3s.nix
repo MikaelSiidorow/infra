@@ -182,6 +182,74 @@ let
           - 10.42.0.1
   '';
 
+  marginaliaDbService = pkgs.writeText "marginalia-db-service.yaml" ''
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: marginalia-db
+      namespace: marginalia
+    spec:
+      ports:
+        - port: 5432
+          targetPort: 5432
+    ---
+    apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: marginalia-db
+      namespace: marginalia
+      labels:
+        kubernetes.io/service-name: marginalia-db
+    addressType: IPv4
+    ports:
+      - port: 5432
+    endpoints:
+      - addresses:
+          - 10.42.0.1
+  '';
+
+  marginaliaCiDeployRbac = pkgs.writeText "marginalia-ci-deploy-rbac.yaml" ''
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: ci-deploy
+      namespace: marginalia
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ci-deploy-token
+      namespace: marginalia
+      annotations:
+        kubernetes.io/service-account.name: ci-deploy
+    type: kubernetes.io/service-account-token
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: ci-deploy
+      namespace: marginalia
+    rules:
+      - apiGroups: ["apps"]
+        resources: ["deployments"]
+        verbs: ["get", "list", "watch", "patch"]
+        resourceNames: ["marginalia-app", "marginalia-zero"]
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: ci-deploy
+      namespace: marginalia
+    subjects:
+      - kind: ServiceAccount
+        name: ci-deploy
+        namespace: marginalia
+    roleRef:
+      kind: Role
+      name: ci-deploy
+      apiGroup: rbac.authorization.k8s.io
+  '';
+
   clusterIssuer = pkgs.writeText "cluster-issuer.yaml" ''
     apiVersion: cert-manager.io/v1
     kind: ClusterIssuer
@@ -237,6 +305,8 @@ in
     "L+ ${manifestDir}/headscale-service.yaml - - - - ${headscaleService}"
     "L+ ${manifestDir}/refinery-db-service.yaml - - - - ${refineryDbService}"
     "L+ ${manifestDir}/ci-deploy-rbac.yaml - - - - ${ciDeployRbac}"
+    "L+ ${manifestDir}/marginalia-db-service.yaml - - - - ${marginaliaDbService}"
+    "L+ ${manifestDir}/marginalia-ci-deploy-rbac.yaml - - - - ${marginaliaCiDeployRbac}"
   ];
 
   # Ensure k3s can manage iptables

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: marginalia-zero
+  namespace: marginalia
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - marginalia-zero.miksu.app
+      secretName: marginalia-zero-tls
+  rules:
+    - host: marginalia-zero.miksu.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: marginalia-zero
+                port:
+                  number: 4848

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marginalia-app
+  namespace: marginalia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marginalia-app
+  template:
+    metadata:
+      labels:
+        app: marginalia-app
+        app.kubernetes.io/name: marginalia-app
+        app.kubernetes.io/component: app
+        app.kubernetes.io/part-of: marginalia
+    spec:
+      initContainers:
+        - name: migrate
+          image: ghcr.io/mikaelsiidorow/marginalia/app:latest
+          imagePullPolicy: Always
+          command: ["bun", "run", "drizzle-kit", "migrate"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: DATABASE_URL
+      containers:
+        - name: app
+          image: ghcr.io/mikaelsiidorow/marginalia/app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          envFrom:
+            - configMapRef:
+                name: marginalia-config
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: DATABASE_URL
+            - name: BETTER_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: BETTER_AUTH_SECRET
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: GITHUB_CLIENT_SECRET
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: SMTP_PASS
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: marginalia-secrets
+                  key: SMTP_FROM

@@ -96,16 +96,28 @@
       # K3s service network
       host all all 10.43.0.0/16 scram-sha-256
     '';
-    ensureDatabases = [ "refinery" ];
+    ensureDatabases = [
+      "refinery"
+      "marginalia"
+      "marginalia_cvr"
+      "marginalia_cdb"
+    ];
     ensureUsers = [
       {
         name = "refinery";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "marginalia";
         ensureDBOwnership = true;
       }
     ];
     # Runs only on first cluster init (fresh deploy)
     initialScript = pkgs.writeText "pg-init.sql" ''
       ALTER ROLE refinery WITH REPLICATION;
+      ALTER ROLE marginalia WITH REPLICATION;
+      GRANT ALL PRIVILEGES ON DATABASE marginalia_cvr TO marginalia;
+      GRANT ALL PRIVILEGES ON DATABASE marginalia_cdb TO marginalia;
     '';
   };
 
@@ -113,15 +125,20 @@
   # initialScript only runs on first cluster init, so this systemd
   # oneshot ensures REPLICATION is granted on existing clusters too.
   systemd.services.postgresql-grant-replication = {
-    description = "Grant REPLICATION to refinery PostgreSQL role";
+    description = "Grant REPLICATION to PostgreSQL roles for zero-cache";
     after = [ "postgresql.service" ];
     requires = [ "postgresql.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       User = "postgres";
-      ExecStart = "${config.services.postgresql.package}/bin/psql -c \"ALTER ROLE refinery WITH REPLICATION;\"";
     };
+    script = ''
+      ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE refinery WITH REPLICATION;"
+      ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE marginalia WITH REPLICATION;"
+      ${config.services.postgresql.package}/bin/psql -c "GRANT ALL PRIVILEGES ON DATABASE marginalia_cvr TO marginalia;"
+      ${config.services.postgresql.package}/bin/psql -c "GRANT ALL PRIVILEGES ON DATABASE marginalia_cdb TO marginalia;"
+    '';
   };
 
   # Basic packages
