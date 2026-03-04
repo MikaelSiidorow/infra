@@ -364,15 +364,41 @@ cmd_create() {
 		log_warn "No .env files found"
 	fi
 
-	# Copy .claude local settings (pre-approved commands, etc.)
+	# Symlink .claude local settings (pre-approved commands, MCP config, etc.)
+	log_info "Setting up .claude directory symlinks..."
+	mkdir -p "$worktree_dir/.claude"
+
+	# Symlink settings.local.json
 	if [[ -f "$repo_root/.claude/settings.local.json" ]]; then
-		log_info "Copying .claude/settings.local.json..."
-		mkdir -p "$worktree_dir/.claude"
-		cp "$repo_root/.claude/settings.local.json" "$worktree_dir/.claude/"
+		log_info "  Symlinking .claude/settings.local.json..."
+		ln -sf "$repo_root/.claude/settings.local.json" "$worktree_dir/.claude/settings.local.json"
 	fi
+
+	# Symlink mcp.json (MCP server configuration)
+	if [[ -f "$repo_root/.claude/mcp.json" ]]; then
+		log_info "  Symlinking .claude/mcp.json..."
+		ln -sf "$repo_root/.claude/mcp.json" "$worktree_dir/.claude/mcp.json"
+	fi
+
+	# Symlink any other local config files in .claude/ (but not directories like worktrees/)
+	for config_file in "$repo_root/.claude"/*.json "$repo_root/.claude"/*.local.*; do
+		if [[ -f "$config_file" ]]; then
+			local filename
+			filename=$(basename "$config_file")
+			# Skip if already symlinked above
+			if [[ "$filename" != "settings.local.json" && "$filename" != "mcp.json" ]]; then
+				if [[ ! -e "$worktree_dir/.claude/$filename" ]]; then
+					log_info "  Symlinking .claude/$filename..."
+					ln -sf "$config_file" "$worktree_dir/.claude/$filename"
+				fi
+			fi
+		fi
+	done
+
+	# Symlink CLAUDE.local.md
 	if [[ -f "$repo_root/CLAUDE.local.md" ]]; then
-		log_info "Copying CLAUDE.local.md..."
-		cp "$repo_root/CLAUDE.local.md" "$worktree_dir/"
+		log_info "  Symlinking CLAUDE.local.md..."
+		ln -sf "$repo_root/CLAUDE.local.md" "$worktree_dir/CLAUDE.local.md"
 	fi
 
 	# Change to worktree directory for package installation
