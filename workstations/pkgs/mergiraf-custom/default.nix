@@ -14,6 +14,7 @@
 {
   lib,
   fetchFromGitea,
+  fetchFromGitHub,
   rustPlatform,
   runCommand,
 }:
@@ -29,7 +30,12 @@ let
     hash = "sha256-KlielG8XxOlS5Np8LZT+GMujWw/7EDOwsZHWVjneV3g=";
   };
 
-  treeSitterPoSrc = ../tree-sitter-po;
+  treeSitterPoSrc = fetchFromGitHub {
+    owner = "mikaelsiidorow";
+    repo = "tree-sitter-po";
+    rev = "2aee49d0ed6a2d8aa6f240feead3ecffe55bd8fc";
+    hash = "sha256-e0Bw0I6MCGYXZXe2Zpq9YOtf6sXcHIZC2X9/lK5JvZY=";
+  };
 
   # Combined source: mergiraf + tree-sitter-po directory (Cargo.toml/Lock unmodified
   # so that fetchCargoVendor validation passes with the upstream cargoHash)
