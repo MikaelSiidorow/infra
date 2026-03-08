@@ -1,0 +1,26 @@
+[formatter.nix]
+command = "nixfmt"
+includes = ["*.nix"]
+
+[formatter.terraform]
+command = "terraform"
+options = ["fmt", "-"]
+includes = ["*.tf"]
+
+[formatter.shell]
+command = "shfmt"
+includes = ["*.sh", "*.bash"]
+
+[formatter.oxfmt]
+command = "oxfmt"
+options = ["--write"]
+includes = [
+  "*.js", "*.jsx", "*.ts", "*.tsx",
+  "*.json", "*.jsonc",
+  "*.yaml", "*.yml",
+  "*.md", "*.mdx",
+  "*.html", "*.vue",
+  "*.css", "*.scss", "*.less",
+  "*.graphql",
+  "*.toml",
+]

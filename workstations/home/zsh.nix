@@ -28,6 +28,7 @@
       p = "pnpm";
       tf = "terraform";
       bb = "bun --bun";
+      treefmt = "treefmt --config-file ~/.config/treefmt/treefmt.toml --allow-missing-formatter";
 
       # Safety
       rm = "rm -i";

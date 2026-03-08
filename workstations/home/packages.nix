@@ -32,6 +32,9 @@
     enableZshIntegration = true;
   };
 
+  # Global treefmt config — used as fallback when no repo-local treefmt.toml exists
+  home.file.".config/treefmt/treefmt.toml".source = ./treefmt.toml;
+
   home.packages =
     with pkgs;
     [
@@ -60,6 +63,9 @@
       # Nix tooling
       nixfmt-tree
 
+      # Formatting
+      oxfmt
+
       # Databases
       postgresql_18
       redis
@@ -77,6 +83,7 @@
       pandoc
       typst
       poppler-utils
+      typstyle
 
       # Development tools
       shellcheck
