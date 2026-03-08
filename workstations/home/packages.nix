@@ -97,5 +97,8 @@
     ++ lib.optionals (!isDarwin) [
       # AI tools
       inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+      inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+
     ];
 }

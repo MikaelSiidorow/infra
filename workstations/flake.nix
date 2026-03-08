@@ -38,6 +38,12 @@
       url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # OpenCode with automatic updates (for NixOS/Linux)
+    opencode-nix = {
+      url = "github:dan-online/opencode-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -50,6 +56,7 @@
       homebrew-core,
       homebrew-cask,
       claude-code-nix,
+      opencode-nix,
       ...
     }@inputs:
     let
