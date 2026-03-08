@@ -61,6 +61,13 @@
           fi
         '')
       ])
+      # Linux-specific: clear LD_LIBRARY_PATH inherited from nixGL terminal wrapper
+      # (only needed by the terminal emulator itself, not child processes)
+      ++ (lib.optionals (!isDarwin) [
+        (lib.mkBefore ''
+          unset LD_LIBRARY_PATH
+        '')
+      ])
       ++ [
         ''
           # GPG TTY for signing
