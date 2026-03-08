@@ -63,6 +63,21 @@
 
     # Dock: pinned apps and autohide (similar to macOS config)
     "org/gnome/shell" = {
+      enabled-extensions = [
+        # Pop!_OS system extensions
+        "cosmic-dock@system76.com"
+        "pop-cosmic@system76.com"
+        "pop-shell@system76.com"
+        "popx11gestures@system76.com"
+        "system76-power@system76.com"
+        "ubuntu-appindicators@ubuntu.com"
+        # Nix-managed extensions
+        "Vitals@CoreCoding.com"
+      ];
+      disabled-extensions = [
+        "cosmic-workspaces@system76.com"
+        "ding@rastersoft.com"
+      ];
       favorite-apps = [
         "org.gnome.Nautilus.desktop"
         "io.elementary.appcenter.desktop"
@@ -72,6 +87,29 @@
         "vesktop.desktop"
         "org.telegram.desktop.desktop"
       ];
+    };
+
+    # Pop Cosmic: hide top-left buttons (replaced by Vitals)
+    "org/gnome/shell/extensions/pop-cosmic" = {
+      show-applications-button = false;
+      show-workspaces-button = false;
+    };
+
+    # Vitals: system monitor in top bar
+    "org/gnome/shell/extensions/vitals" = {
+      hot-sensors = [
+        "_memory_usage_"
+        "_processor_usage_"
+      ];
+      position-in-panel = 0; # left
+      show-temperature = false;
+      show-voltage = false;
+      show-fan = false;
+      show-memory = true;
+      show-processor = true;
+      show-network = false;
+      show-storage = false;
+      show-battery = false;
     };
 
     "org/gnome/shell/extensions/dash-to-dock" = {

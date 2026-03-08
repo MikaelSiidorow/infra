@@ -19,4 +19,7 @@
   targets.genericLinux.nixGL.defaultWrapper = "mesa";
   targets.genericLinux.nixGL.installScripts = [ "mesa" ];
   targets.genericLinux.nixGL.vulkan.enable = true;
+
+  # Ensure GNOME can find Nix-installed extensions and desktop files
+  targets.genericLinux.enable = true;
 }
