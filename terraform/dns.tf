@@ -248,8 +248,9 @@ resource "cloudflare_dns_record" "miksu_app_refinery_zero" {
   type    = "A"
   name    = "refinery-zero.miksu.app"
   content = hcloud_server.k3s_server.ipv4_address
-  proxied = true
+  proxied = false
   ttl     = 1
+  comment = "DNS-only for WebSocket support"
 }
 
 resource "cloudflare_dns_record" "miksu_app_marginalia" {
