@@ -9,12 +9,10 @@
       dns = {
         magic_dns = true;
         base_domain = "vpn.miksu.app";
-        nameservers.split = {
-          "miksu.app" = [
-            "1.1.1.1"
-            "1.0.0.1"
-          ];
-        };
+        nameservers.global = [
+          "1.1.1.1"
+          "1.0.0.1"
+        ];
         extra_records = [
           {
             name = "argocd.miksu.app";
