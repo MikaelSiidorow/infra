@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-config
+  namespace: gatus
+data:
+  config.yaml: |
+    storage:
+      type: sqlite
+      path: /data/gatus.db
+
+    ui:
+      title: miksu.app status
+      header: miksu.app status
+
+    endpoints:
+      - name: Refinery
+        group: Apps
+        url: https://refinery.miksu.app
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: Refinery Zero
+        group: Apps
+        url: https://refinery-zero.miksu.app
+        interval: 60s
+        conditions:
+          - "[CONNECTED] == true"
+          - "[RESPONSE_TIME] < 5000"
+
+      - name: Marginalia
+        group: Apps
+        url: https://marginalia.miksu.app
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: Marginalia Zero
+        group: Apps
+        url: https://zero.marginalia.miksu.app
+        interval: 60s
+        conditions:
+          - "[CONNECTED] == true"
+          - "[RESPONSE_TIME] < 5000"
+
+      - name: Headscale
+        group: Infrastructure
+        url: https://hs.miksu.app/health
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 5000"
