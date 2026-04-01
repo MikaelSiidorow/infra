@@ -1,7 +1,7 @@
-# Custom mergiraf build with tree-sitter-po grammar for PO/gettext file support.
+# Custom mergiraf build with tree-sitter-gettext grammar for PO/gettext file support.
 #
 # This fetches the upstream mergiraf source at a pinned version, injects the
-# tree-sitter-po grammar as a path dependency, and patches the language
+# tree-sitter-gettext grammar as a path dependency, and patches the language
 # registry to enable structure-aware merging of .po/.pot files.
 #
 # To update mergiraf:
@@ -32,19 +32,19 @@ let
 
   treeSitterPoSrc = fetchFromGitHub {
     owner = "mikaelsiidorow";
-    repo = "tree-sitter-po";
-    rev = "2aee49d0ed6a2d8aa6f240feead3ecffe55bd8fc";
-    hash = "sha256-e0Bw0I6MCGYXZXe2Zpq9YOtf6sXcHIZC2X9/lK5JvZY=";
+    repo = "tree-sitter-gettext";
+    rev = "0d9485a4c91412c2f07fc7957b7a217162a134fd";
+    hash = "sha256-aVzhHgNn8gY2AV1pfGoQkbpmhK+YATms4dYAWqO1zDQ=";
   };
 
-  # Combined source: mergiraf + tree-sitter-po directory (Cargo.toml/Lock unmodified
+  # Combined source: mergiraf + tree-sitter-gettext directory (Cargo.toml/Lock unmodified
   # so that fetchCargoVendor validation passes with the upstream cargoHash)
   src = runCommand "mergiraf-po-src" { } ''
     cp -r ${mergirafSrc} $out
     chmod -R u+w $out
 
-    # Copy tree-sitter-po grammar into the source tree
-    cp -r ${treeSitterPoSrc} $out/tree-sitter-po
+    # Copy tree-sitter-gettext grammar into the source tree
+    cp -r ${treeSitterPoSrc} $out/tree-sitter-gettext
   '';
 
 in
@@ -70,7 +70,7 @@ rustPlatform.buildRustPackage {
                     alternate_names: &["gettext"],
                     extensions: vec!["po", "pot"],
                     file_names: vec![],
-                    language: tree_sitter_po::LANGUAGE.into(),
+                    language: tree_sitter_gettext::LANGUAGE.into(),
                     atomic_nodes: vec!["string"],
                     commutative_parents: vec![
                         CommutativeParent::without_delimiters("source_file", "\n\n"),
@@ -102,16 +102,16 @@ rustPlatform.buildRustPackage {
 
   # Cargo.toml/Lock modifications happen in preBuild (after the cargoSetupPostPatchHook
   # validation) so the vendor Cargo.lock matches the unmodified source Cargo.lock.
-  # Path deps aren't vendored, so cargo resolves tree-sitter-po from the source tree.
+  # Path deps aren't vendored, so cargo resolves tree-sitter-gettext from the source tree.
   preBuild = ''
-        sed -i '/^tree-sitter-starlark/a tree-sitter-po = { path = "./tree-sitter-po" }' Cargo.toml
+        sed -i '/^tree-sitter-starlark/a tree-sitter-gettext = { path = "./tree-sitter-gettext" }' Cargo.toml
 
-        sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-po",' Cargo.lock
+        sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-gettext",' Cargo.lock
 
         cat >> Cargo.lock << 'LOCKEOF'
 
     [[package]]
-    name = "tree-sitter-po"
+    name = "tree-sitter-gettext"
     version = "0.1.0"
     dependencies = [
      "cc",
