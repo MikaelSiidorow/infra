@@ -30,7 +30,6 @@
       "microsoft-auto-update" # needed for teams I guess?
       "microsoft-teams"
       "drata-agent"
-      "claude-code"
       "obs"
     ];
   };
