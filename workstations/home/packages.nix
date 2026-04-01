@@ -69,6 +69,7 @@
       # Databases
       postgresql_18
       redis
+      sqlite
 
       # Cloud
       google-cloud-sdk
@@ -99,5 +100,8 @@
     # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
     ++ lib.optionals (!isDarwin) [
       inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+      # Application launcher
+      # inputs.zap.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 }
