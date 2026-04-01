@@ -96,7 +96,11 @@
     };
 
     # Vitals: system monitor in top bar
+    # NOTE: GNOME 42 has a GJS bug where any extension polling on a timer can
+    # trigger GC crashes (fixed in GJS 1.76 / GNOME 44+). Longer update-time
+    # reduces the chance of hitting it. See pop-os/pop#2893.
     "org/gnome/shell/extensions/vitals" = {
+      update-time = 15;
       hot-sensors = [
         "_memory_usage_"
         "_processor_usage_"
