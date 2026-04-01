@@ -1,5 +1,6 @@
 # Shared launcher configuration for Raycast on macOS and Vicinae on Linux.
 {
+  config,
   hostname ? null,
   isDarwin ? false,
   lib,
@@ -8,6 +9,7 @@
 }:
 let
   isLinux = !isDarwin;
+  isGenericLinux = config.targets.genericLinux.enable or false;
 
   launcherKeybindingPath = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launcher/";
 
@@ -187,7 +189,7 @@ in
     settings = linux.vicinae.settings;
   };
 
-  dconf.settings = lib.mkIf isLinux {
+  dconf.settings = lib.mkIf isGenericLinux {
     "org/gnome/desktop/wm/keybindings" = {
       switch-input-source = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
       switch-input-source-backward = [ "<Shift><Super>space" ];

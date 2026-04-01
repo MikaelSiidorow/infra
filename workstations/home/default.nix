@@ -3,6 +3,7 @@
   lib,
   inputs,
   isDarwin ? false,
+  isNixOS ? false,
   ...
 }:
 {
@@ -30,9 +31,15 @@
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
-    ./gnome.nix
     # Firefox is not approved on the work (darwin) machine.
     ./firefox.nix
+  ]
+  # GNOME config only on Pop!_OS (non-NixOS Linux)
+  ++ lib.optionals (!isDarwin && !isNixOS) [
+    ./gnome.nix
+  ]
+  ++ lib.optionals isNixOS [
+    ./plasma.nix
   ];
 
   home = {

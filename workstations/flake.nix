@@ -32,17 +32,26 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Maintained hardware defaults and quirks for the ThinkPad X1 Carbon Gen 9.
+    nixos-hardware = {
+      url = "github:NixOS/nixos-hardware/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Homebrew integration for macOS. Taps are pinned for reproducibility;
     # homebrew-cask is patched in mkDarwinSystem (see patchedHomebrewCask).
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
+
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
     };
+
     homebrew-cask = {
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+
     homebrew-cmux = {
       url = "github:manaflow-ai/homebrew-cmux";
       flake = false;
@@ -77,6 +86,19 @@
       url = "github:MikaelSiidorow/aeye";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
+    # CachyOS kernel for NixOS (performance-tuned, BORE scheduler)
+    nix-cachyos-kernel = {
+      url = "github:xddxdd/nix-cachyos-kernel/release";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -86,11 +108,14 @@
       nixpkgs-unstable,
       nix-darwin,
       home-manager,
+      nixos-hardware,
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
       homebrew-cmux,
       nur,
+      plasma-manager,
+      nix-cachyos-kernel,
       ...
     }@inputs:
     let
@@ -217,6 +242,60 @@
                 extraSpecialArgs = {
                   inherit inputs pkgs-unstable hostname;
                   isDarwin = true;
+                  isNixOS = false;
+                };
+                users.${username} = import ./home;
+              };
+            }
+          ]
+          ++ extraModules;
+        };
+
+      # Helper function to create a NixOS system
+      mkNixosSystem =
+        {
+          system,
+          hostname,
+          extraModules ? [ ],
+        }:
+        let
+          pkgs-unstable = mkPkgsUnstable system;
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit
+              self
+              inputs
+              pkgs-unstable
+              username
+              ;
+          };
+          modules = [
+            # Custom package overlays
+            {
+              nixpkgs.overlays = [
+                mergirafOverlay
+                nur.overlays.default
+                nix-cachyos-kernel.overlays.pinned
+              ];
+            }
+
+            # Host-specific configuration
+            ./hosts/${hostname}
+
+            # Home-manager integration
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                sharedModules = [ plasma-manager.homeModules.plasma-manager ];
+                extraSpecialArgs = {
+                  inherit inputs pkgs-unstable hostname;
+                  isDarwin = false;
+                  isNixOS = true;
                 };
                 users.${username} = import ./home;
               };
@@ -250,6 +329,7 @@
               hostname
               ;
             isDarwin = false;
+            isNixOS = false;
           };
           modules = [
             ./hosts/${hostname}
@@ -323,6 +403,69 @@
           };
         }) supportedSystems
       );
+      # NixOS configurations
+      nixosConfigurations = {
+        "nixos-laptop" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+          extraModules = [ nixos-hardware.nixosModules.lenovo-thinkpad-x1-9th-gen ];
+        };
+
+        # VM variant for testing — run: nix build .#nixosConfigurations.nixos-laptop-vm.config.system.build.vm
+        # Then: ./result/bin/run-nixos-laptop-vm
+        "nixos-laptop-vm" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+          extraModules = [
+            (
+              {
+                lib,
+                modulesPath,
+                ...
+              }:
+              {
+                imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
+
+                # Skip real hardware config (LUKS, UUIDs) — VM handles its own
+                disabledModules = [ ./hosts/nixos-laptop/hardware-configuration.nix ];
+
+                # VM settings
+                virtualisation = {
+                  memorySize = 4096;
+                  cores = 4;
+                  diskSize = 8192;
+                  resolution = {
+                    x = 1920;
+                    y = 1080;
+                  };
+                  qemu.options = [
+                    "-display gtk"
+                  ];
+                };
+
+                # Placeholder filesystems for evaluation (overridden by VM module)
+                fileSystems."/" = lib.mkForce {
+                  device = "/dev/disk/by-label/nixos";
+                  fsType = "ext4";
+                };
+
+                # ponytail: the VM previews Plasma, not alternate physical kernels.
+                specialisation = lib.mkForce { };
+
+                # Set a password for VM login (password: "test")
+                users.users.${username}.initialHashedPassword =
+                  "$y$j9T$63FtiwzFlRRMEGBFJ/QNd.$pXlcmADD4dqHv.3/k.78sBE9oBKFp75p9HPmRfoRcT.";
+
+                # Auto-login to Plasma in the disposable VM.
+                services.displayManager.autoLogin = {
+                  enable = true;
+                  user = username;
+                };
+              }
+            )
+          ];
+        };
+      };
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {

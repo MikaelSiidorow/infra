@@ -2,15 +2,16 @@
 
 [![CI](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml/badge.svg)](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml)
 
-Multi-platform Nix configuration supporting macOS (nix-darwin) and Linux (home-manager standalone).
+Multi-platform Nix configuration supporting macOS, NixOS, and standalone Home Manager.
 
 Configured hosts:
 
-| Attr                    | Platform       | Notes                   |
-| ----------------------- | -------------- | ----------------------- |
-| `MacBook-Air`           | aarch64-darwin | nix-darwin              |
-| `MacBook-Pro`           | aarch64-darwin | nix-darwin              |
-| `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
+| Attr                    | Platform       | Notes                      |
+| ----------------------- | -------------- | -------------------------- |
+| `MacBook-Air`           | aarch64-darwin | nix-darwin                 |
+| `MacBook-Pro`           | aarch64-darwin | nix-darwin                 |
+| `nixos-laptop`          | x86_64-linux   | NixOS on ThinkPad X1 Gen 9 |
+| `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone    |
 
 ## Quick Start
 
@@ -40,6 +41,13 @@ nix run .#darwin-rebuild -- switch --flake .
 ```
 
 If you need a different hostname, add it to `darwinHosts` (top of `flake.nix`) before switching.
+
+### NixOS (ThinkPad X1 Carbon Gen 9)
+
+The `nixos-2` branch is the Plasma installation candidate. Its storage configuration
+preserves this laptop's existing LUKS container, LVM layout, EFI partition, and
+randomly encrypted swap. See [docs/nixos-install.md](docs/nixos-install.md) for the
+destructive migration procedure from Pop!\_OS.
 
 Optional: append `extra-substituters = https://cache.flakehub.com` to `/etc/nix/nix.custom.conf` if you want the FlakeHub cache actually queried (Determinate marks it trusted but doesn't query it). Leave the `access-tokens` line alone.
 

@@ -2,6 +2,8 @@
 {
   pkgs,
   pkgs-unstable,
+  lib,
+  isNixOS ? false,
   ...
 }:
 let
@@ -35,43 +37,45 @@ let
   '';
 in
 {
-  home.packages = with pkgs; [
-    # Communication
-    pkgs-unstable.vesktop
-    # telegram-desktop - using flatpak instead due to graphics driver issues
+  home.packages =
+    (with pkgs; [
+      # Communication
+      pkgs-unstable.vesktop
+      # telegram-desktop - using flatpak instead due to graphics driver issues
 
-    # bitwarden-desktop is temporarily omitted: nixos-26.05 packages it with
-    # Electron 39, which nixpkgs marks as EOL/insecure.
+      # bitwarden-desktop is temporarily omitted: nixos-26.05 packages it with
+      # Electron 39, which nixpkgs marks as EOL/insecure.
 
-    # Gaming
-    steam-system # Pop!_OS Steam with an isolated system-toolchain environment
+      # Game development
+      pkgs-unstable.godot_4
 
-    # Game development
-    pkgs-unstable.godot_4 # `godot4` on PATH for headless / scripting use
-    godot-steam # `godot-steam` launches via Steam for playtime tracking
+      # Productivity
+      obsidian
+      sweethome3d.application
 
-    # Productivity
-    obsidian
-    sweethome3d.application
+      # Cloud
+      azure-cli
+      stripe-cli
 
-    # Cloud
-    azure-cli
-    stripe-cli
+      # Document processing
+      texliveFull
+      inkscape
 
-    # Document processing
-    texliveFull
+      # Screenshot
+      flameshot
 
-    # Screenshot
-    flameshot
-
-    # Terminal
-    ghostty
-  ];
+      # Terminal
+      ghostty
+    ])
+    ++ lib.optionals (!isNixOS) [
+      steam-system
+      godot-steam
+    ];
 
   # Steam creates its own user-level desktop symlink, which takes precedence
   # over entries in the Home Manager profile. Replace it declaratively so
   # desktop launches use the same system-runtime wrapper as terminal launches.
-  xdg.dataFile."applications/steam.desktop" = {
+  xdg.dataFile."applications/steam.desktop" = lib.mkIf (!isNixOS) {
     source = "${steam-desktop}/share/applications/steam.desktop";
     force = true;
   };
