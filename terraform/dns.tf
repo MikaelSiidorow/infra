@@ -262,6 +262,15 @@ resource "cloudflare_dns_record" "miksu_app_marginalia" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "miksu_app_status" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "status.miksu.app"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = true
+  ttl     = 1
+}
+
 resource "cloudflare_dns_record" "miksu_app_marginalia_zero" {
   zone_id = cloudflare_zone.miksu_app.id
   type    = "A"
