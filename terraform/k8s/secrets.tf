@@ -32,10 +32,16 @@ resource "kubernetes_secret_v1" "alertmanager_telegram_token" {
   }
 }
 
+resource "kubernetes_namespace_v1" "gatus" {
+  metadata {
+    name = "gatus"
+  }
+}
+
 resource "kubernetes_secret_v1" "gatus_telegram_token" {
   metadata {
     name      = "gatus-telegram-token"
-    namespace = "gatus"
+    namespace = kubernetes_namespace_v1.gatus.metadata[0].name
   }
 
   data = {
