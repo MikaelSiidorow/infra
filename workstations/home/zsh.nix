@@ -7,6 +7,7 @@
 {
   home.sessionVariables = {
     PNPM_HOME = "$HOME/.local/share/pnpm";
+    CLAUDE_CODE_EFFORT_LEVEL = "max";
   };
 
   home.sessionPath = [
