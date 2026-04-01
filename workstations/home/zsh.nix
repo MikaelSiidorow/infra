@@ -61,11 +61,18 @@
           fi
         '')
       ])
-      # Linux-specific: clear LD_LIBRARY_PATH inherited from nixGL terminal wrapper
-      # (only needed by the terminal emulator itself, not child processes)
+      # Linux-specific: clear env vars inherited from nixGL/wrapGAppsHook terminal wrapper.
+      # These are only needed by the terminal emulator itself (for GPU rendering and GTK),
+      # not by child processes — system apps need the system's own drivers and GIO modules.
       ++ (lib.optionals (!isDarwin) [
         (lib.mkBefore ''
           unset LD_LIBRARY_PATH
+          unset LIBGL_DRIVERS_PATH
+          unset LIBVA_DRIVERS_PATH
+          unset __EGL_VENDOR_LIBRARY_FILENAMES
+          unset GBM_BACKENDS_PATH
+          unset VK_ICD_FILENAMES
+          unset GIO_EXTRA_MODULES
         '')
       ])
       ++ [
