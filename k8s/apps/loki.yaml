@@ -28,6 +28,17 @@ spec:
                   period: 24h
           limits_config:
             retention_period: 168h
+          rulerConfig:
+            alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+            storage:
+              type: local
+              local:
+                directory: /var/loki/rules
+            rule_path: /var/loki/rules-temp
+            ring:
+              kvstore:
+                store: inmemory
+            enable_api: true
           storage:
             type: filesystem
 
@@ -41,6 +52,14 @@ spec:
           persistence:
             storageClass: local-path
             size: 10Gi
+          extraVolumes:
+            - name: alerting-rules
+              configMap:
+                name: loki-alerting-rules
+          extraVolumeMounts:
+            - name: alerting-rules
+              mountPath: /var/loki/rules/fake
+              readOnly: true
 
         read:
           replicas: 0
@@ -59,6 +78,28 @@ spec:
 
         minio:
           enabled: false
+
+        extraObjects:
+          - apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: loki-alerting-rules
+            data:
+              rules.yaml: |
+                groups:
+                  - name: application-errors
+                    rules:
+                      - alert: ApplicationError
+                        expr: |
+                          sum by (namespace, app, level) (
+                            count_over_time({namespace=~"refinery|marginalia"} | json | level=~"error|fatal" [1m])
+                          ) > 0
+                        for: 0m
+                        labels:
+                          severity: critical
+                        annotations:
+                          summary: "{{ $labels.level | title }} in {{ $labels.namespace }}/{{ $labels.app }}"
+                          description: "{{ $labels.namespace }}/{{ $labels.app }} logged {{ $value }} {{ $labels.level }}-level message(s) in the last minute."
   destination:
     server: https://kubernetes.default.svc
     namespace: loki
