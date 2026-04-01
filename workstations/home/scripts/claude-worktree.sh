@@ -37,7 +37,7 @@ Commands:
 Create Options:
   --from <branch>     Base branch to create worktree from (default: origin/main)
                       Only used when creating a NEW branch
-  --no-open          Don't open a new Ghostty window after creation
+  --no-open          Don't open a new terminal after creation
 
 Branch Behavior:
   The script intelligently handles existing branches:
@@ -46,10 +46,10 @@ Branch Behavior:
   - If neither exists: creates new branch from --from option (default: origin/main)
 
 Examples:
-  cwt my-feature                    # Auto-detect or create, open in Ghostty
+  cwt my-feature                    # Auto-detect or create, open in cmux/Ghostty
   cwt my-feature --from origin/dev  # Create NEW branch from origin/dev
   cwt existing-branch               # Checkout existing branch in worktree
-  cwt my-feature --no-open          # Create/checkout without opening Ghostty
+  cwt my-feature --no-open          # Create/checkout without opening terminal
   cwt list                          # List all worktrees
   cwt close my-feature              # Remove my-feature worktree
 EOF
@@ -137,10 +137,19 @@ cmd_close() {
 		exit 1
 	fi
 
+	# Safety: resolve real path and ensure it's inside .claude/worktrees/
+	local real_path expected_parent
+	real_path=$(cd "$worktree_dir" && pwd -P)
+	expected_parent=$(cd "$repo_root/.claude/worktrees" && pwd -P)
+	if [[ "$real_path" != "$expected_parent"/* ]]; then
+		log_error "Resolved path '$real_path' is outside '$expected_parent' — aborting"
+		exit 1
+	fi
+
 	log_info "Removing worktree: $worktree_name"
 
 	# Check for uncommitted changes
-	if git -C "$worktree_dir" diff-index --quiet HEAD 2>/dev/null || ! git -C "$worktree_dir" diff-files --quiet 2>/dev/null; then
+	if ! git -C "$worktree_dir" diff-index --quiet HEAD 2>/dev/null || ! git -C "$worktree_dir" diff-files --quiet 2>/dev/null; then
 		log_warn "Worktree has uncommitted changes that will be discarded"
 		read -p "Continue with removal? [y/N] " -n 1 -r
 		echo
@@ -150,6 +159,14 @@ cmd_close() {
 		fi
 	fi
 
+	# Remove bulky untracked directories first so git worktree remove
+	# doesn't have to scan them
+	for dir in node_modules .next dist build target; do
+		if [[ -d "$worktree_dir/$dir" ]]; then
+			rm -rf "$worktree_dir/$dir"
+		fi
+	done
+
 	# Remove the worktree (--force to handle uncommitted changes)
 	if git worktree remove "$worktree_dir" --force 2>/dev/null; then
 		log_info "Worktree removed successfully"
@@ -157,6 +174,7 @@ cmd_close() {
 		# If git worktree remove fails, try manual cleanup
 		log_warn "Git worktree remove failed, cleaning up manually..."
 		rm -rf "$worktree_dir"
+		git worktree prune
 		log_info "Directory removed"
 	fi
 
@@ -245,9 +263,17 @@ install_dependencies() {
 	fi
 }
 
-# Open Ghostty window
-open_ghostty() {
+# Open terminal (cmux workspace if running, otherwise Ghostty window)
+open_terminal() {
 	local worktree_dir="$1"
+
+	# Prefer cmux if we're inside a cmux terminal (CMUX_WORKSPACE_ID is set by cmux)
+	if [[ -n "${CMUX_WORKSPACE_ID:-}" ]] && command -v cmux &>/dev/null; then
+		log_info "Opening new cmux workspace..."
+		cmux new-workspace --cwd "$worktree_dir"
+		echo -e "${GREEN}New cmux workspace opened${NC}"
+		return
+	fi
 
 	if command -v ghostty &>/dev/null; then
 		log_info "Opening new Ghostty window..."
@@ -260,7 +286,7 @@ open_ghostty() {
 		fi
 		echo -e "${GREEN}New Ghostty window opened${NC}"
 	else
-		log_warn "Ghostty not found, skipping window open"
+		log_warn "No terminal (cmux/Ghostty) found, skipping window open"
 		echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
 	fi
 }
@@ -269,7 +295,7 @@ open_ghostty() {
 cmd_create() {
 	local worktree_name=""
 	local base_branch="origin/main"
-	local open_ghostty=true
+	local open_terminal=true
 
 	# Parse arguments
 	while [[ $# -gt 0 ]]; do
@@ -279,7 +305,7 @@ cmd_create() {
 			shift 2
 			;;
 		--no-open)
-			open_ghostty=false
+			open_terminal=false
 			shift
 			;;
 		-*)
@@ -308,10 +334,15 @@ cmd_create() {
 	repo_root=$(get_repo_root)
 	local worktree_dir="$repo_root/.claude/worktrees/$worktree_name"
 
-	# Check if worktree already exists
+	# If worktree already exists, just open it
 	if [[ -d "$worktree_dir" ]]; then
-		log_error "Worktree directory already exists: $worktree_dir"
-		exit 1
+		log_info "Worktree already exists: $worktree_dir"
+		if [[ "$open_terminal" == true ]]; then
+			open_terminal "$worktree_dir"
+		else
+			echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
+		fi
+		return 0
 	fi
 
 	# Create .claude/worktrees directory if it doesn't exist
@@ -421,8 +452,8 @@ cmd_create() {
 	fi
 
 	# Open Ghostty if requested
-	if [[ "$open_ghostty" == true ]]; then
-		open_ghostty "$worktree_dir"
+	if [[ "$open_terminal" == true ]]; then
+		open_terminal "$worktree_dir"
 	else
 		echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
 	fi
