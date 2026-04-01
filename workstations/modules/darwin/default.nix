@@ -33,4 +33,14 @@
   nix.enable = false;
 
   security.pam.services.sudo_local.touchIdAuth = true;
+
+  # Cap per-process file descriptors to prevent login(1) from hanging
+  # when iterating FDs (e.g. cmux/Ghostty terminal spawning)
+  launchd.daemons.sysctl-maxfilesperproc = {
+    command = "/usr/sbin/sysctl kern.maxfilesperproc=65536";
+    serviceConfig = {
+      RunAtLoad = true;
+      LaunchOnlyOnce = true;
+    };
+  };
 }

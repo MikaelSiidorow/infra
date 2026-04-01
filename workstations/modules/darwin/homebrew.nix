@@ -22,6 +22,7 @@
       "firefox"
       "orbstack"
       "ghostty"
+      "cmux"
       "google-chrome"
       "1password"
       "amethyst"

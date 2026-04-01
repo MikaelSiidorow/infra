@@ -32,8 +32,12 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+    homebrew-cmux = {
+      url = "github:manaflow-ai/homebrew-cmux";
+      flake = false;
+    };
 
-    # Claude Code with automatic updates (for NixOS/Linux)
+    # Claude Code with automatic updates
     claude-code-nix = {
       url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -55,6 +59,7 @@
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
+      homebrew-cmux,
       claude-code-nix,
       opencode-nix,
       ...
@@ -100,6 +105,7 @@
                 taps = {
                   "homebrew/homebrew-core" = homebrew-core;
                   "homebrew/homebrew-cask" = homebrew-cask;
+                  "manaflow-ai/homebrew-cmux" = homebrew-cmux;
                 };
                 mutableTaps = false;
                 autoMigrate = true;

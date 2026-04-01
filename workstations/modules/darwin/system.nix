@@ -33,6 +33,9 @@
           app = "/Applications/Ghostty.app";
         }
         {
+          app = "/Applications/cmux.app";
+        }
+        {
           app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
         }
         {
