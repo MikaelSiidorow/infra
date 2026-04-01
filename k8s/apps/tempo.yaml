@@ -23,11 +23,11 @@ spec:
               wal:
                 path: /var/tempo/wal
           retention: 168h
-          resources:
-            requests:
-              memory: 256Mi
-            limits:
-              memory: 512Mi
+        resources:
+          requests:
+            memory: 256Mi
+          limits:
+            memory: 512Mi
         persistence:
           enabled: true
           storageClassName: local-path
