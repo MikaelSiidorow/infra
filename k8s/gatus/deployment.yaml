@@ -48,6 +48,11 @@ spec:
           env:
             - name: GATUS_CONFIG_PATH
               value: /config/config.yaml
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gatus-telegram-token
+                  key: bot-token
       volumes:
         - name: config
           configMap:

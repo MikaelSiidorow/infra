@@ -13,6 +13,11 @@ data:
       title: miksu.app status
       header: miksu.app status
 
+    alerting:
+      telegram:
+        token: ${TELEGRAM_BOT_TOKEN}
+        id: "-1003049249814"
+
     endpoints:
       - name: Refinery
         group: Apps
@@ -34,6 +39,11 @@ data:
         conditions:
           - "[CONNECTED] == true"
           - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
 
       - name: Marginalia
         group: Apps
@@ -55,6 +65,11 @@ data:
         conditions:
           - "[CONNECTED] == true"
           - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
 
       - name: Headscale
         group: Infrastructure
@@ -63,3 +78,8 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[RESPONSE_TIME] < 5000"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2

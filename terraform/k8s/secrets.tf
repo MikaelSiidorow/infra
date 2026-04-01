@@ -32,6 +32,17 @@ resource "kubernetes_secret_v1" "alertmanager_telegram_token" {
   }
 }
 
+resource "kubernetes_secret_v1" "gatus_telegram_token" {
+  metadata {
+    name      = "gatus-telegram-token"
+    namespace = "gatus"
+  }
+
+  data = {
+    bot-token = var.telegram_bot_token
+  }
+}
+
 resource "kubernetes_secret_v1" "refinery_secrets" {
   metadata {
     name      = "refinery-secrets"
