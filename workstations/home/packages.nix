@@ -32,6 +32,37 @@
     enableZshIntegration = true;
   };
 
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      format = lib.concatStrings [
+        "$directory"
+        "$git_branch"
+        "$git_status"
+        "$nix_shell"
+        "$cmd_duration"
+        "$line_break"
+        "$character"
+      ];
+      directory = {
+        style = "bold blue";
+        truncation_length = 3;
+        truncate_to_repo = true;
+      };
+      git_branch = {
+        style = "bold purple";
+      };
+      character = {
+        success_symbol = "[>](bold green)";
+        error_symbol = "[>](bold red)";
+      };
+      cmd_duration = {
+        min_time = 2000;
+      };
+    };
+  };
+
   # Global treefmt config — used as fallback when no repo-local treefmt.toml exists
   home.file.".config/treefmt/treefmt.toml".source = ./treefmt.toml;
 
