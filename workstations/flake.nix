@@ -98,7 +98,12 @@
           };
           modules = [
             # Custom package overlays
-            { nixpkgs.overlays = [ mergirafOverlay nur.overlays.default ]; }
+            {
+              nixpkgs.overlays = [
+                mergirafOverlay
+                nur.overlays.default
+              ];
+            }
 
             # Host-specific configuration
             ./hosts/${hostname}
@@ -155,7 +160,12 @@
           };
           modules = [
             # Custom package overlays
-            { nixpkgs.overlays = [ mergirafOverlay nur.overlays.default ]; }
+            {
+              nixpkgs.overlays = [
+                mergirafOverlay
+                nur.overlays.default
+              ];
+            }
 
             # Host-specific configuration
             ./hosts/${hostname}

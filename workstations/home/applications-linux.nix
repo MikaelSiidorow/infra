@@ -1,5 +1,14 @@
 # Linux-specific desktop applications
 { pkgs, config, ... }:
+let
+  # Launches the Steam-installed Godot so playtime is tracked.
+  # Steam appid 404790 = Godot Engine. Strips Nix env for apt Steam glibc compat.
+  godot-steam = pkgs.writeShellScriptBin "godot-steam" ''
+    exec env PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games" \
+      LD_LIBRARY_PATH="" \
+      /usr/games/steam -applaunch 404790 "$@"
+  '';
+in
 {
   home.packages = with pkgs; [
     # Communication
@@ -8,6 +17,10 @@
 
     # Gaming
     # steam - using apt version; wrapper below strips Nix PATH to avoid glibc conflicts
+
+    # Game development
+    (config.lib.nixGL.wrap godot_4) # `godot4` on PATH for headless / scripting use
+    godot-steam # `godot-steam` launches via Steam for playtime tracking
 
     # Productivity
     obsidian
