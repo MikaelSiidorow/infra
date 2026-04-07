@@ -12,6 +12,7 @@
 
   home.sessionPath = [
     "$HOME/.local/share/pnpm"
+    "$HOME/.bun/bin"
     "$HOME/.local/bin"
   ];
 
