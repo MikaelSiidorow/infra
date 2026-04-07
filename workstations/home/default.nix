@@ -11,6 +11,7 @@
     ./zsh.nix
     ./scripts.nix
     ./applications.nix
+    ./firefox.nix
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix

@@ -37,6 +37,12 @@
       flake = false;
     };
 
+    # Nix User Repository (Firefox extensions, etc.)
+    nur = {
+      url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Claude Code with automatic updates
     claude-code-nix = {
       url = "github:sadjow/claude-code-nix";
@@ -62,6 +68,7 @@
       homebrew-cmux,
       claude-code-nix,
       opencode-nix,
+      nur,
       ...
     }@inputs:
     let
@@ -91,7 +98,7 @@
           };
           modules = [
             # Custom package overlays
-            { nixpkgs.overlays = [ mergirafOverlay ]; }
+            { nixpkgs.overlays = [ mergirafOverlay nur.overlays.default ]; }
 
             # Host-specific configuration
             ./hosts/${hostname}
@@ -148,7 +155,7 @@
           };
           modules = [
             # Custom package overlays
-            { nixpkgs.overlays = [ mergirafOverlay ]; }
+            { nixpkgs.overlays = [ mergirafOverlay nur.overlays.default ]; }
 
             # Host-specific configuration
             ./hosts/${hostname}
@@ -179,7 +186,10 @@
           extraModules ? [ ],
         }:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ nur.overlays.default ];
+          };
           extraSpecialArgs = {
             inherit
               self
