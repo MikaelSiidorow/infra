@@ -39,7 +39,7 @@
       cres = "claude --resume";
       crew = "claude /review";
       cwt = "claude-worktree";
-      codex = "codex --sandbox danger-full-access --ask-for-approval untrusted --enable web_search_request -c model_reasoning_effort=\"xhigh\"";
+      codex = "codex --sandbox danger-full-access --ask-for-approval untrusted -c model_reasoning_effort=\"xhigh\"";
 
       # Git (from oh-my-zsh git plugin)
       g = "git";
