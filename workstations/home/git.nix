@@ -8,6 +8,7 @@
       ".DS_Store"
       "CLAUDE.md"
       ".claude"
+      ".codex"
       ".github/copilot-instructions.md"
       "todo.md"
     ];
