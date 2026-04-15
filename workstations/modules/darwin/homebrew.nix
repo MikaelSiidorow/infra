@@ -16,6 +16,7 @@
 
     brews = [
       "cloudflared"
+      "render"
     ];
 
     casks = [
