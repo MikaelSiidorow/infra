@@ -1,5 +1,10 @@
 # macOS system defaults
-{ pkgs, username, ... }:
+{
+  pkgs,
+  username,
+  inputs,
+  ...
+}:
 {
   system.defaults = {
     NSGlobalDomain.AppleICUForce24HourTime = true;
@@ -37,6 +42,9 @@
         }
         {
           app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
+        }
+        {
+          app = "${inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default}/Applications/T3 Code (Alpha).app";
         }
         {
           app = "/Applications/Firefox.app";

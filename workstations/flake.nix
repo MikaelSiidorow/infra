@@ -54,6 +54,12 @@
       url = "github:dan-online/opencode-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # t3code desktop app (personal fork)
+    t3code = {
+      url = "github:MikaelSiidorow/t3code?ref=nix-desktop-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
