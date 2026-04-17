@@ -42,9 +42,27 @@
           app = "/Applications/Firefox.app";
         }
       ];
-      persistent-others = [
-        "/Users/${username}/Downloads"
-      ];
     };
+    # Use CustomUserPreferences for persistent-others so we can set view
+    # options. The typed `dock.persistent-others` only accepts paths.
+    # arrangement: 1=name 2=date-added 3=date-modified 4=date-created 5=kind
+    # displayas:   0=stack 1=folder
+    # showas:      0=auto 1=fan 2=grid 3=list
+    CustomUserPreferences."com.apple.dock".persistent-others = [
+      {
+        tile-type = "directory-tile";
+        tile-data = {
+          file-label = "Downloads";
+          file-type = 2;
+          arrangement = 2;
+          displayas = 0;
+          showas = 1;
+          file-data = {
+            _CFURLString = "file:///Users/${username}/Downloads/";
+            _CFURLStringType = 15;
+          };
+        };
+      }
+    ];
   };
 }
