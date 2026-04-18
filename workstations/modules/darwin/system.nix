@@ -44,7 +44,9 @@
           app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
         }
         {
-          app = "${inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default}/Applications/T3 Code (Alpha).app";
+          app = "${
+            inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default
+          }/Applications/T3 Code (Alpha).app";
         }
         {
           app = "/Applications/Firefox.app";

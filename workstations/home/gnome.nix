@@ -82,6 +82,7 @@
         "org.gnome.Nautilus.desktop"
         "io.elementary.appcenter.desktop"
         "com.google.Chrome.desktop"
+        "firefox.desktop"
         "com.mitchellh.ghostty.desktop"
         "code.desktop"
         "t3code.desktop"

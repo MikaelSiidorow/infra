@@ -18,6 +18,7 @@
         ublock-origin
         sponsorblock
         darkreader
+        bitwarden
       ];
 
       settings = {
@@ -29,6 +30,13 @@
         "browser.sessionstore.interval" = 60000; # save session every 60s instead of 15s
         "browser.cache.disk.capacity" = 512000; # 500MB disk cache
         "image.mem.surfacecache.max_size_kb" = 256000; # limit image cache
+
+        # Passwords: disabled — using Bitwarden extension
+        "signon.rememberSignons" = false;
+        "signon.generation.enabled" = false;
+        "signon.autofillForms" = false;
+        "signon.management.page.breach-alerts.enabled" = false;
+        "signon.firefoxRelay.feature" = "disabled";
 
         # Privacy
         "browser.contentblocking.category" = "strict";
