@@ -65,6 +65,8 @@ terraform  →  nixos  →  k8s-terraform
 
 K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for these.
 
+Refinery application releases do not require per-build image tag commits in this repo. The steady-state `refinery-app` and `refinery-zero` Deployments track the promoted mutable `:production` tag, and the app repo deploy pipeline creates a one-shot `refinery-migrate-<sha>` Job with `ghcr.io/mikaelsiidorow/refinery/migrate:production`.
+
 ### Initial setup (new server)
 
 1. Provision server with Terraform:

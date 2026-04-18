@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: zero
-          image: ghcr.io/mikaelsiidorow/refinery/zero:latest
+          image: ghcr.io/mikaelsiidorow/refinery/zero:production
           imagePullPolicy: Always
           ports:
             - containerPort: 4848
