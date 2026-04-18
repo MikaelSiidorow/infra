@@ -171,6 +171,80 @@ resource "cloudflare_dns_record" "m12w_me_spf" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "m12w_me_simplelogin_verification" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "m.m12w.me"
+  content = "\"sl-verification=dchtxgjtjvwawbdbogwuittnywteru\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_mx_1" {
+  zone_id  = cloudflare_zone.m12w_me.id
+  type     = "MX"
+  name     = "m.m12w.me"
+  content  = "mx1.simplelogin.co"
+  proxied  = false
+  ttl      = 1
+  priority = 10
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_mx_2" {
+  zone_id  = cloudflare_zone.m12w_me.id
+  type     = "MX"
+  name     = "m.m12w.me"
+  content  = "mx2.simplelogin.co"
+  proxied  = false
+  ttl      = 1
+  priority = 20
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_spf" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "m.m12w.me"
+  content = "\"v=spf1 include:simplelogin.co ~all\""
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_dkim" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "CNAME"
+  name    = "dkim._domainkey.m.m12w.me"
+  content = "dkim._domainkey.simplelogin.co"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_dkim02" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "CNAME"
+  name    = "dkim02._domainkey.m.m12w.me"
+  content = "dkim02._domainkey.simplelogin.co"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_dkim03" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "CNAME"
+  name    = "dkim03._domainkey.m.m12w.me"
+  content = "dkim03._domainkey.simplelogin.co"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "m12w_me_simplelogin_dmarc" {
+  zone_id = cloudflare_zone.m12w_me.id
+  type    = "TXT"
+  name    = "_dmarc.m.m12w.me"
+  content = "\"v=DMARC1; p=quarantine; pct=100; adkim=s; aspf=s\""
+  proxied = false
+  ttl     = 1
+}
+
 # =============================================================================
 # miksu.link records
 # =============================================================================
