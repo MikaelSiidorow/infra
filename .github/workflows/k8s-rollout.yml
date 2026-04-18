@@ -8,22 +8,31 @@ on:
       deployments:
         required: true
         type: string # comma-separated
+      headscale-login-server:
+        required: false
+        type: string
+        default: https://hs.miksu.app
     secrets:
-      HEADSCALE_AUTH_KEY:
+      HEADSCALE_PREAUTH_KEY:
         required: true
       K8S_DEPLOY_KUBECONFIG:
         required: true
 jobs:
   rollout:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      # Headscale's documented automation path is still preauth keys.
+      # Pin both the action revision and the client artifact for reproducibility.
       - name: Connect to Headscale VPN
-        uses: tailscale/github-action@v4
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
         with:
-          authkey: ${{ secrets.HEADSCALE_AUTH_KEY }}
-          args: "--login-server=https://hs.miksu.app"
+          authkey: ${{ secrets.HEADSCALE_PREAUTH_KEY }}
+          version: 1.96.4
+          sha256sum: a1cba18826b1f91cb25ef7f5b8259b5258339b42db7867af9269e21829ea78cc
+          use-cache: "false"
+          args: --login-server=${{ inputs.headscale-login-server }} --accept-routes
       - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube

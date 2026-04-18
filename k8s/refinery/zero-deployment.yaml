@@ -60,9 +60,9 @@ spec:
                   key: DATABASE_URL
             - name: ZERO_REPLICA_FILE
               value: /data/sync-replica.db
-            - name: ZERO_GET_QUERIES_URL
+            - name: ZERO_QUERY_URL
               value: http://refinery-app/api/zero/get-queries
-            - name: ZERO_GET_QUERIES_FORWARD_COOKIES
+            - name: ZERO_QUERY_FORWARD_COOKIES
               value: "true"
             - name: ZERO_MUTATE_URL
               value: http://refinery-app/api/zero/mutate
