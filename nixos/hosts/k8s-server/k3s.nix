@@ -140,6 +140,9 @@ let
         resources: ["deployments"]
         verbs: ["get", "list", "watch", "patch"]
         resourceNames: ["refinery-app", "refinery-zero"]
+      - apiGroups: ["batch"]
+        resources: ["jobs"]
+        verbs: ["create", "get", "list", "watch", "patch", "delete"]
     ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
