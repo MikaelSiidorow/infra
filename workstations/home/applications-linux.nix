@@ -15,6 +15,10 @@ in
     vesktop
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
+    # Password manager
+    bitwarden-desktop
+    rbw
+
     # Gaming
     # steam - using apt version; wrapper below strips Nix PATH to avoid glibc conflicts
 
