@@ -12,6 +12,7 @@
     ./scripts.nix
     ./applications.nix
     ./firefox.nix
+    ./package-managers
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
