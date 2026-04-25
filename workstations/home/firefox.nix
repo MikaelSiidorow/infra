@@ -19,6 +19,7 @@
         sponsorblock
         darkreader
         bitwarden
+        refined-github
       ];
 
       settings = {
