@@ -10,6 +10,7 @@
   programs.firefox = {
     enable = true;
     package = if isDarwin then pkgs.firefox-bin else config.lib.nixGL.wrap pkgs.firefox;
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
 
     profiles.default = {
       isDefault = true;
