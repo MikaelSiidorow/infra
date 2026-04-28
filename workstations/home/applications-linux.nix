@@ -60,9 +60,4 @@ in
       "x-scheme-handler/steamlink"
     ];
   };
-
-  programs.zed-editor = {
-    enable = true;
-    package = config.lib.nixGL.wrap pkgs.zed-editor;
-  };
 }

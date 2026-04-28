@@ -21,6 +21,7 @@
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
     ./gnome.nix
+    ./zed.nix
   ];
 
   home = {
