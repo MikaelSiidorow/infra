@@ -7,6 +7,7 @@
 {
   imports = [
     ./packages.nix
+    ./direnv.nix
     ./git.nix
     ./zsh.nix
     ./scripts.nix
