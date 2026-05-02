@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # Stable nixpkgs, used to pin a few packages where unstable has regressions
+    # (e.g. flameshot 14.0-rc1 routes through xdg-desktop-portal-gnome on X11
+    # and shows GNOME's screenshot UI instead of its own region picker).
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+
     # Darwin (macOS) support
     nix-darwin = {
       url = "github:LnL7/nix-darwin/master";
@@ -66,6 +71,7 @@
     {
       self,
       nixpkgs,
+      nixpkgs-stable,
       nix-darwin,
       home-manager,
       nix-homebrew,
@@ -84,6 +90,13 @@
       # Custom mergiraf with tree-sitter-po grammar for PO/gettext merge support
       mergirafOverlay = final: prev: {
         mergiraf = final.callPackage ./pkgs/mergiraf-custom { };
+      };
+
+      # Pin flameshot to the version in nixpkgs-stable (12.x). Unstable's
+      # 14.0-rc1 invokes xdg-desktop-portal on GNOME and breaks the
+      # region-capture-by-default workflow on Pop!_OS X11.
+      flameshotOverlay = final: _prev: {
+        flameshot = (import nixpkgs-stable { inherit (final) system; }).flameshot;
       };
 
       # Helper function to create a darwin system
@@ -204,7 +217,10 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ nur.overlays.default ];
+            overlays = [
+              flameshotOverlay
+              nur.overlays.default
+            ];
           };
           extraSpecialArgs = {
             inherit
