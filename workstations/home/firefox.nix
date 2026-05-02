@@ -21,6 +21,7 @@
         darkreader
         bitwarden
         refined-github
+        zotero-connector
       ];
 
       settings = {
