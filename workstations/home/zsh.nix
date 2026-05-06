@@ -32,7 +32,6 @@
       tf = "terraform";
       bb = "bun --bun";
       treefmt = "treefmt --config-file ~/.config/treefmt/treefmt.toml --allow-missing-formatter";
-      rm = "rm -i";
       tp = "trash-put";
       c = "claude";
       cco = "claude --continue";
