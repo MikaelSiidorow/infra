@@ -99,6 +99,13 @@
         flameshot = (import nixpkgs-stable { inherit (final) system; }).flameshot;
       };
 
+      # Skip direnv's checkPhase on darwin. Its test suite forks subshells
+      # that hang inside nix's macOS sandbox, and aarch64-darwin binary
+      # caches often lag behind, forcing source builds that deadlock.
+      direnvOverlay = final: prev: {
+        direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
+      };
+
       # Helper function to create a darwin system
       mkDarwinSystem =
         {
@@ -120,6 +127,7 @@
             {
               nixpkgs.overlays = [
                 mergirafOverlay
+                direnvOverlay
                 nur.overlays.default
               ];
             }
