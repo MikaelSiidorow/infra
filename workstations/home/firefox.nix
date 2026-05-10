@@ -12,6 +12,18 @@
     package = if isDarwin then pkgs.firefox-bin else config.lib.nixGL.wrap pkgs.firefox;
     configPath = "${config.xdg.configHome}/mozilla/firefox";
 
+    policies = {
+      # Keep strict tracking protection while allowing Aalto/Microsoft login flows.
+      EnableTrackingProtection = {
+        Exceptions = [
+          "https://outlook.cloud.microsoft"
+          "https://outlook.office.com"
+          "https://login.microsoftonline.com"
+          "https://idp.aalto.fi"
+        ];
+      };
+    };
+
     profiles.default = {
       isDefault = true;
 
@@ -45,7 +57,10 @@
         "browser.contentblocking.category" = "strict";
         "privacy.trackingprotection.enabled" = true;
         "privacy.trackingprotection.socialtracking.enabled" = true;
+        "privacy.trackingprotection.allow_list.baseline.enabled" = true;
+        "privacy.trackingprotection.allow_list.convenience.enabled" = false;
         "privacy.donottrackheader.enabled" = true;
+        "privacy.globalprivacycontrol.enabled" = true;
         "dom.security.https_only_mode" = true;
         "browser.urlbar.suggest.quicksuggest.sponsored" = false;
         "browser.newtabpage.activity-stream.showSponsored" = false;
