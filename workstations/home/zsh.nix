@@ -414,6 +414,16 @@
           eval "$(fnm env --use-on-cd --shell zsh)"
         ''
       ]
+      # Darwin lacks systemd-user cgroups, so cmux pty close leaves orphaned
+      # dev-server children. Trap EXIT to SIGTERM our pgroup. Daemons
+      # (docker -d, brew services) live in their own pgroup, safe.
+      ++ (lib.optionals isDarwin [
+        ''
+          if [[ -o interactive && $SHLVL -eq 1 ]]; then
+            trap 'kill -TERM -- -$$ 2>/dev/null' EXIT
+          fi
+        ''
+      ])
     );
   };
 }
