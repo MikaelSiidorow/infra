@@ -13,7 +13,10 @@
     # macOS Firefox always reads from ~/Library/Application Support/Firefox, so use HM's
     # darwin default there. On linux, opt into the XDG-style path.
     configPath =
-      if isDarwin then "Library/Application Support/Firefox" else "${config.xdg.configHome}/mozilla/firefox";
+      if isDarwin then
+        "Library/Application Support/Firefox"
+      else
+        "${config.xdg.configHome}/mozilla/firefox";
 
     policies = {
       # Keep strict tracking protection while allowing Aalto/Microsoft login flows.
