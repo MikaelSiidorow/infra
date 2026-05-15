@@ -10,7 +10,10 @@
   programs.firefox = {
     enable = true;
     package = if isDarwin then pkgs.firefox-bin else config.lib.nixGL.wrap pkgs.firefox;
-    configPath = "${config.xdg.configHome}/mozilla/firefox";
+    # macOS Firefox always reads from ~/Library/Application Support/Firefox, so use HM's
+    # darwin default there. On linux, opt into the XDG-style path.
+    configPath =
+      if isDarwin then "Library/Application Support/Firefox" else "${config.xdg.configHome}/mozilla/firefox";
 
     policies = {
       # Keep strict tracking protection while allowing Aalto/Microsoft login flows.
@@ -27,14 +30,21 @@
     profiles.default = {
       isDefault = true;
 
-      extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-        ublock-origin
-        sponsorblock
-        darkreader
-        bitwarden
-        refined-github
-        zotero-connector
-      ];
+      extensions.packages =
+        with pkgs.nur.repos.rycee.firefox-addons;
+        [
+          ublock-origin
+          sponsorblock
+          darkreader
+          refined-github
+        ]
+        ++ lib.optionals isDarwin [
+          onepassword-password-manager
+        ]
+        ++ lib.optionals (!isDarwin) [
+          bitwarden
+          zotero-connector
+        ];
 
       settings = {
         # Auto-enable extensions managed by nix
@@ -46,7 +56,7 @@
         "browser.cache.disk.capacity" = 512000; # 500MB disk cache
         "image.mem.surfacecache.max_size_kb" = 256000; # limit image cache
 
-        # Passwords: disabled — using Bitwarden extension
+        # Passwords: disabled, using external password manager extension (1Password on darwin, Bitwarden on linux)
         "signon.rememberSignons" = false;
         "signon.generation.enabled" = false;
         "signon.autofillForms" = false;
