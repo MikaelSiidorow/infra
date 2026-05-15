@@ -49,7 +49,7 @@
           }/Applications/T3 Code (Alpha).app";
         }
         {
-          app = "/Applications/Firefox.app";
+          app = "/Users/${username}/Applications/Home Manager Apps/Firefox.app";
         }
       ];
     };
