@@ -1,30 +1,23 @@
 # Multi-host Nix configuration Makefile
 # Supports nix-darwin (macOS) and home-manager (Linux standalone)
 
-# Detect current host
-HOSTNAME := $(shell hostname)
+# Detect platform
+HOSTNAME := $(shell hostname -s)
 UNAME := $(shell uname -s)
 
-# Map hostnames to flake configurations
-ifeq ($(HOSTNAME),MacBook-Air)
-	FLAKE_TARGET := MacBook-Air
+# darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
+# when no flake attr is specified, so we pass `.` and let it pick.
+# home-manager has no equivalent default, so we pass the full target.
+ifeq ($(UNAME),Darwin)
 	BUILD_CMD := darwin-rebuild
 	NEEDS_SUDO := sudo
-else ifeq ($(HOSTNAME),pop-os)
-	FLAKE_TARGET := mikaelsiidorow@pop-os
+	FLAKE_TARGET := .
+	DISPLAY_TARGET := darwinConfigurations.$(HOSTNAME)
+else
 	BUILD_CMD := home-manager
 	NEEDS_SUDO :=
-else
-	# Fallback: try to detect by OS
-	ifeq ($(UNAME),Darwin)
-		FLAKE_TARGET := MacBook-Air
-		BUILD_CMD := darwin-rebuild
-		NEEDS_SUDO := sudo
-	else
-		FLAKE_TARGET := mikaelsiidorow@pop-os
-		BUILD_CMD := home-manager
-		NEEDS_SUDO :=
-	endif
+	FLAKE_TARGET := .#mikaelsiidorow@pop-os
+	DISPLAY_TARGET := $(FLAKE_TARGET)
 endif
 
 # Default target - show help
@@ -33,7 +26,7 @@ help:
 	@echo "Nix Configuration Management"
 	@echo ""
 	@echo "Detected: $(HOSTNAME) ($(UNAME))"
-	@echo "Target: $(FLAKE_TARGET)"
+	@echo "Target: $(DISPLAY_TARGET)"
 	@echo ""
 	@echo "Common targets:"
 	@echo "  make switch       - Build and activate configuration for current host"
@@ -44,11 +37,8 @@ help:
 	@echo "  make clean        - Run garbage collection"
 	@echo "  make fmt          - Format all .nix files"
 	@echo ""
-	@echo "Host-specific targets:"
-	@echo "  make mac          - Build and activate macOS configuration"
-	@echo "  make popos        - Build and activate Pop!_OS configuration"
-	@echo ""
 	@echo "Other targets:"
+	@echo "  make popos        - Build and activate Pop!_OS configuration"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
 	@echo "  make rollback     - Rollback to previous generation"
@@ -56,14 +46,14 @@ help:
 # Auto-detected switch
 .PHONY: switch
 switch:
-	@echo "Building configuration for $(FLAKE_TARGET)..."
-	$(NEEDS_SUDO) $(BUILD_CMD) switch --flake .#$(FLAKE_TARGET)
+	@echo "Building $(DISPLAY_TARGET)..."
+	$(NEEDS_SUDO) $(BUILD_CMD) switch --flake $(FLAKE_TARGET)
 
 # Build without activating
 .PHONY: build
 build:
-	@echo "Building configuration for $(FLAKE_TARGET)..."
-	$(NEEDS_SUDO) $(BUILD_CMD) build --flake .#$(FLAKE_TARGET)
+	@echo "Building $(DISPLAY_TARGET)..."
+	$(NEEDS_SUDO) $(BUILD_CMD) build --flake $(FLAKE_TARGET)
 
 # Check flake for errors
 .PHONY: check
@@ -73,12 +63,12 @@ check:
 # Show what would change (dry-run)
 .PHONY: diff
 diff:
-	@echo "Checking changes for $(FLAKE_TARGET)..."
+	@echo "Checking changes for $(DISPLAY_TARGET)..."
 ifeq ($(BUILD_CMD),darwin-rebuild)
-	$(NEEDS_SUDO) darwin-rebuild build --flake .#$(FLAKE_TARGET)
+	$(NEEDS_SUDO) darwin-rebuild build --flake $(FLAKE_TARGET)
 	nix store diff-closures /run/current-system ./result
 else
-	home-manager build --flake .#$(FLAKE_TARGET)
+	home-manager build --flake $(FLAKE_TARGET)
 	nix store diff-closures ~/.local/state/nix/profiles/home-manager ./result
 endif
 
@@ -109,11 +99,7 @@ fmt:
 	@echo "Formatting nix files..."
 	nix fmt
 
-# Host-specific targets
-.PHONY: mac
-mac:
-	sudo darwin-rebuild switch --flake .#MacBook-Air
-
+# Host-specific overrides (use when not running on the target host)
 .PHONY: popos
 popos:
 	home-manager switch --flake .#mikaelsiidorow@pop-os

@@ -102,11 +102,18 @@
         });
       };
 
+      # Darwin hosts: attr key is the LocalHostName (must match
+      # `scutil --get LocalHostName`, which is what darwin-rebuild uses
+      # to resolve the default flake target).
+      darwinHosts = {
+        "MacBook-Air" = "aarch64-darwin";
+        "MacBook-Pro" = "aarch64-darwin";
+      };
+
       # Helper function to create a darwin system
       mkDarwinSystem =
         {
           system,
-          hostname,
           extraModules ? [ ],
         }:
         nix-darwin.lib.darwinSystem {
@@ -128,8 +135,13 @@
               ];
             }
 
-            # Host-specific configuration
-            ./hosts/${hostname}
+            # Common darwin host wiring (was hosts/macbook-air/default.nix)
+            {
+              imports = [ ./modules/darwin ];
+              nixpkgs.hostPlatform = system;
+              system.primaryUser = username;
+              users.users.${username}.home = "/Users/${username}";
+            }
 
             # Homebrew integration
             nix-homebrew.darwinModules.nix-homebrew
@@ -248,12 +260,9 @@
     in
     {
       # Darwin (macOS) configurations
-      darwinConfigurations = {
-        "MacBook-Air" = mkDarwinSystem {
-          system = "aarch64-darwin";
-          hostname = "macbook-air";
-        };
-      };
+      darwinConfigurations = builtins.mapAttrs (
+        _: system: mkDarwinSystem { inherit system; }
+      ) darwinHosts;
 
       # Standalone package for testing: nix build .#packages.aarch64-darwin.mergiraf
       packages =
