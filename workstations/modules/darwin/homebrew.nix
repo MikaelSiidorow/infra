@@ -25,8 +25,7 @@
       "cmux"
       "google-chrome"
       "1password"
-      "amethyst"
-      "alfred"
+      "raycast"
       "slack"
       "microsoft-auto-update" # needed for teams I guess?
       "microsoft-teams"
