@@ -85,7 +85,6 @@
         "firefox.desktop"
         "com.mitchellh.ghostty.desktop"
         "code.desktop"
-        "t3code.desktop"
         "dev.zed.Zed.desktop"
         "vesktop.desktop"
         "org.telegram.desktop.desktop"

@@ -127,7 +127,6 @@
 
       # AI tools
       inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-      inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default
     ]
     # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
     ++ lib.optionals (!isDarwin) [
