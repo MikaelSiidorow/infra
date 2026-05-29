@@ -29,6 +29,7 @@ The script automatically detects existing branches:
 3. **Neither exists** → Creates new branch from base (default: `origin/main`, or use `--from`)
 
 This allows you to:
+
 - Continue work on existing feature branches
 - Pull down branches from remote to work on them
 - Create fresh branches for new features
@@ -74,12 +75,14 @@ cwt rm my-feature
 ```
 
 This will:
+
 - Remove the worktree directory
 - Optionally prompt to delete the associated branch
 
 ### Options
 
 **Create command:**
+
 - `--from <branch>` - Base branch to create from (default: `origin/main`, only used for NEW branches)
 - `--no-open` - Skip opening a new Ghostty window
 
@@ -160,6 +163,7 @@ casks = [
 ```
 
 Benefits:
+
 - Automatic updates via Homebrew
 - Official distribution method from Anthropic
 - Native macOS integration
@@ -169,6 +173,7 @@ Benefits:
 Claude Code is installed via the [sadjow/claude-code-nix](https://github.com/sadjow/claude-code-nix) flake for automatic updates.
 
 Configuration in `flake.nix`:
+
 ```nix
 inputs = {
   claude-code-nix = {
@@ -179,6 +184,7 @@ inputs = {
 ```
 
 Usage in `home/packages.nix`:
+
 ```nix
 home.packages = with pkgs; [
   # ...
@@ -189,6 +195,7 @@ home.packages = with pkgs; [
 ```
 
 Benefits:
+
 - **Hourly automatic updates** - New releases available within ~1 hour
 - Uses native binary (self-contained, no runtime dependencies)
 - Declarative installation
@@ -196,6 +203,7 @@ Benefits:
 - Alternative variants available: Node.js and Bun versions
 
 To use a different variant (Node.js or Bun), change `default` to `nodejs` or `bun`:
+
 ```nix
 claude-code-nix.packages.${pkgs.system}.nodejs  # Node.js version
 claude-code-nix.packages.${pkgs.system}.bun     # Bun version
@@ -206,6 +214,7 @@ claude-code-nix.packages.${pkgs.system}.bun     # Bun version
 Ghostty is installed on both platforms for the integrated workflow:
 
 **macOS**: Installed via Homebrew Cask (`modules/darwin/homebrew.nix:24`)
+
 ```nix
 casks = [
   "ghostty"
@@ -213,6 +222,7 @@ casks = [
 ```
 
 **NixOS/Linux**: Installed via nixpkgs (`home/packages.nix`)
+
 ```nix
 ++ lib.optionals (!isDarwin) [
   ghostty
@@ -220,6 +230,7 @@ casks = [
 ```
 
 The worktree script automatically:
+
 - Detects if Ghostty is available
 - Opens a new Ghostty window in the worktree directory
 - Falls back gracefully if Ghostty isn't installed
@@ -227,6 +238,7 @@ The worktree script automatically:
 ### Development Installation
 
 The worktree script is installed as a Nix package in `home/scripts.nix`, making it:
+
 - Available in your PATH automatically
 - Reproducible across machines
 - Managed declaratively with your other packages
@@ -236,6 +248,7 @@ The worktree script is installed as a Nix package in `home/scripts.nix`, making 
 ### Why Shell Script?
 
 The tool is implemented in Bash because:
+
 - **No build step required** - Works immediately after installation
 - **Portable** - Runs anywhere with bash (macOS, Linux, etc.)
 - **Fits Nix ecosystem** - Easy to package with `writeShellScriptBin`

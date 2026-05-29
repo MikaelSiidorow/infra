@@ -14,7 +14,7 @@ cd ~/nix-config
 make switch
 ```
 
-### Linux (Pop!_OS)
+### Linux (Pop!\_OS)
 
 ```bash
 # Install Nix
@@ -68,6 +68,7 @@ Run `make help` for all commands.
 ## Troubleshooting
 
 **Nix daemon not found:**
+
 ```bash
 . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 ```

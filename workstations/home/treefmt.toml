@@ -15,12 +15,21 @@ includes = ["*.sh", "*.bash"]
 command = "oxfmt"
 options = ["--write"]
 includes = [
-  "*.js", "*.jsx", "*.ts", "*.tsx",
-  "*.json", "*.jsonc",
-  "*.yaml", "*.yml",
-  "*.md", "*.mdx",
-  "*.html", "*.vue",
-  "*.css", "*.scss", "*.less",
+  "*.js",
+  "*.jsx",
+  "*.ts",
+  "*.tsx",
+  "*.json",
+  "*.jsonc",
+  "*.yaml",
+  "*.yml",
+  "*.md",
+  "*.mdx",
+  "*.html",
+  "*.vue",
+  "*.css",
+  "*.scss",
+  "*.less",
   "*.graphql",
   "*.toml",
 ]
