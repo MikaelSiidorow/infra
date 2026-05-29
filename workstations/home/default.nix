@@ -13,6 +13,7 @@
     ./scripts.nix
     ./applications.nix
     ./firefox.nix
+    ./claude-code.nix
     ./package-managers
   ]
   ++ lib.optionals isDarwin [
