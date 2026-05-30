@@ -34,8 +34,8 @@ cd ~/nix-config
 
 # 4. Restore the SOPS age key using the commands below.
 
-# 5. Activate.
-make switch
+# 5. Bootstrap nix-darwin. After this, `make switch` is available.
+nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .
 ```
 
 If you need a different hostname, add it to `darwinHosts` (top of `flake.nix`) before switching.
@@ -61,8 +61,11 @@ nix shell nixpkgs#rbw -c rbw unlock
 nix shell nixpkgs#rbw -c rbw sync
 
 # Restore the age private key without printing it.
-nix shell nixpkgs#rbw -c rbw get "sops age key" > ~/.config/sops/age/keys.txt
-chmod 600 ~/.config/sops/age/keys.txt
+( umask 077
+  nix shell nixpkgs#rbw -c rbw get "sops age key" \
+    | awk '/^AGE-SECRET-KEY-/ { print; found=1 } END { if (!found) exit 1 }' \
+    > ~/.config/sops/age/keys.txt
+)
 
 # Optional sanity check: prints only the public age recipient.
 nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt

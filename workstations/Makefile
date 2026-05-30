@@ -9,14 +9,17 @@ UNAME := $(shell uname -s)
 # when no flake attr is specified, so we pass `.` and let it pick.
 # home-manager has no equivalent default, so we pass the full target.
 ifeq ($(UNAME),Darwin)
-	BUILD_CMD := darwin-rebuild
-	NEEDS_SUDO := sudo
+	DARWIN_REBUILD := $(shell command -v darwin-rebuild 2>/dev/null || true)
+	ifeq ($(DARWIN_REBUILD),)
+		BUILD_CMD := nix run github:LnL7/nix-darwin/master\#darwin-rebuild --
+	else
+		BUILD_CMD := sudo darwin-rebuild
+	endif
 	FLAKE_TARGET := .
 	DISPLAY_TARGET := darwinConfigurations.$(HOSTNAME)
 else
 	BUILD_CMD := home-manager
-	NEEDS_SUDO :=
-	FLAKE_TARGET := .#mikaelsiidorow@pop-os
+	FLAKE_TARGET := .\#mikaelsiidorow@pop-os
 	DISPLAY_TARGET := $(FLAKE_TARGET)
 endif
 
@@ -47,13 +50,13 @@ help:
 .PHONY: switch
 switch:
 	@echo "Building $(DISPLAY_TARGET)..."
-	$(NEEDS_SUDO) $(BUILD_CMD) switch --flake $(FLAKE_TARGET)
+	$(BUILD_CMD) switch --flake $(FLAKE_TARGET)
 
 # Build without activating
 .PHONY: build
 build:
 	@echo "Building $(DISPLAY_TARGET)..."
-	$(NEEDS_SUDO) $(BUILD_CMD) build --flake $(FLAKE_TARGET)
+	$(BUILD_CMD) build --flake $(FLAKE_TARGET)
 
 # Check flake for errors
 .PHONY: check
@@ -64,8 +67,8 @@ check:
 .PHONY: diff
 diff:
 	@echo "Checking changes for $(DISPLAY_TARGET)..."
-ifeq ($(BUILD_CMD),darwin-rebuild)
-	$(NEEDS_SUDO) darwin-rebuild build --flake $(FLAKE_TARGET)
+ifeq ($(UNAME),Darwin)
+	$(BUILD_CMD) build --flake $(FLAKE_TARGET)
 	nix store diff-closures /run/current-system ./result
 else
 	home-manager build --flake $(FLAKE_TARGET)
@@ -107,7 +110,7 @@ popos:
 # Show system generations
 .PHONY: history
 history:
-ifeq ($(BUILD_CMD),darwin-rebuild)
+ifeq ($(UNAME),Darwin)
 	sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 else
 	home-manager generations
@@ -116,10 +119,10 @@ endif
 # Rollback to previous generation
 .PHONY: rollback
 rollback:
-ifeq ($(BUILD_CMD),darwin-rebuild)
-	sudo darwin-rebuild rollback
+ifeq ($(UNAME),Darwin)
+	$(BUILD_CMD) rollback
 else
-	home-manager generations | head -2 | tail -1 | awk '{print $$7}' | xargs home-manager switch --generation
+	home-manager switch --rollback
 endif
 
 # Verify flake inputs are up to date
