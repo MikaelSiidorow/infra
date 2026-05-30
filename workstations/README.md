@@ -34,8 +34,8 @@ cd ~/nix-config
 
 # 4. Restore the SOPS age key using the commands below.
 
-# 5. Bootstrap nix-darwin. After this, `make switch` is available.
-nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .
+# 5. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
+nix run .#darwin-rebuild -- switch --flake .
 ```
 
 If you need a different hostname, add it to `darwinHosts` (top of `flake.nix`) before switching.
@@ -87,8 +87,8 @@ cd ~/nix-config
 Activate Home Manager:
 
 ```bash
-# Bootstrap (uses latest home-manager from master, may differ from flake.lock)
-nix run home-manager/master -- switch --flake .#mikaelsiidorow@pop-os -b backup
+# Bootstrap using the locked home-manager input.
+nix run .#home-manager -- switch --flake .#mikaelsiidorow@pop-os -b backup
 
 # Subsequent updates
 make switch
@@ -101,11 +101,14 @@ make switch       # Build and activate
 make diff         # Preview changes
 make update       # Update inputs
 make upgrade      # Update + switch
+make brew-upgrade # Explicit Homebrew update + upgrade on macOS
 make check        # Validate flake
 make fmt          # Format code
 ```
 
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.
+
+Homebrew packages are not upgraded during `make switch`; run `make brew-upgrade` when you want casks and brews updated.
 
 ## Secrets
 

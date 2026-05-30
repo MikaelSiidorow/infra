@@ -11,14 +11,19 @@ UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
 	DARWIN_REBUILD := $(shell command -v darwin-rebuild 2>/dev/null || true)
 	ifeq ($(DARWIN_REBUILD),)
-		BUILD_CMD := nix run github:LnL7/nix-darwin/master\#darwin-rebuild --
+		BUILD_CMD := nix run .\#darwin-rebuild --
 	else
 		BUILD_CMD := sudo darwin-rebuild
 	endif
 	FLAKE_TARGET := .
 	DISPLAY_TARGET := darwinConfigurations.$(HOSTNAME)
 else
-	BUILD_CMD := home-manager
+	HOME_MANAGER := $(shell command -v home-manager 2>/dev/null || true)
+	ifeq ($(HOME_MANAGER),)
+		BUILD_CMD := nix run .\#home-manager --
+	else
+		BUILD_CMD := home-manager
+	endif
 	FLAKE_TARGET := .\#mikaelsiidorow@pop-os
 	DISPLAY_TARGET := $(FLAKE_TARGET)
 endif
@@ -37,6 +42,7 @@ help:
 	@echo "  make check        - Check flake for errors"
 	@echo "  make update       - Update flake inputs"
 	@echo "  make upgrade      - Update inputs and switch"
+	@echo "  make brew-upgrade - Update Homebrew packages on macOS"
 	@echo "  make clean        - Run garbage collection"
 	@echo "  make fmt          - Format all .nix files"
 	@echo ""
@@ -83,6 +89,17 @@ update:
 # Update and switch
 .PHONY: upgrade
 upgrade: update switch
+
+# Explicit Homebrew upgrade; switch does not upgrade brews/casks.
+.PHONY: brew-upgrade
+brew-upgrade:
+ifeq ($(UNAME),Darwin)
+	brew update
+	brew upgrade
+	brew upgrade --cask
+else
+	@echo "brew-upgrade is only available on macOS"
+endif
 
 # Garbage collection
 .PHONY: clean

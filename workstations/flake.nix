@@ -90,8 +90,21 @@
       ...
     }@inputs:
     let
+      lib = nixpkgs.lib;
+
       # User configuration - change this for different users
       username = "mikaelsiidorow";
+
+      supportedSystems = [
+        "aarch64-darwin"
+        "x86_64-linux"
+      ];
+
+      mkApp = program: description: {
+        type = "app";
+        inherit program;
+        meta.description = description;
+      };
 
       # Custom mergiraf with tree-sitter-po grammar for PO/gettext merge support
       mergirafOverlay = final: prev: {
@@ -277,25 +290,30 @@
       ) darwinHosts;
 
       # Standalone package for testing: nix build .#packages.aarch64-darwin.mergiraf
-      packages =
-        let
-          systems = [
-            "aarch64-darwin"
-            "x86_64-linux"
-          ];
-        in
-        builtins.listToAttrs (
-          map (system: {
-            name = system;
-            value = {
-              mergiraf =
-                let
-                  pkgs = import nixpkgs { inherit system; };
-                in
-                pkgs.callPackage ./pkgs/mergiraf-custom { };
-            };
-          }) systems
-        );
+      packages = builtins.listToAttrs (
+        map (system: {
+          name = system;
+          value = {
+            mergiraf =
+              let
+                pkgs = import nixpkgs { inherit system; };
+              in
+              pkgs.callPackage ./pkgs/mergiraf-custom { };
+          };
+        }) supportedSystems
+      );
+
+      apps = builtins.listToAttrs (
+        map (system: {
+          name = system;
+          value = {
+            home-manager = mkApp "${home-manager.packages.${system}.home-manager}/bin/home-manager" "Run the locked Home Manager CLI";
+          }
+          // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
+            darwin-rebuild = mkApp "${nix-darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild" "Run the locked nix-darwin rebuild CLI";
+          };
+        }) supportedSystems
+      );
 
       # NixOS configurations (uncomment when ready)
       # nixosConfigurations = {
