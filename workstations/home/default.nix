@@ -1,6 +1,7 @@
 # Home-manager configuration entry point
 {
   lib,
+  inputs,
   isDarwin ? false,
   ...
 }:
@@ -15,6 +16,8 @@
     ./firefox.nix
     ./claude-code.nix
     ./package-managers
+    inputs.sops-nix.homeManagerModules.sops
+    ./sops.nix
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix

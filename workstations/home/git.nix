@@ -1,5 +1,11 @@
 # Git configuration - platform-agnostic
-{ pkgs, ... }:
+{ config, pkgs, ... }:
+let
+  signingEmail = "mikael@siidorow.com";
+  signingKeyPath = "${config.home.homeDirectory}/.ssh/git_signing_key";
+  allowedSignersPath = "${config.home.homeDirectory}/.ssh/allowed_signers";
+  signingPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtyePmG2oyS5n9bOWraUq3bci8L2jNJg7xiB8gR42PX mikael@siidorow.com git signing";
+in
 {
   programs.git = {
     enable = true;
@@ -15,17 +21,28 @@
     settings = {
       user = {
         name = "Mikael Siidorow";
-        email = "mikael.siidorow@teamspective.com";
+        email = signingEmail;
+        signingKey = signingKeyPath;
       };
       init.defaultBranch = "main";
       core = {
         autocrlf = "input";
+        editor = "${pkgs.vim}/bin/vim";
       };
       branch.sort = "-committerdate";
       merge.conflictstyle = "zdiff3";
       pull.ff = "only";
       rebase.autoStash = true;
       rerere.enabled = true;
+      commit.gpgsign = true;
+      tag.gpgSign = true;
+      gpg = {
+        format = "ssh";
+        ssh = {
+          allowedSignersFile = allowedSignersPath;
+          program = "${pkgs.openssh}/bin/ssh-keygen";
+        };
+      };
 
       "merge \"mergiraf\"" = {
         name = "mergiraf";
@@ -33,4 +50,11 @@
       };
     };
   };
+
+  home.file.".gitconfig".text = ''
+    [include]
+      path = ${config.xdg.configHome}/git/config
+  '';
+  home.file.".ssh/git_signing_key.pub".text = "${signingPublicKey}\n";
+  home.file.".ssh/allowed_signers".text = "${signingEmail} ${signingPublicKey}\n";
 }
