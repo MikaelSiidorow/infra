@@ -13,10 +13,12 @@
     ./zsh.nix
     ./scripts.nix
     ./applications.nix
+    ./nix-index.nix
     ./firefox.nix
     ./claude-code.nix
     ./package-managers
     inputs.sops-nix.homeManagerModules.sops
+    inputs.nix-index-database.homeModules.nix-index
     ./sops.nix
   ]
   ++ lib.optionals isDarwin [
