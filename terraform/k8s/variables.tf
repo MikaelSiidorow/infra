@@ -63,3 +63,8 @@ variable "marginalia_smtp_from" {
   type      = string
   sensitive = true
 }
+
+variable "brawl_stars_api_key" {
+  type      = string
+  sensitive = true
+}

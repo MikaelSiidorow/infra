@@ -95,3 +95,20 @@ resource "kubernetes_secret_v1" "marginalia_secrets" {
     SMTP_FROM            = var.marginalia_smtp_from
   }
 }
+
+resource "kubernetes_namespace_v1" "brawl_draft" {
+  metadata {
+    name = "brawl-draft"
+  }
+}
+
+resource "kubernetes_secret_v1" "brawl_draft_secrets" {
+  metadata {
+    name      = "brawl-draft-secrets"
+    namespace = kubernetes_namespace_v1.brawl_draft.metadata[0].name
+  }
+
+  data = {
+    BRAWL_STARS_API_KEY = var.brawl_stars_api_key
+  }
+}
