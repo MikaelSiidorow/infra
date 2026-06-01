@@ -100,6 +100,7 @@ make switch
 make switch       # Build and activate
 make diff         # Preview changes
 make update       # Update inputs
+make update-fast  # Update fast-moving app inputs
 make upgrade      # Update + switch
 make brew-upgrade # Explicit Homebrew update + upgrade on macOS
 make check        # Validate flake
@@ -109,6 +110,14 @@ make fmt          # Format code
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.
 
 Homebrew packages are not upgraded during `make switch`; run `make brew-upgrade` when you want casks and brews updated.
+
+## Source policy
+
+The default package set is `nixpkgs` on `nixos-26.05`. Fast-moving user apps can use `nixpkgs-unstable` explicitly; Firefox is wired this way so browser updates can move ahead of the default package set.
+
+Use `make update-fast` to update app/catalog inputs without moving the default stable package set: `nixpkgs-unstable`, NUR, nix-index database, Claude Code, OpenCode, and Homebrew taps. Use `make update` when you want all flake inputs updated together.
+
+`bitwarden-desktop` is not currently installed from Nix because `nixos-26.05` packages it with Electron 39, which nixpkgs marks EOL/insecure. The Firefox Bitwarden extension remains managed by Nix.
 
 ## Secrets
 

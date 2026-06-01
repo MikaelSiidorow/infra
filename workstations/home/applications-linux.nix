@@ -15,8 +15,8 @@ in
     vesktop
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
-    # Password manager
-    bitwarden-desktop
+    # bitwarden-desktop is temporarily omitted: nixos-26.05 packages it with
+    # Electron 39, which nixpkgs marks as EOL/insecure.
 
     # Gaming
     # steam - using apt version; wrapper below strips Nix PATH to avoid glibc conflicts

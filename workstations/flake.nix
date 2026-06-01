@@ -2,12 +2,11 @@
   description = "Mikael's multi-platform Nix configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # Default package set: stable release branch for broad desktop/system use.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    # Stable nixpkgs, used to pin a few packages where unstable has regressions
-    # (e.g. flameshot 14.0-rc1 routes through xdg-desktop-portal-gnome on X11
-    # and shows GNOME's screenshot UI instead of its own region picker).
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+    # Fast lane for browsers and selected fast-moving desktop apps.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Darwin (macOS) support
     nix-darwin = {
@@ -17,7 +16,7 @@
 
     # Home-manager for user environment
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -77,7 +76,7 @@
     {
       self,
       nixpkgs,
-      nixpkgs-stable,
+      nixpkgs-unstable,
       nix-darwin,
       home-manager,
       nix-homebrew,
@@ -106,16 +105,16 @@
         meta.description = description;
       };
 
+      mkPkgsUnstable =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
       # Custom mergiraf with tree-sitter-po grammar for PO/gettext merge support
       mergirafOverlay = final: prev: {
         mergiraf = final.callPackage ./pkgs/mergiraf-custom { };
-      };
-
-      # Pin flameshot to the version in nixpkgs-stable (12.x). Unstable's
-      # 14.0-rc1 invokes xdg-desktop-portal on GNOME and breaks the
-      # region-capture-by-default workflow on Pop!_OS X11.
-      flameshotOverlay = final: _prev: {
-        flameshot = (import nixpkgs-stable { inherit (final) system; }).flameshot;
       };
 
       # Skip direnv's checkPhase on darwin. Its test suite forks subshells
@@ -141,12 +140,16 @@
           system,
           extraModules ? [ ],
         }:
+        let
+          pkgs-unstable = mkPkgsUnstable system;
+        in
         nix-darwin.lib.darwinSystem {
           inherit system;
           specialArgs = {
             inherit
               self
               inputs
+              pkgs-unstable
               username
               ;
           };
@@ -192,7 +195,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs;
+                  inherit inputs pkgs-unstable;
                   isDarwin = true;
                 };
                 users.${username} = import ./home;
@@ -209,12 +212,16 @@
           hostname,
           extraModules ? [ ],
         }:
+        let
+          pkgs-unstable = mkPkgsUnstable system;
+        in
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
             inherit
               self
               inputs
+              pkgs-unstable
               username
               ;
           };
@@ -238,7 +245,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs;
+                  inherit inputs pkgs-unstable;
                   isDarwin = false;
                 };
                 users.${username} = import ./home;
@@ -255,11 +262,13 @@
           hostname,
           extraModules ? [ ],
         }:
+        let
+          pkgs-unstable = mkPkgsUnstable system;
+        in
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
-              flameshotOverlay
               nur.overlays.default
             ];
           };
@@ -267,6 +276,7 @@
             inherit
               self
               inputs
+              pkgs-unstable
               ;
             isDarwin = false;
           };

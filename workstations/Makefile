@@ -41,6 +41,7 @@ help:
 	@echo "  make build        - Build configuration without activating"
 	@echo "  make check        - Check flake for errors"
 	@echo "  make update       - Update flake inputs"
+	@echo "  make update-fast  - Update fast-moving app inputs"
 	@echo "  make upgrade      - Update inputs and switch"
 	@echo "  make brew-upgrade - Update Homebrew packages on macOS"
 	@echo "  make clean        - Run garbage collection"
@@ -85,6 +86,19 @@ endif
 .PHONY: update
 update:
 	nix flake update
+
+# Update fast-moving desktop inputs without moving the default stable package set
+.PHONY: update-fast
+update-fast:
+	nix flake update \
+		nixpkgs-unstable \
+		nur \
+		nix-index-database \
+		claude-code-nix \
+		opencode-nix \
+		homebrew-core \
+		homebrew-cask \
+		homebrew-cmux
 
 # Update and switch
 .PHONY: upgrade

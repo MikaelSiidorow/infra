@@ -3,13 +3,15 @@
   config,
   lib,
   pkgs,
+  pkgs-unstable,
   isDarwin ? false,
   ...
 }:
 {
   programs.firefox = {
     enable = true;
-    package = if isDarwin then pkgs.firefox-bin else config.lib.nixGL.wrap pkgs.firefox;
+    package =
+      if isDarwin then pkgs-unstable.firefox-bin else config.lib.nixGL.wrap pkgs-unstable.firefox;
     # macOS Firefox always reads from ~/Library/Application Support/Firefox, so use HM's
     # darwin default there. On linux, opt into the XDG-style path.
     configPath =
