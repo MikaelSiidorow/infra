@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brawl-draft-collector
+  namespace: brawl-draft
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: brawl-draft-collector
+  template:
+    metadata:
+      labels:
+        app: brawl-draft-collector
+        app.kubernetes.io/name: brawl-draft-collector
+        app.kubernetes.io/component: collector
+        app.kubernetes.io/part-of: brawl-draft
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: collector
+          image: ghcr.io/mikaelsiidorow/brawl-draft-collector:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 1Gi
+          env:
+            - name: BRAWL_STARS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: brawl-draft-secrets
+                  key: BRAWL_STARS_API_KEY
+            - name: COLLECTOR_DB_FILE
+              value: /data/brawl-draft.sqlite
+          volumeMounts:
+            - name: collector-data
+              mountPath: /data
+      volumes:
+        - name: collector-data
+          persistentVolumeClaim:
+            claimName: brawl-draft-collector-data

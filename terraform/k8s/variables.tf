@@ -63,3 +63,13 @@ variable "marginalia_smtp_from" {
   type      = string
   sensitive = true
 }
+
+variable "brawl_stars_api_key" {
+  type      = string
+  sensitive = true
+
+  validation {
+    condition     = length(trimspace(var.brawl_stars_api_key)) > 0
+    error_message = "brawl_stars_api_key must be set."
+  }
+}
