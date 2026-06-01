@@ -28,7 +28,7 @@ spec:
               memory: 256Mi
               cpu: 100m
             limits:
-              memory: 1Gi
+              memory: 768Mi
           env:
             - name: BRAWL_STARS_API_KEY
               valueFrom:
@@ -37,6 +37,8 @@ spec:
                   key: BRAWL_STARS_API_KEY
             - name: COLLECTOR_DB_FILE
               value: /data/brawl-draft.sqlite
+            - name: COLLECTOR_SQLITE_CACHE_KIB
+              value: "65536"
           volumeMounts:
             - name: collector-data
               mountPath: /data
