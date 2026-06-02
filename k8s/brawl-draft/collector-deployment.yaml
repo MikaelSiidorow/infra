@@ -4,7 +4,7 @@ metadata:
   name: brawl-draft-collector
   namespace: brawl-draft
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
