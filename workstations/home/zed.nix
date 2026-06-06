@@ -1,5 +1,10 @@
-# Zed editor configuration for Linux.
-{ pkgs, config, ... }:
+# Zed editor configuration.
+{
+  pkgs,
+  config,
+  isDarwin ? false,
+  ...
+}:
 let
   zedLsp = path: arguments: {
     binary = {
@@ -14,7 +19,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    package = config.lib.nixGL.wrap pkgs.zed-editor;
+    package = if isDarwin then pkgs.zed-editor else config.lib.nixGL.wrap pkgs.zed-editor;
     extraPackages = with pkgs; [
       bash-language-server
       dockerfile-language-server
@@ -26,7 +31,26 @@ in
       vtsls
       yaml-language-server
     ];
+    extensions = [
+      "git-firefly"
+      "html"
+      "lua"
+      "nix"
+      "oxc"
+      "toml"
+      "typst"
+    ];
     userSettings = {
+      auto_update = false;
+      disable_ai = true;
+      show_edit_predictions = false;
+      max_tabs = 1;
+      title_bar = {
+        show_sign_in = false;
+      };
+      collaboration_panel = {
+        button = false;
+      };
       node = {
         ignore_system_version = false;
         path = "${pkgs.nodejs}/bin/node";

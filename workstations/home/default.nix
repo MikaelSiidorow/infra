@@ -16,6 +16,7 @@
     ./nix-index.nix
     ./firefox.nix
     ./claude-code.nix
+    ./zed.nix
     ./package-managers
     inputs.sops-nix.homeManagerModules.sops
     inputs.nix-index-database.homeModules.nix-index
@@ -27,7 +28,6 @@
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
     ./gnome.nix
-    ./zed.nix
   ];
 
   home = {
