@@ -4,7 +4,7 @@ metadata:
   name: brawl-draft-collector
   namespace: brawl-draft
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -25,10 +25,10 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: 256Mi
-              cpu: 100m
+              memory: 512Mi
+              cpu: 250m
             limits:
-              memory: 768Mi
+              memory: 1Gi
           env:
             - name: BRAWL_STARS_API_KEY
               valueFrom:
