@@ -32,10 +32,11 @@ sudo scutil --set ComputerName MacBook-Pro
 git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
 cd ~/nix-config
 
-# 4. Restore the SOPS age key using the commands below.
-
-# 5. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
+# 4. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
+#    Succeeds without secrets; sops-nix decryption fails quietly until the age key exists.
 nix run .#darwin-rebuild -- switch --flake .
+
+# 5. Restore the SOPS age key (see "SOPS age key restore" below), then `make switch` again to decrypt.
 ```
 
 If you need a different hostname, add it to `darwinHosts` (top of `flake.nix`) before switching.
@@ -44,32 +45,47 @@ Optional: append `extra-substituters = https://cache.flakehub.com` to `/etc/nix/
 
 ### SOPS age key restore
 
-Restore the SOPS age key before the first switch on every machine. This key is intentionally not managed by Nix; it is the recovery key that unlocks encrypted repo secrets. `home-manager build` can evaluate without it, but activation needs it when `sops-nix` starts decrypting secrets.
+The age private key at `~/.config/sops/age/keys.txt` unlocks the repo's encrypted secrets. It is intentionally not managed by Nix; it is the recovery key, backed up in Bitwarden as `sops age key`. rbw, pinentry, and rbw's config (email, base_url, pinentry) are all managed declaratively by `home/sops.nix`, so there is nothing to `rbw config set` by hand.
+
+`rbw register` asks for a Bitwarden personal API key: paste the `client_id`, then `client_secret`, from the web vault under **Settings > Security > Keys > "View API Key"**. That authorizes this CLI device past Bitwarden's new-client login challenge; you still enter the master password at `rbw login`.
+
+**macOS:** the first `make switch` succeeds without the key (sops-nix decryption runs as a launchd agent and just logs a failure to `~/Library/Logs/SopsNix/`). So switch first, then restore the key with the now-installed rbw:
 
 ```bash
-mkdir -p ~/.config/sops/age
-chmod 700 ~/.config/sops ~/.config/sops/age
+mkdir -p ~/.config/sops/age && chmod 700 ~/.config/sops ~/.config/sops/age
 
-# Only needed the first time rbw is configured on this machine:
-nix shell nixpkgs#rbw -c rbw config set base_url "https://vault.bitwarden.eu"
-nix shell nixpkgs#rbw -c rbw config set email "<bitwarden-account-email>"
-nix shell nixpkgs#rbw -c rbw register  # first rbw device login may require Bitwarden API keys
-nix shell nixpkgs#rbw -c rbw login
+rbw register   # client_id, then client_secret (see above)
+rbw login      # master password
 
-# Needed whenever rbw is locked or stale:
-nix shell nixpkgs#rbw -c rbw unlock
-nix shell nixpkgs#rbw -c rbw sync
-
-# Restore the age private key without printing it.
 ( umask 077
-  nix shell nixpkgs#rbw -c rbw get "sops age key" \
+  rbw get "sops age key" \
     | awk '/^AGE-SECRET-KEY-/ { print; found=1 } END { if (!found) exit 1 }' \
     > ~/.config/sops/age/keys.txt
 )
 
-# Optional sanity check: prints only the public age recipient.
-nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt
+make switch    # re-runs decryption; the git signing key and other secrets land now
+
+age-keygen -y ~/.config/sops/age/keys.txt   # optional: prints only the public age recipient
 ```
+
+**Linux:** decryption runs as a blocking systemd user service during activation, so restore the key before the first activation. rbw is not installed yet, so run it from a temporary shell (pinentry-curses provides the `pinentry` binary rbw prompts through):
+
+```bash
+mkdir -p ~/.config/sops/age && chmod 700 ~/.config/sops ~/.config/sops/age
+
+nix shell nixpkgs#rbw nixpkgs#pinentry-curses -c sh -c '
+  rbw config set base_url "https://vault.bitwarden.eu"
+  rbw config set email "<bitwarden-account-email>"
+  rbw register
+  rbw login
+  umask 077
+  rbw get "sops age key" \
+    | awk "/^AGE-SECRET-KEY-/ { print; found=1 } END { if (!found) exit 1 }" \
+    > ~/.config/sops/age/keys.txt
+'
+```
+
+Whenever rbw is locked or stale later: `rbw unlock`, `rbw sync`.
 
 ### Linux (Pop!\_OS)
 
