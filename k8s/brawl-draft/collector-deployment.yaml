@@ -39,6 +39,28 @@ spec:
               value: /data/brawl-draft.sqlite
             - name: COLLECTOR_SQLITE_CACHE_KIB
               value: "65536"
+            - name: COLLECTOR_REQUESTS_PER_MINUTE
+              value: "3000"
+            - name: COLLECTOR_TICK_LIMIT
+              value: "500"
+            - name: COLLECTOR_TICK_CONCURRENCY
+              value: "16"
+            - name: COLLECTOR_PROFILE_LIMIT
+              value: "3000"
+            - name: COLLECTOR_PROFILE_DEBT_LIMIT
+              value: "3000"
+            - name: COLLECTOR_PROFILE_DEBT_RECENT_MATCH_LIMIT
+              value: "50000"
+            - name: COLLECTOR_TICK_PROFILE_LIMIT
+              value: "3000"
+            - name: COLLECTOR_PROFILE_CONCURRENCY
+              value: "16"
+            - name: COLLECTOR_MAX_BATTLE_AGE_DAYS
+              value: "31"
+            - name: COLLECTOR_CYCLE_SLEEP_SECONDS
+              value: "0"
+            - name: COLLECTOR_STOP_DB_SIZE_GIB
+              value: "50"
           volumeMounts:
             - name: collector-data
               mountPath: /data
