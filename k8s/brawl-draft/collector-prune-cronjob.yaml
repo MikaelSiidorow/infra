@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: brawl-draft-collector-prune
+  namespace: brawl-draft
+spec:
+  schedule: "15 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: brawl-draft-collector-prune
+            app.kubernetes.io/name: brawl-draft-collector-prune
+            app.kubernetes.io/component: collector-maintenance
+            app.kubernetes.io/part-of: brawl-draft
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: prune
+              image: ghcr.io/mikaelsiidorow/brawl-draft-collector:latest
+              imagePullPolicy: Always
+              command:
+                - sh
+                - -c
+              args:
+                - |
+                  bun src/commands/db-migrate.ts
+                  exec bun src/commands/prune.ts --execute
+              resources:
+                requests:
+                  memory: 256Mi
+                  cpu: 100m
+                limits:
+                  memory: 1Gi
+              env:
+                - name: COLLECTOR_DB_FILE
+                  value: /data/brawl-draft.sqlite
+                - name: COLLECTOR_SQLITE_CACHE_KIB
+                  value: "65536"
+                - name: COLLECTOR_PRUNE_KEEP_LATEST_MATCHES
+                  value: "5000000"
+                - name: COLLECTOR_PRUNE_OLDER_THAN_DAYS
+                  value: "31"
+              volumeMounts:
+                - name: collector-data
+                  mountPath: /data
+          volumes:
+            - name: collector-data
+              persistentVolumeClaim:
+                claimName: brawl-draft-collector-data
