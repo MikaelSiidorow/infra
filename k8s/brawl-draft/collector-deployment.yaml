@@ -61,6 +61,12 @@ spec:
               value: "0"
             - name: COLLECTOR_STOP_DB_SIZE_GIB
               value: "50"
+            - name: COLLECTOR_MAINTENANCE_LOCK_FILE
+              value: /data/collector-maintenance.lock
+            - name: COLLECTOR_MAINTENANCE_SLEEP_SECONDS
+              value: "60"
+            - name: COLLECTOR_SQLITE_BUSY_SLEEP_SECONDS
+              value: "60"
           volumeMounts:
             - name: collector-data
               mountPath: /data

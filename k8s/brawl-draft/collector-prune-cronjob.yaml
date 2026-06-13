@@ -29,7 +29,6 @@ spec:
                 - -c
               args:
                 - |
-                  bun src/commands/db-migrate.ts
                   exec bun src/commands/prune.ts --execute
               resources:
                 requests:
@@ -46,6 +45,10 @@ spec:
                   value: "5000000"
                 - name: COLLECTOR_PRUNE_OLDER_THAN_DAYS
                   value: "31"
+                - name: COLLECTOR_MAINTENANCE_LOCK_FILE
+                  value: /data/collector-maintenance.lock
+                - name: COLLECTOR_PRUNE_LOCK_SETTLE_SECONDS
+                  value: "600"
               volumeMounts:
                 - name: collector-data
                   mountPath: /data
