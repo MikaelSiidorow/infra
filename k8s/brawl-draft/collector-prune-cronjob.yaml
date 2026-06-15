@@ -45,6 +45,14 @@ spec:
                   value: "5000000"
                 - name: COLLECTOR_PRUNE_OLDER_THAN_DAYS
                   value: "31"
+                - name: COLLECTOR_PRUNE_DROP_BELOW_RANK
+                  value: "13"
+                - name: COLLECTOR_PRUNE_RANK_MIN_KNOWN_PLAYERS
+                  value: "1"
+                - name: COLLECTOR_PRUNE_PROTECT_RANK
+                  value: "16"
+                - name: COLLECTOR_PRUNE_PROTECT_RANK_MIN_KNOWN_PLAYERS
+                  value: "1"
                 - name: COLLECTOR_MAINTENANCE_LOCK_FILE
                   value: /data/collector-maintenance.lock
                 - name: COLLECTOR_PRUNE_LOCK_SETTLE_SECONDS

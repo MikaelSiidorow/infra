@@ -57,6 +57,10 @@ spec:
               value: "16"
             - name: COLLECTOR_MAX_BATTLE_AGE_DAYS
               value: "31"
+            - name: COLLECTOR_MIN_MATCH_RANK
+              value: "13"
+            - name: COLLECTOR_MIN_MATCH_RANK_KNOWN_PLAYERS
+              value: "1"
             - name: COLLECTOR_CYCLE_SLEEP_SECONDS
               value: "0"
             - name: COLLECTOR_STOP_DB_SIZE_GIB
