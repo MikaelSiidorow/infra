@@ -7,6 +7,11 @@
 {
   home.file = {
     ".claude/CLAUDE.md".source = ./claude-code/CLAUDE.md;
-    ".claude/statusline-command.sh".source = ./claude-code/statusline-command.sh;
+    ".claude/statusline-command.sh" = {
+      source = ./claude-code/statusline-command.sh;
+      # Claude Code runs the statusLine command through a shell, so the file
+      # must be executable; nix store copies are read-only without this.
+      executable = true;
+    };
   };
 }
