@@ -5,6 +5,7 @@ input=$(cat)
 cwd=$(echo "$input" | jq -r '.cwd')
 model=$(echo "$input" | jq -r '.model.display_name')
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+cost_usd=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 
 # Shorten home directory to ~
 home="$HOME"
@@ -36,8 +37,15 @@ if [ -n "$used_pct" ]; then
 	ctx_info=" [ctx: ${used_pct}%]"
 fi
 
-printf "\033[34m%s\033[0m\033[33m%s\033[0m\n\033[32m%s\033[0m%s" \
+# Session cost
+cost_info=""
+if [ -n "$cost_usd" ]; then
+	cost_info=$(printf ' [$%.2f]' "$cost_usd")
+fi
+
+printf "\033[34m%s\033[0m\033[33m%s\033[0m\n\033[32m%s\033[0m%s%s" \
 	"$short_cwd" \
 	"$git_branch" \
 	"$model" \
-	"$ctx_info"
+	"$ctx_info" \
+	"$cost_info"
