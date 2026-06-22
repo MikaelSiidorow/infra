@@ -14,7 +14,6 @@
     ./scripts.nix
     ./applications.nix
     ./nix-index.nix
-    ./firefox.nix
     ./claude-code.nix
     ./zed.nix
     ./package-managers
@@ -28,6 +27,8 @@
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
     ./gnome.nix
+    # Firefox is not approved on the work (darwin) machine.
+    ./firefox.nix
   ];
 
   home = {

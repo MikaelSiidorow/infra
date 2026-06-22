@@ -25,7 +25,7 @@
           app = "/System/Applications/System Settings.app";
         }
         {
-          app = "/Applications/Slack.app";
+          app = "/Applications/Microsoft Teams.app";
         }
         {
           app = "/Applications/1Password.app";
@@ -41,9 +41,6 @@
         }
         {
           app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
-        }
-        {
-          app = "/Users/${username}/Applications/Home Manager Apps/Firefox.app";
         }
       ];
     };

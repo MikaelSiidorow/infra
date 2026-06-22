@@ -14,23 +14,14 @@
       brewfile = true;
     };
 
-    brews = [
-      "cloudflared"
-      "render"
-    ];
+    brews = [ ];
 
+    # Chrome, 1Password, Teams and drata-agent come from the enterprise MDM.
     casks = [
       "orbstack"
       "ghostty"
       "cmux"
-      "google-chrome"
-      "1password"
       "raycast"
-      "slack"
-      "microsoft-auto-update" # needed for teams I guess?
-      "microsoft-teams"
-      "drata-agent"
-      "obs"
     ];
   };
 }
