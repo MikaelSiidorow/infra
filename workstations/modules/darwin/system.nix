@@ -65,5 +65,27 @@
         };
       }
     ];
+    # Keyboard input sources: only Finnish (drop the default Swedish layout),
+    # keeping the character/emoji viewer.
+    CustomUserPreferences."com.apple.HIToolbox" = {
+      AppleEnabledInputSources = [
+        {
+          InputSourceKind = "Keyboard Layout";
+          "KeyboardLayout ID" = 17;
+          "KeyboardLayout Name" = "Finnish";
+        }
+        {
+          "Bundle ID" = "com.apple.CharacterPaletteIM";
+          InputSourceKind = "Non Keyboard Input Method";
+        }
+      ];
+      AppleSelectedInputSources = [
+        {
+          InputSourceKind = "Keyboard Layout";
+          "KeyboardLayout ID" = 17;
+          "KeyboardLayout Name" = "Finnish";
+        }
+      ];
+    };
   };
 }
