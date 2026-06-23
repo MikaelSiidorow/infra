@@ -438,6 +438,18 @@ cmd_create() {
 	# Install dependencies
 	install_dependencies "$worktree_dir"
 
+	# Run the repository's worktree-setup hook if present. Keeps cwt
+	# project-agnostic: repo-specific setup (e.g. per-worktree dev ports)
+	# lives in the repo's own .claude/worktree-setup.sh.
+	local worktree_hook="$repo_root/.claude/worktree-setup.sh"
+	if [[ -f "$worktree_hook" ]]; then
+		log_info "Running repo worktree-setup hook..."
+		CWT_WORKTREE_DIR="$worktree_dir" \
+			CWT_WORKTREE_NAME="$worktree_name" \
+			CWT_REPO_ROOT="$repo_root" \
+			bash "$worktree_hook" || log_warn "worktree-setup hook exited non-zero"
+	fi
+
 	echo ""
 	log_info "Worktree created successfully!"
 	echo -e "${GREEN}Location:${NC} $worktree_dir"
