@@ -435,6 +435,14 @@ cmd_create() {
 	# Change to worktree directory for package installation
 	cd "$worktree_dir"
 
+	# Trust mise config in the new worktree if mise is in use. Project-agnostic:
+	# the worktree is the same content as the already-trusted main checkout, so
+	# this just avoids an interactive "trust?" prompt during install.
+	if command -v mise &>/dev/null; then
+		log_info "Trusting mise config in worktree..."
+		mise trust >/dev/null 2>&1 || true
+	fi
+
 	# Install dependencies
 	install_dependencies "$worktree_dir"
 
