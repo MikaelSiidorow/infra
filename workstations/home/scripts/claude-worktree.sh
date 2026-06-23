@@ -148,7 +148,9 @@ cmd_close() {
 
 	log_info "Removing worktree: $worktree_name"
 
-	# Check for uncommitted changes
+	# Check for uncommitted changes (refresh first so files that differ only by
+	# stat/mtime, not content, are not reported as changed).
+	git -C "$worktree_dir" update-index -q --refresh >/dev/null 2>&1 || true
 	if ! git -C "$worktree_dir" diff-index --quiet HEAD 2>/dev/null || ! git -C "$worktree_dir" diff-files --quiet 2>/dev/null; then
 		log_warn "Worktree has uncommitted changes that will be discarded"
 		read -p "Continue with removal? [y/N] " -n 1 -r
@@ -200,7 +202,9 @@ seed_dev_artifacts() {
 	# coreutils cp (no -c flag) may shadow it on PATH. Skip on other platforms.
 	[[ "$OSTYPE" == "darwin"* ]] || return 0
 
-	local seeded=false
+	log_info "Seeding deps from source via APFS clone (a few seconds)..."
+	local start=$SECONDS
+	local count=0
 	local nm rel dest artifact
 
 	# node_modules trees (root + each workspace); cp -R clones nested ones too.
@@ -212,7 +216,7 @@ seed_dev_artifacts() {
 		fi
 		mkdir -p "$(dirname "$dest")"
 		if /bin/cp -cR "$nm" "$dest" 2>/dev/null; then
-			seeded=true
+			count=$((count + 1))
 		fi
 	done < <(find "$source_dir" \
 		-path "$source_dir/.git" -prune -o \
@@ -224,13 +228,13 @@ seed_dev_artifacts() {
 		if [[ -e "$source_dir/$artifact" && ! -e "$worktree_dir/$artifact" ]]; then
 			mkdir -p "$(dirname "$worktree_dir/$artifact")"
 			if /bin/cp -cR "$source_dir/$artifact" "$worktree_dir/$artifact" 2>/dev/null; then
-				seeded=true
+				count=$((count + 1))
 			fi
 		fi
 	done
 
-	if [[ "$seeded" == true ]]; then
-		log_info "Seeded deps from source via APFS clone; install will verify."
+	if [[ "$count" -gt 0 ]]; then
+		log_info "Seeded $count dep dir(s) in $((SECONDS - start))s; install will verify."
 	fi
 	return 0
 }
@@ -428,6 +432,12 @@ cmd_create() {
 	local env_found=false
 	while IFS= read -r -d '' env_file; do
 		local rel_path="${env_file#$repo_root/}"
+		# Skip git-tracked env templates (.env.example, .env.testing): they're
+		# already in the checkout, and copying them stat-dirties the worktree,
+		# which makes `cwt close` warn about non-existent uncommitted changes.
+		if git -C "$repo_root" ls-files --error-unmatch "$rel_path" >/dev/null 2>&1; then
+			continue
+		fi
 		mkdir -p "$(dirname "$worktree_dir/$rel_path")"
 		cp "$env_file" "$worktree_dir/$rel_path"
 		log_info "  Copied $rel_path"
