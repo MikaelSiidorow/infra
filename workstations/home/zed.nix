@@ -24,6 +24,7 @@ in
       bash-language-server
       dockerfile-language-server
       nodejs
+      package-version-server
       tailwindcss-language-server
       tinymist
       typescript-language-server
@@ -67,6 +68,7 @@ in
         dockerfile-language-server = nodeLangServer pkgs.dockerfile-language-server "docker-langserver" [
           "--stdio"
         ];
+        package-version-server = zedLsp "${pkgs.package-version-server}/bin/package-version-server" [ ];
         vtsls = nodeLangServer pkgs.vtsls "vtsls" [ "--stdio" ];
         typescript-language-server =
           nodeLangServer pkgs.typescript-language-server "typescript-language-server"
