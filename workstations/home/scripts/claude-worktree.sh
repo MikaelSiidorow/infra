@@ -161,13 +161,28 @@ cmd_close() {
 		fi
 	fi
 
-	# Remove bulky untracked directories first so git worktree remove
-	# doesn't have to scan them
-	for dir in node_modules .next dist build target; do
-		if [[ -d "$worktree_dir/$dir" ]]; then
-			rm -rf "$worktree_dir/$dir"
+	# Move bulky untracked dirs (node_modules in every workspace, build caches)
+	# to a same-volume trash via instant renames, then delete them in the
+	# background. git worktree remove then only deletes the small source tree,
+	# so close returns fast instead of unlinking hundreds of thousands of files.
+	local trash i=0 bulky extra
+	trash="$(mktemp -d "$repo_root/.claude/worktrees/.cwt-trash-XXXXXX" 2>/dev/null || true)"
+	if [[ -n "$trash" && -d "$trash" ]]; then
+		while IFS= read -r -d '' bulky; do
+			mv "$bulky" "$trash/$i" 2>/dev/null && i=$((i + 1)) || true
+		done < <(find "$worktree_dir" \
+			-type d \( -name node_modules -o -name target -o -name .next -o -name dist \) -prune -print0 2>/dev/null)
+		for extra in .yarn/cache .yarn/unplugged; do
+			if [[ -d "$worktree_dir/$extra" ]]; then
+				mv "$worktree_dir/$extra" "$trash/$i" 2>/dev/null && i=$((i + 1)) || true
+			fi
+		done
+		if [[ "$i" -gt 0 ]]; then
+			nohup rm -rf "$trash" >/dev/null 2>&1 &
+		else
+			rmdir "$trash" 2>/dev/null || true
 		fi
-	done
+	fi
 
 	# Remove the worktree (--force to handle uncommitted changes)
 	if git worktree remove "$worktree_dir" --force 2>/dev/null; then
