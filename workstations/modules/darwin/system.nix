@@ -87,5 +87,22 @@
         }
       ];
     };
+    # Rebind "Move focus to next window" (default ⌘`) to ⌘§ so the section key
+    # left of 1 cycles windows of the active app (⌘⇧§ cycles backwards). This is
+    # symbolic hotkey 27; parameters = (character, key code, modifier mask):
+    #   167     = "§" character
+    #   10      = key code of the § / ISO section key (left of 1)
+    #   1048576 = ⌘ (Command) modifier
+    CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys."27" = {
+      enabled = 1;
+      value = {
+        type = "standard";
+        parameters = [
+          167
+          10
+          1048576
+        ];
+      };
+    };
   };
 }
