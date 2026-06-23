@@ -189,6 +189,52 @@ cmd_close() {
 	fi
 }
 
+# Seed a new worktree's dependencies and build artifacts from a source checkout
+# using APFS copy-on-write, so the package install verifies instead of
+# re-downloading and rebuilding. macOS/APFS only; best-effort and non-fatal.
+seed_dev_artifacts() {
+	local source_dir="$1"
+	local worktree_dir="$2"
+
+	# clonefile is a macOS (APFS) feature; use /bin/cp explicitly since a GNU
+	# coreutils cp (no -c flag) may shadow it on PATH. Skip on other platforms.
+	[[ "$OSTYPE" == "darwin"* ]] || return 0
+
+	local seeded=false
+	local nm rel dest artifact
+
+	# node_modules trees (root + each workspace); cp -R clones nested ones too.
+	while IFS= read -r -d '' nm; do
+		rel="${nm#"$source_dir"/}"
+		dest="$worktree_dir/$rel"
+		if [[ -e "$dest" ]]; then
+			continue
+		fi
+		mkdir -p "$(dirname "$dest")"
+		if /bin/cp -cR "$nm" "$dest" 2>/dev/null; then
+			seeded=true
+		fi
+	done < <(find "$source_dir" \
+		-path "$source_dir/.git" -prune -o \
+		-path "$source_dir/.claude" -prune -o \
+		-type d -name node_modules -prune -print0 2>/dev/null)
+
+	# Package-manager caches / build state so install can skip fetch + rebuild.
+	for artifact in .yarn/cache .yarn/unplugged .yarn/build-state.yml .yarn/install-state.gz .pnp.cjs .pnp.loader.mjs; do
+		if [[ -e "$source_dir/$artifact" && ! -e "$worktree_dir/$artifact" ]]; then
+			mkdir -p "$(dirname "$worktree_dir/$artifact")"
+			if /bin/cp -cR "$source_dir/$artifact" "$worktree_dir/$artifact" 2>/dev/null; then
+				seeded=true
+			fi
+		fi
+	done
+
+	if [[ "$seeded" == true ]]; then
+		log_info "Seeded deps from source via APFS clone; install will verify."
+	fi
+	return 0
+}
+
 # Detect package manager and install dependencies
 install_dependencies() {
 	local worktree_dir="$1"
@@ -442,6 +488,10 @@ cmd_create() {
 		log_info "Trusting mise config in worktree..."
 		mise trust >/dev/null 2>&1 || true
 	fi
+
+	# Seed deps + build artifacts from the source checkout via APFS clone, so the
+	# install verifies instead of re-downloading and rebuilding (macOS/APFS only).
+	seed_dev_artifacts "$repo_root" "$worktree_dir"
 
 	# Install dependencies (non-fatal so a failed install doesn't abort cwt mid-setup)
 	install_dependencies "$worktree_dir" || log_warn "Dependency install reported errors; continuing (worktree still usable, re-run install if needed)"
