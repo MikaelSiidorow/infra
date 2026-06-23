@@ -192,50 +192,66 @@ cmd_close() {
 }
 
 # Seed a new worktree's dependencies and build artifacts from a source checkout
-# using APFS copy-on-write, so the package install verifies instead of
-# re-downloading and rebuilding. macOS/APFS only; best-effort and non-fatal.
+# via APFS clonefile(2) on each directory: one fast kernel-side syscall per tree,
+# unlike `cp -cR` which clones per file and crawls for minutes on a node_modules
+# with hundreds of thousands of small files. The package install then verifies
+# instead of re-downloading and rebuilding. macOS + python3 only; best-effort.
 seed_dev_artifacts() {
 	local source_dir="$1"
 	local worktree_dir="$2"
 
-	# clonefile is a macOS (APFS) feature; use /bin/cp explicitly since a GNU
-	# coreutils cp (no -c flag) may shadow it on PATH. Skip on other platforms.
 	[[ "$OSTYPE" == "darwin"* ]] || return 0
+	# python3 is used to call clonefile(2) directly. Without it, skip seeding and
+	# let the install do its normal full work (cp -cR would be slower than that).
+	command -v python3 >/dev/null 2>&1 || return 0
 
-	log_info "Seeding deps from source via APFS clone (a few seconds)..."
+	log_info "Seeding deps from source via APFS clone..."
 	local start=$SECONDS
-	local count=0
-	local nm rel dest artifact
 
-	# node_modules trees (root + each workspace); cp -R clones nested ones too.
+	# Sources: node_modules trees (root + each workspace) plus package-manager
+	# caches / build state, so the install can skip fetch and rebuild.
+	local -a srcs=()
+	local nm artifact
 	while IFS= read -r -d '' nm; do
-		rel="${nm#"$source_dir"/}"
-		dest="$worktree_dir/$rel"
-		if [[ -e "$dest" ]]; then
-			continue
-		fi
-		mkdir -p "$(dirname "$dest")"
-		if /bin/cp -cR "$nm" "$dest" 2>/dev/null; then
-			count=$((count + 1))
-		fi
+		srcs+=("$nm")
 	done < <(find "$source_dir" \
 		-path "$source_dir/.git" -prune -o \
 		-path "$source_dir/.claude" -prune -o \
 		-type d -name node_modules -prune -print0 2>/dev/null)
-
-	# Package-manager caches / build state so install can skip fetch + rebuild.
 	for artifact in .yarn/cache .yarn/unplugged .yarn/build-state.yml .yarn/install-state.gz .pnp.cjs .pnp.loader.mjs; do
-		if [[ -e "$source_dir/$artifact" && ! -e "$worktree_dir/$artifact" ]]; then
-			mkdir -p "$(dirname "$worktree_dir/$artifact")"
-			if /bin/cp -cR "$source_dir/$artifact" "$worktree_dir/$artifact" 2>/dev/null; then
-				count=$((count + 1))
-			fi
+		if [[ -e "$source_dir/$artifact" ]]; then
+			srcs+=("$source_dir/$artifact")
 		fi
 	done
+	[[ ${#srcs[@]} -gt 0 ]] || return 0
 
-	if [[ "$count" -gt 0 ]]; then
-		log_info "Seeded $count dep dir(s) in $((SECONDS - start))s; install will verify."
-	fi
+	# Clone each source to its matching path under the worktree (skips any that
+	# already exist; clonefile recreates the directory tree).
+	local count
+	count=$(python3 - "$source_dir" "$worktree_dir" "${srcs[@]}" <<'PY' 2>/dev/null
+import ctypes, os, sys
+
+libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+clonefile = libc.clonefile
+clonefile.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32]
+clonefile.restype = ctypes.c_int
+
+src_root = sys.argv[1].rstrip("/") + "/"
+dst_root = sys.argv[2]
+n = 0
+for src in sys.argv[3:]:
+    rel = src[len(src_root):] if src.startswith(src_root) else os.path.basename(src)
+    dst = os.path.join(dst_root, rel)
+    if os.path.exists(dst):
+        continue
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    if clonefile(src.encode(), dst.encode(), 0) == 0:
+        n += 1
+print(n)
+PY
+) || count=0
+
+	log_info "Seeded ${count:-0} dep dir(s) in $((SECONDS - start))s; install will verify."
 	return 0
 }
 
