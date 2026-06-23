@@ -443,8 +443,8 @@ cmd_create() {
 		mise trust >/dev/null 2>&1 || true
 	fi
 
-	# Install dependencies
-	install_dependencies "$worktree_dir"
+	# Install dependencies (non-fatal so a failed install doesn't abort cwt mid-setup)
+	install_dependencies "$worktree_dir" || log_warn "Dependency install reported errors; continuing (worktree still usable, re-run install if needed)"
 
 	# Run the repository's worktree-setup hook if present. Keeps cwt
 	# project-agnostic: repo-specific setup (e.g. per-worktree dev ports)
