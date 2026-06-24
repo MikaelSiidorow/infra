@@ -25,6 +25,8 @@ in
       dockerfile-language-server
       nodejs
       package-version-server
+      ruff
+      rust-analyzer
       tailwindcss-language-server
       tinymist
       typescript-language-server
@@ -33,6 +35,7 @@ in
       yaml-language-server
     ];
     extensions = [
+      "dockerfile"
       "git-firefly"
       "html"
       "lua"
@@ -69,6 +72,8 @@ in
           "--stdio"
         ];
         package-version-server = zedLsp "${pkgs.package-version-server}/bin/package-version-server" [ ];
+        rust-analyzer = zedLsp "${pkgs.rust-analyzer}/bin/rust-analyzer" [ ];
+        ruff = zedLsp "${pkgs.ruff}/bin/ruff" [ "server" ];
         vtsls = nodeLangServer pkgs.vtsls "vtsls" [ "--stdio" ];
         typescript-language-server =
           nodeLangServer pkgs.typescript-language-server "typescript-language-server"
