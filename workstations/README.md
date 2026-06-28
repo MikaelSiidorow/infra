@@ -131,7 +131,7 @@ Homebrew packages are not upgraded during `make switch`; run `make brew-upgrade`
 
 The default package set is `nixpkgs` on `nixos-26.05`. Fast-moving user apps can use `nixpkgs-unstable` explicitly; Firefox is wired this way so browser updates can move ahead of the default package set.
 
-Use `make update-fast` to update app/catalog inputs without moving the default stable package set: `nixpkgs-unstable`, NUR, nix-index database, Claude Code, OpenCode, and Homebrew taps. Use `make update` when you want all flake inputs updated together.
+Use `make update-fast` to update app/catalog inputs without moving the default stable package set: `nixpkgs-unstable`, NUR, nix-index database, Claude Code, Codex, OpenCode, and Homebrew taps. Use `make update` when you want all flake inputs updated together.
 
 `bitwarden-desktop` is not currently installed from Nix because `nixos-26.05` packages it with Electron 39, which nixpkgs marks EOL/insecure. The Firefox Bitwarden extension remains managed by Nix.
 

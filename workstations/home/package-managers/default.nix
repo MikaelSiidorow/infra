@@ -7,7 +7,6 @@ let
   minimumReleaseAgeExcludes = [
     "create-mikstack"
     "@mikstack/*"
-    "@openai/codex"
   ];
 in
 {

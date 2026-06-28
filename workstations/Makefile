@@ -95,6 +95,7 @@ update-fast:
 		nur \
 		nix-index-database \
 		claude-code-nix \
+		codex-cli-nix \
 		opencode-nix \
 		homebrew-core \
 		homebrew-cask \

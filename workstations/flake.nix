@@ -66,6 +66,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Codex CLI with automatic updates
+    codex-cli-nix = {
+      url = "github:sadjow/codex-cli-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # OpenCode with automatic updates (for NixOS/Linux)
     opencode-nix = {
       url = "github:dan-online/opencode-nix";
@@ -85,6 +91,7 @@
       homebrew-cask,
       homebrew-cmux,
       claude-code-nix,
+      codex-cli-nix,
       opencode-nix,
       nur,
       ...
