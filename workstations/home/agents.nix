@@ -7,7 +7,21 @@ let
   skillTargets = {
     codex = name: ".codex/skills/${name}";
     claude-code = name: ".claude/skills/${name}";
+    opencode = name: ".config/opencode/skills/${name}";
   };
+
+  skillTargetPaths =
+    name: agents:
+    let
+      # OpenCode also reads ~/.claude/skills. If a skill targets both tools,
+      # install it once there so OpenCode does not see duplicate skill names.
+      effectiveAgents =
+        if builtins.elem "claude-code" agents && builtins.elem "opencode" agents then
+          builtins.filter (agent: agent != "opencode") agents
+        else
+          agents;
+    in
+    lib.unique (map (agent: skillTargets.${agent} name) effectiveAgents);
 
   skills = {
     ponytail = {
@@ -15,6 +29,7 @@ let
       agents = [
         "codex"
         "claude-code"
+        "opencode"
       ];
     };
   };
@@ -22,12 +37,12 @@ let
   mkSkillFiles =
     name: skill:
     lib.listToAttrs (
-      map (agent: {
-        name = skillTargets.${agent} name;
+      map (path: {
+        name = path;
         value = {
           inherit (skill) source;
         };
-      }) skill.agents
+      }) (skillTargetPaths name skill.agents)
     );
 
   skillFiles = lib.foldl' (acc: fileSet: acc // fileSet) { } (lib.mapAttrsToList mkSkillFiles skills);
