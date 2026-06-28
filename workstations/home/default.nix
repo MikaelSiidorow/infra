@@ -14,7 +14,7 @@
     ./scripts.nix
     ./applications.nix
     ./nix-index.nix
-    ./claude-code.nix
+    ./agents.nix
     ./zed.nix
     ./package-managers
     inputs.sops-nix.homeManagerModules.sops

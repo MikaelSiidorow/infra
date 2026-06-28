@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Agent Instructions
 
-Behavioral defaults across all projects. Project-specific CLAUDE.md files extend these.
+Behavioral defaults across all projects. Project-specific instruction files extend these.
 
 Bias: caution over speed. Use judgment for trivial tasks.
 
