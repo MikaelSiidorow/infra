@@ -1,3 +1,5 @@
+excludes = ["home/agents/skills/**"]
+
 [formatter.nix]
 command = "nixfmt"
 includes = ["*.nix"]
