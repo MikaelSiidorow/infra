@@ -10,6 +10,7 @@
     ./packages.nix
     ./direnv.nix
     ./git.nix
+    ./github-auth.nix
     ./zsh.nix
     ./scripts.nix
     ./applications.nix
