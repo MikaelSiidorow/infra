@@ -16,14 +16,11 @@
     !include ${config.sops.templates."nix-access-tokens.conf".path}
   '';
 
-  # For gh/uv/git/curl. Read at startup; sessionVariables are static and would
-  # bake the token into the store.
+  # uv only. Setting GITHUB_TOKEN/GH_TOKEN would shadow gh's keyring login,
+  # which holds the real scopes.
   programs.zsh.envExtra = ''
     if [[ -r "${config.sops.secrets."github/token".path}" ]]; then
-      GITHUB_TOKEN="$(< "${config.sops.secrets."github/token".path}")"
-      export GITHUB_TOKEN
-      export GH_TOKEN="$GITHUB_TOKEN"
-      export UV_GITHUB_TOKEN="$GITHUB_TOKEN"
+      export UV_GITHUB_TOKEN="$(< "${config.sops.secrets."github/token".path}")"
     fi
   '';
 }
