@@ -161,6 +161,19 @@ cmd_close() {
 		fi
 	fi
 
+	# Run the repository's worktree-teardown hook if present, before anything is
+	# removed (the worktree's docker/ must still exist). Keeps cwt
+	# project-agnostic: repo-specific teardown (e.g. docker compose down -v of a
+	# per-worktree dev stack) lives in the repo's own .claude/worktree-teardown.sh.
+	local worktree_teardown_hook="$repo_root/.claude/worktree-teardown.sh"
+	if [[ -f "$worktree_teardown_hook" ]]; then
+		log_info "Running repo worktree-teardown hook..."
+		CWT_WORKTREE_DIR="$worktree_dir" \
+			CWT_WORKTREE_NAME="$worktree_name" \
+			CWT_REPO_ROOT="$repo_root" \
+			bash "$worktree_teardown_hook" || log_warn "worktree-teardown hook exited non-zero"
+	fi
+
 	# Move bulky untracked dirs (node_modules in every workspace, build caches)
 	# to a same-volume trash via instant renames, then delete them in the
 	# background. git worktree remove then only deletes the small source tree,
