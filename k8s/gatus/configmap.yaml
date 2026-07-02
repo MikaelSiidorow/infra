@@ -45,19 +45,6 @@ data:
             failure-threshold: 3
             success-threshold: 2
 
-      - name: Marginalia
-        group: Apps
-        url: https://marginalia.miksu.app
-        interval: 60s
-        conditions:
-          - "[STATUS] == 200"
-          - "[RESPONSE_TIME] < 5000"
-        alerts:
-          - type: telegram
-            enabled: true
-            failure-threshold: 3
-            success-threshold: 2
-
       - name: Brawl Draft
         group: Apps
         url: https://brawl.miksu.app/api/health
@@ -65,19 +52,6 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[BODY].status == ok"
-          - "[RESPONSE_TIME] < 5000"
-        alerts:
-          - type: telegram
-            enabled: true
-            failure-threshold: 3
-            success-threshold: 2
-
-      - name: Marginalia Zero
-        group: Apps
-        url: https://zero.marginalia.miksu.app
-        interval: 60s
-        conditions:
-          - "[CONNECTED] == true"
           - "[RESPONSE_TIME] < 5000"
         alerts:
           - type: telegram
