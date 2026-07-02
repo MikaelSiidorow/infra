@@ -98,27 +98,16 @@
     '';
     ensureDatabases = [
       "refinery"
-      "marginalia"
-      "marginalia_cvr"
-      "marginalia_cdb"
     ];
     ensureUsers = [
       {
         name = "refinery";
         ensureDBOwnership = true;
       }
-      {
-        name = "marginalia";
-        ensureDBOwnership = true;
-      }
     ];
     # Runs only on first cluster init (fresh deploy)
     initialScript = pkgs.writeText "pg-init.sql" ''
       ALTER ROLE refinery WITH REPLICATION;
-      ALTER ROLE marginalia WITH SUPERUSER REPLICATION;
-      ALTER ROLE marginalia SET search_path TO public;
-      GRANT ALL PRIVILEGES ON DATABASE marginalia_cvr TO marginalia;
-      GRANT ALL PRIVILEGES ON DATABASE marginalia_cdb TO marginalia;
     '';
   };
 
@@ -136,10 +125,6 @@
     };
     script = ''
       ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE refinery WITH REPLICATION;"
-      ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE marginalia WITH SUPERUSER REPLICATION;"
-      ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE marginalia SET search_path TO public;"
-      ${config.services.postgresql.package}/bin/psql -c "GRANT ALL PRIVILEGES ON DATABASE marginalia_cvr TO marginalia;"
-      ${config.services.postgresql.package}/bin/psql -c "GRANT ALL PRIVILEGES ON DATABASE marginalia_cdb TO marginalia;"
     '';
   };
 

@@ -38,32 +38,6 @@ variable "grafana_admin_password" {
   sensitive = true
 }
 
-# Marginalia secrets - external values (must be set via TF_VAR_*)
-variable "marginalia_github_client_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "marginalia_smtp_host" {
-  type      = string
-  sensitive = true
-}
-
-variable "marginalia_smtp_user" {
-  type      = string
-  sensitive = true
-}
-
-variable "marginalia_smtp_pass" {
-  type      = string
-  sensitive = true
-}
-
-variable "marginalia_smtp_from" {
-  type      = string
-  sensitive = true
-}
-
 variable "brawl_stars_api_key" {
   type      = string
   sensitive = true

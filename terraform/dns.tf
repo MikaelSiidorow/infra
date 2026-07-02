@@ -327,15 +327,6 @@ resource "cloudflare_dns_record" "miksu_app_refinery_zero" {
   comment = "DNS-only for WebSocket support"
 }
 
-resource "cloudflare_dns_record" "miksu_app_marginalia" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "A"
-  name    = "marginalia.miksu.app"
-  content = hcloud_server.k3s_server.ipv4_address
-  proxied = true
-  ttl     = 1
-}
-
 resource "cloudflare_dns_record" "miksu_app_brawl" {
   zone_id = cloudflare_zone.miksu_app.id
   type    = "A"
@@ -352,54 +343,6 @@ resource "cloudflare_dns_record" "miksu_app_status" {
   content = hcloud_server.k3s_server.ipv4_address
   proxied = true
   ttl     = 1
-}
-
-resource "cloudflare_dns_record" "miksu_app_marginalia_zero" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "A"
-  name    = "zero.marginalia.miksu.app"
-  content = hcloud_server.k3s_server.ipv4_address
-  proxied = false
-  ttl     = 1
-  comment = "DNS-only for WebSocket support"
-}
-
-# Marginalia email (Scaleway TEM)
-resource "cloudflare_dns_record" "miksu_app_marginalia_spf" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "TXT"
-  name    = "marginalia.miksu.app"
-  content = "\"v=spf1 include:_spf.tem.scaleway.com -all\""
-  proxied = false
-  ttl     = 1
-}
-
-resource "cloudflare_dns_record" "miksu_app_marginalia_dkim" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "TXT"
-  name    = "7b9f3309-1a48-4cf2-b9fa-fab3dd0a6813._domainkey.marginalia.miksu.app"
-  content = "\"v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvOY6vL/a9vab+j3yKGwNo4faIZzOaZ4GnF79c/6z5+VtB4VIMeGxy3maUuXYTdV6ph/jRPEHluwgFdpsRGsQUed2BImrg1U4gRSai/Oo2YCaELmhoA5wmybzrUweBkxfuDOm1PUT3jI5tuh9tVlEn1k9Xxc2T52aDZ4ZdImTycxjkBRBITzHQ5zPh4eDe1+7NeNHFCtfAKMbQzT9+XBi0qzJPc0cBuYONHdi6GfFK98kYZtpUhOxfxf0jwV8EFO4UVHtUmZihSnARoEvMrBdjELZf1d2/VZ8E0ynxp1i6BrqeDw+rDp5BQ0OVGyjUvN2mhRYinF6fP7942qpcEkxNwIDAQAB\""
-  proxied = false
-  ttl     = 1
-}
-
-resource "cloudflare_dns_record" "miksu_app_marginalia_dmarc" {
-  zone_id = cloudflare_zone.miksu_app.id
-  type    = "TXT"
-  name    = "_dmarc.marginalia.miksu.app"
-  content = "\"v=DMARC1; p=none\""
-  proxied = false
-  ttl     = 1
-}
-
-resource "cloudflare_dns_record" "miksu_app_marginalia_mx" {
-  zone_id  = cloudflare_zone.miksu_app.id
-  type     = "MX"
-  name     = "marginalia.miksu.app"
-  content  = "blackhole.tem.scaleway.com"
-  proxied  = false
-  ttl      = 1
-  priority = 10
 }
 
 # =============================================================================
