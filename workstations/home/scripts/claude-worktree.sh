@@ -38,6 +38,7 @@ Create Options:
   --from <branch>     Base branch to create worktree from (default: origin/main)
                       Only used when creating a NEW branch
   --no-open          Don't open a new terminal after creation
+  --no-dev           Don't launch the repo dev stack/tabs (dev is the default)
 
 Branch Behavior:
   The script intelligently handles existing branches:
@@ -161,17 +162,17 @@ cmd_close() {
 		fi
 	fi
 
-	# Run the repository's worktree-teardown hook if present, before anything is
+	# Run the repository's worktree teardown hook if present, before anything is
 	# removed (the worktree's docker/ must still exist). Keeps cwt
 	# project-agnostic: repo-specific teardown (e.g. docker compose down -v of a
-	# per-worktree dev stack) lives in the repo's own .claude/worktree-teardown.sh.
-	local worktree_teardown_hook="$repo_root/.claude/worktree-teardown.sh"
-	if [[ -f "$worktree_teardown_hook" ]]; then
-		log_info "Running repo worktree-teardown hook..."
+	# per-worktree dev stack) lives in the repo's own .claude/worktree-hooks.sh.
+	local worktree_hook="$repo_root/.claude/worktree-hooks.sh"
+	if [[ -f "$worktree_hook" ]]; then
+		log_info "Running repo worktree teardown hook..."
 		CWT_WORKTREE_DIR="$worktree_dir" \
 			CWT_WORKTREE_NAME="$worktree_name" \
 			CWT_REPO_ROOT="$repo_root" \
-			bash "$worktree_teardown_hook" || log_warn "worktree-teardown hook exited non-zero"
+			bash "$worktree_hook" teardown || log_warn "worktree teardown hook exited non-zero"
 	fi
 
 	# Move bulky untracked dirs (node_modules in every workspace, build caches)
@@ -256,7 +257,8 @@ seed_dev_artifacts() {
 	# Clone each source to its matching path under the worktree (skips any that
 	# already exist; clonefile recreates the directory tree).
 	local count
-	count=$(python3 - "$source_dir" "$worktree_dir" "${srcs[@]}" <<'PY' 2>/dev/null
+	count=$(
+		python3 - "$source_dir" "$worktree_dir" "${srcs[@]}" <<'PY' 2>/dev/null
 import ctypes, os, sys
 
 libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
@@ -277,7 +279,7 @@ for src in sys.argv[3:]:
         n += 1
 print(n)
 PY
-) || count=0
+	) || count=0
 
 	log_info "Seeded ${count:-0} dep dir(s) in $((SECONDS - start))s; install will verify."
 	return 0
@@ -364,7 +366,7 @@ open_terminal() {
 	# Prefer cmux if we're inside a cmux terminal (CMUX_WORKSPACE_ID is set by cmux)
 	if [[ -n "${CMUX_WORKSPACE_ID:-}" ]] && command -v cmux &>/dev/null; then
 		log_info "Opening new cmux workspace..."
-		cmux new-workspace --cwd "$worktree_dir"
+		cmux workspace create --cwd "$worktree_dir"
 		echo -e "${GREEN}New cmux workspace opened${NC}"
 		return
 	fi
@@ -390,6 +392,7 @@ cmd_create() {
 	local worktree_name=""
 	local base_branch="origin/main"
 	local open_terminal=true
+	local dev_mode=true
 
 	# Parse arguments
 	while [[ $# -gt 0 ]]; do
@@ -400,6 +403,10 @@ cmd_create() {
 			;;
 		--no-open)
 			open_terminal=false
+			shift
+			;;
+		--no-dev)
+			dev_mode=false
 			shift
 			;;
 		-*)
@@ -475,7 +482,7 @@ cmd_create() {
 	log_info "Looking for .env files to copy..."
 	local env_found=false
 	while IFS= read -r -d '' env_file; do
-		local rel_path="${env_file#$repo_root/}"
+		local rel_path="${env_file#"$repo_root"/}"
 		# Skip git-tracked env templates (.env.example, .env.testing): they're
 		# already in the checkout, and copying them stat-dirties the worktree,
 		# which makes `cwt close` warn about non-existent uncommitted changes.
@@ -550,16 +557,31 @@ cmd_create() {
 	# Install dependencies (non-fatal so a failed install doesn't abort cwt mid-setup)
 	install_dependencies "$worktree_dir" || log_warn "Dependency install reported errors; continuing (worktree still usable, re-run install if needed)"
 
-	# Run the repository's worktree-setup hook if present. Keeps cwt
-	# project-agnostic: repo-specific setup (e.g. per-worktree dev ports)
-	# lives in the repo's own .claude/worktree-setup.sh.
-	local worktree_hook="$repo_root/.claude/worktree-setup.sh"
+	# Run the repository's worktree lifecycle hooks if present. Keeps cwt
+	# project-agnostic: repo-specific setup (per-worktree dev env) and the dev
+	# launch (e.g. cmux tabs for the dev stack) live in the repo's own
+	# .claude/worktree-hooks.sh, dispatched by event.
+	local worktree_hook="$repo_root/.claude/worktree-hooks.sh"
 	if [[ -f "$worktree_hook" ]]; then
-		log_info "Running repo worktree-setup hook..."
+		log_info "Running repo worktree setup hook..."
 		CWT_WORKTREE_DIR="$worktree_dir" \
 			CWT_WORKTREE_NAME="$worktree_name" \
 			CWT_REPO_ROOT="$repo_root" \
-			bash "$worktree_hook" || log_warn "worktree-setup hook exited non-zero"
+			bash "$worktree_hook" setup || log_warn "worktree setup hook exited non-zero"
+
+		# Dev stack/tabs are the default; --no-dev skips them. When the dev hook
+		# opens its own tabs, skip cwt's fallback single terminal.
+		if [[ "$dev_mode" == true ]]; then
+			log_info "Launching dev stack (--no-dev to skip)..."
+			if CWT_WORKTREE_DIR="$worktree_dir" \
+				CWT_WORKTREE_NAME="$worktree_name" \
+				CWT_REPO_ROOT="$repo_root" \
+				bash "$worktree_hook" dev; then
+				open_terminal=false
+			else
+				log_warn "worktree dev hook exited non-zero"
+			fi
+		fi
 	fi
 
 	echo ""
