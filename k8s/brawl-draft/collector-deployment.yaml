@@ -4,7 +4,7 @@ metadata:
   name: brawl-draft-collector
   namespace: brawl-draft
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -60,11 +60,17 @@ spec:
             - name: COLLECTOR_MIN_MATCH_RANK
               value: "13"
             - name: COLLECTOR_MIN_MATCH_RANK_KNOWN_PLAYERS
-              value: "1"
+              value: "3"
+            - name: COLLECTOR_MIN_DISCOVERED_PLAYER_RANK
+              value: "13"
+            - name: COLLECTOR_MIN_DISCOVERED_MATCH_RANK
+              value: "13"
+            - name: COLLECTOR_MIN_DISCOVERED_MATCH_RANK_KNOWN_PLAYERS
+              value: "3"
             - name: COLLECTOR_CYCLE_SLEEP_SECONDS
               value: "0"
             - name: COLLECTOR_STOP_DB_SIZE_GIB
-              value: "50"
+              value: "38"
             - name: COLLECTOR_MAINTENANCE_LOCK_FILE
               value: /data/collector-maintenance.lock
             - name: COLLECTOR_MAINTENANCE_SLEEP_SECONDS
