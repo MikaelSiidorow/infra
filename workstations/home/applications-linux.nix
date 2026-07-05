@@ -27,6 +27,7 @@ in
 
     # Productivity
     obsidian
+    (config.lib.nixGL.wrap sweethome3d.application)
 
     # Cloud
     azure-cli
