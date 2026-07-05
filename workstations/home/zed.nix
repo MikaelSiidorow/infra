@@ -20,30 +20,38 @@ in
   programs.zed-editor = {
     enable = true;
     package = if isDarwin then pkgs.zed-editor else config.lib.nixGL.wrap pkgs.zed-editor;
-    extraPackages = with pkgs; [
-      bash-language-server
-      dockerfile-language-server
-      nil
-      nixd
-      nodejs
-      package-version-server
-      ruff
-      rust-analyzer
-      tailwindcss-language-server
-      tinymist
-      typescript-language-server
-      vscode-langservers-extracted
-      vtsls
-      yaml-language-server
-    ];
+    extraPackages =
+      with pkgs;
+      [
+        bash-language-server
+        dockerfile-language-server
+        nil
+        nixd
+        nodejs
+        package-version-server
+        ruff
+        rust-analyzer
+        tailwindcss-language-server
+        typescript-language-server
+        vscode-langservers-extracted
+        vtsls
+        yaml-language-server
+      ]
+      ++ pkgs.lib.optionals (!isDarwin) [
+        nmap
+        tinymist
+      ];
     extensions = [
       "dockerfile"
       "git-firefly"
       "html"
-      "lua"
       "nix"
       "oxc"
       "toml"
+    ]
+    ++ pkgs.lib.optionals (!isDarwin) [
+      "gdscript"
+      "lua"
       "typst"
     ];
     userSettings = {
@@ -85,6 +93,8 @@ in
         tailwindcss-language-server =
           nodeLangServer pkgs.tailwindcss-language-server "tailwindcss-language-server"
             [ "--stdio" ];
+      }
+      // pkgs.lib.optionalAttrs (!isDarwin) {
         tinymist = (zedLsp "${pkgs.tinymist}/bin/tinymist" [ "lsp" ]) // {
           settings = {
             exportPdf = "onSave";
