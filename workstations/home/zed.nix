@@ -23,6 +23,8 @@ in
     extraPackages = with pkgs; [
       bash-language-server
       dockerfile-language-server
+      nil
+      nixd
       nodejs
       package-version-server
       ruff
@@ -71,6 +73,8 @@ in
         dockerfile-language-server = nodeLangServer pkgs.dockerfile-language-server "docker-langserver" [
           "--stdio"
         ];
+        nil = zedLsp "${pkgs.nil}/bin/nil" [ ];
+        nixd = zedLsp "${pkgs.nixd}/bin/nixd" [ ];
         package-version-server = zedLsp "${pkgs.package-version-server}/bin/package-version-server" [ ];
         rust-analyzer = zedLsp "${pkgs.rust-analyzer}/bin/rust-analyzer" [ ];
         ruff = zedLsp "${pkgs.ruff}/bin/ruff" [ "server" ];
