@@ -6,16 +6,6 @@
     mode = "0600";
   };
 
-  # Templated (not inline) so the token stays out of the store; `!include` is
-  # optional, so nix won't error before the secret is decrypted.
-  sops.templates."nix-access-tokens.conf".content = ''
-    access-tokens = github.com=${config.sops.placeholder."github/token"}
-  '';
-
-  xdg.configFile."nix/nix.conf".text = ''
-    !include ${config.sops.templates."nix-access-tokens.conf".path}
-  '';
-
   # uv only. Setting GITHUB_TOKEN/GH_TOKEN would shadow gh's keyring login,
   # which holds the real scopes.
   programs.zsh.envExtra = ''

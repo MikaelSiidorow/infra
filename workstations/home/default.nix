@@ -8,6 +8,7 @@
 {
   imports = [
     ./packages.nix
+    ./nix.nix
     ./direnv.nix
     ./git.nix
     ./github-auth.nix
