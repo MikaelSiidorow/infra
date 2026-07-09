@@ -6,11 +6,6 @@
   ...
 }:
 let
-  vesktop-unstable = pkgs-unstable.vesktop.override {
-    # nixpkgs Vesktop currently pins pnpm_10_29_2, which is marked insecure.
-    pnpm_10_29_2 = pkgs-unstable.pnpm_10;
-  };
-
   # Launches the Steam-installed Godot so playtime is tracked.
   # Steam appid 404790 = Godot Engine. Strips Nix env for apt Steam glibc compat.
   godot-steam = pkgs.writeShellScriptBin "godot-steam" ''
@@ -22,7 +17,7 @@ in
 {
   home.packages = with pkgs; [
     # Communication
-    vesktop-unstable
+    pkgs-unstable.vesktop
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
     # bitwarden-desktop is temporarily omitted: nixos-26.05 packages it with
