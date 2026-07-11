@@ -15,6 +15,7 @@
     ./zsh.nix
     ./scripts.nix
     ./applications.nix
+    ./launcher.nix
     ./nix-index.nix
     ./agents.nix
     ./zed.nix
