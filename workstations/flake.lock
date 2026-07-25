@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "aeye": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784913496,
+        "narHash": "sha256-DF3hxKTVd+ibyhWQjC0WAb0gsVk096xo1+LwznBXDEY=",
+        "owner": "MikaelSiidorow",
+        "repo": "aeye",
+        "rev": "dd47e43352f52553cf6317b04f556a09a88e3a80",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MikaelSiidorow",
+        "repo": "aeye",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -378,6 +398,7 @@
     },
     "root": {
       "inputs": {
+        "aeye": "aeye",
         "claude-code-nix": "claude-code-nix",
         "codex-cli-nix": "codex-cli-nix",
         "home-manager": "home-manager",

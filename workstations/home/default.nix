@@ -7,6 +7,7 @@
 }:
 {
   imports = [
+    ./aeye.nix
     ./packages.nix
     ./nix.nix
     ./direnv.nix
