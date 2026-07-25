@@ -1,6 +1,5 @@
 # skhd configuration - macOS only
-{ ... }:
-{
+_: {
   xdg.configFile."skhd/skhdrc" = {
     text = ''
       # -- App Switching Hotkeys --

@@ -4,11 +4,6 @@ excludes = ["home/agents/skills/**"]
 command = "nixfmt"
 includes = ["*.nix"]
 
-[formatter.terraform]
-command = "terraform"
-options = ["fmt", "-"]
-includes = ["*.tf"]
-
 [formatter.shell]
 command = "shfmt"
 includes = ["*.sh", "*.bash"]

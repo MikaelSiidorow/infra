@@ -4,6 +4,8 @@
 # Detect platform
 HOSTNAME := $(shell hostname -s)
 UNAME := $(shell uname -s)
+SHELL_SOURCES := $(shell git ls-files '*.sh' '*.bash' ':!home/agents/skills/**')
+CHECK_SHELL := nix develop .\#checks -c
 
 # darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
 # when no flake attr is specified, so we pass `.` and let it pick.
@@ -39,15 +41,17 @@ help:
 	@echo "Common targets:"
 	@echo "  make switch       - Build and activate configuration for current host"
 	@echo "  make build        - Build configuration without activating"
-	@echo "  make check        - Check flake for errors"
+	@echo "  make check        - Check formatting, lint, and flake outputs"
 	@echo "  make update       - Update flake inputs"
 	@echo "  make update-fast  - Update fast-moving app inputs"
 	@echo "  make upgrade      - Update inputs and switch"
 	@echo "  make brew-upgrade - Update Homebrew packages on macOS"
 	@echo "  make clean        - Run garbage collection"
-	@echo "  make fmt          - Format all .nix files"
+	@echo "  make fmt          - Format supported repository files"
 	@echo ""
 	@echo "Other targets:"
+	@echo "  make format-check - Check formatting without activating"
+	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
 	@echo "  make popos        - Build and activate Pop!_OS configuration"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
@@ -65,9 +69,21 @@ build:
 	@echo "Building $(DISPLAY_TARGET)..."
 	$(BUILD_CMD) build --flake $(FLAKE_TARGET)
 
-# Check flake for errors
+# Check formatting in treefmt's CI mode
+.PHONY: format-check
+format-check:
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --ci
+
+# Lint shell and Nix sources
+.PHONY: lint
+lint:
+	$(CHECK_SHELL) shellcheck $(SHELL_SOURCES)
+	$(CHECK_SHELL) deadnix --fail .
+	$(CHECK_SHELL) statix check .
+
+# Check formatting, lint, and flake outputs
 .PHONY: check
-check:
+check: format-check lint
 	nix flake check
 
 # Show what would change (dry-run)
@@ -128,11 +144,10 @@ deep-clean:
 	@echo "Optimizing nix store..."
 	nix store optimise
 
-# Format all nix files
+# Format all supported repository files
 .PHONY: fmt
 fmt:
-	@echo "Formatting nix files..."
-	nix fmt
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml
 
 # Host-specific overrides (use when not running on the target host)
 .PHONY: popos

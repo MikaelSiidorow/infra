@@ -53,9 +53,11 @@ in
 
   # Managed to neutralize stale ~/.gitconfig files during migration. The real
   # config is written by Home Manager to $XDG_CONFIG_HOME/git/config.
-  home.file.".gitconfig".text = ''
-    # Managed by Home Manager. Git config lives in ${config.xdg.configHome}/git/config.
-  '';
-  home.file.".ssh/git_signing_key.pub".text = "${signingPublicKey}\n";
-  home.file.".ssh/allowed_signers".text = "${signingEmail} ${signingPublicKey}\n";
+  home.file = {
+    ".gitconfig".text = ''
+      # Managed by Home Manager. Git config lives in ${config.xdg.configHome}/git/config.
+    '';
+    ".ssh/git_signing_key.pub".text = "${signingPublicKey}\n";
+    ".ssh/allowed_signers".text = "${signingEmail} ${signingPublicKey}\n";
+  };
 }

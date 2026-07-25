@@ -1,9 +1,7 @@
 # NixOS Laptop host configuration - placeholder for future setup
 {
-  self,
   pkgs,
   username,
-  inputs,
   ...
 }:
 {

@@ -153,7 +153,7 @@ let
       extensions =
         (map mkRaycastExtension shared.extensions.raycast)
         ++ (map mkVicinaeExtension shared.extensions.vicinae);
-      settings = shared.settings;
+      inherit (shared) settings;
     };
   };
 

@@ -1,6 +1,5 @@
 # Common configuration shared between Darwin and NixOS
-{ ... }:
-{
+_: {
   # This module contains configuration that applies to both platforms
   # Currently most shared config is in home-manager modules
 

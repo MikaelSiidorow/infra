@@ -90,14 +90,11 @@
       homebrew-core,
       homebrew-cask,
       homebrew-cmux,
-      claude-code-nix,
-      codex-cli-nix,
-      opencode-nix,
       nur,
       ...
     }@inputs:
     let
-      lib = nixpkgs.lib;
+      inherit (nixpkgs) lib;
 
       # NixOS / Linux home-manager (pop-os) account.
       username = "mikaelsiidorow";
@@ -123,14 +120,14 @@
         };
 
       # Custom mergiraf with tree-sitter-po grammar for PO/gettext merge support
-      mergirafOverlay = final: prev: {
+      mergirafOverlay = final: _: {
         mergiraf = final.callPackage ./pkgs/mergiraf-custom { };
       };
 
       # Skip direnv's checkPhase on darwin. Its test suite forks subshells
       # that hang inside nix's macOS sandbox, and aarch64-darwin binary
       # caches often lag behind, forcing source builds that deadlock.
-      direnvOverlay = final: prev: {
+      direnvOverlay = _: prev: {
         direnv = prev.direnv.overrideAttrs (_: {
           doCheck = false;
         });
@@ -228,56 +225,6 @@
           ++ extraModules;
         };
 
-      # Helper function to create a NixOS system (for future use)
-      mkNixosSystem =
-        {
-          system,
-          hostname,
-          extraModules ? [ ],
-        }:
-        let
-          pkgs-unstable = mkPkgsUnstable system;
-        in
-        nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            inherit
-              self
-              inputs
-              pkgs-unstable
-              username
-              ;
-          };
-          modules = [
-            # Custom package overlays
-            {
-              nixpkgs.overlays = [
-                mergirafOverlay
-                nur.overlays.default
-              ];
-            }
-
-            # Host-specific configuration
-            ./hosts/${hostname}
-
-            # Home-manager integration
-            home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                backupFileExtension = "backup";
-                extraSpecialArgs = {
-                  inherit inputs pkgs-unstable hostname;
-                  isDarwin = false;
-                };
-                users.${username} = import ./home;
-              };
-            }
-          ]
-          ++ extraModules;
-        };
-
       # Helper function to create a home-manager standalone config
       mkHomeConfig =
         {
@@ -341,6 +288,30 @@
         }) supportedSystems
       );
 
+      # Pinned repository tooling used by the Makefile.
+      devShells = builtins.listToAttrs (
+        map (
+          system:
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+          in
+          {
+            name = system;
+            value.checks = pkgs.mkShellNoCC {
+              packages = with pkgs; [
+                deadnix
+                nixfmt
+                oxfmt
+                shellcheck
+                shfmt
+                statix
+                treefmt
+              ];
+            };
+          }
+        ) supportedSystems
+      );
+
       apps = builtins.listToAttrs (
         map (system: {
           name = system;
@@ -352,14 +323,6 @@
           };
         }) supportedSystems
       );
-
-      # NixOS configurations (uncomment when ready)
-      # nixosConfigurations = {
-      #   "nixos-laptop" = mkNixosSystem {
-      #     system = "x86_64-linux";  # or "aarch64-linux" for ARM
-      #     hostname = "nixos-laptop";
-      #   };
-      # };
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {

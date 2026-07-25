@@ -5,19 +5,19 @@
   ...
 }:
 {
-  home.sessionVariables = {
-    PNPM_HOME = "$HOME/.local/share/pnpm";
+  home = {
+    sessionVariables.PNPM_HOME = "$HOME/.local/share/pnpm";
+
+    sessionPath = [
+      "$HOME/.local/share/pnpm"
+      "$HOME/.bun/bin"
+      "$HOME/.local/bin"
+    ];
+
+    activation.createPnpmHome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      mkdir -p "$HOME/.local/share/pnpm"
+    '';
   };
-
-  home.sessionPath = [
-    "$HOME/.local/share/pnpm"
-    "$HOME/.bun/bin"
-    "$HOME/.local/bin"
-  ];
-
-  home.activation.createPnpmHome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    mkdir -p "$HOME/.local/share/pnpm"
-  '';
 
   programs.zsh = {
     enable = true;

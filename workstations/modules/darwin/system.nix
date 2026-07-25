@@ -49,59 +49,61 @@
     # arrangement: 1=name 2=date-added 3=date-modified 4=date-created 5=kind
     # displayas:   0=stack 1=folder
     # showas:      0=auto 1=fan 2=grid 3=list
-    CustomUserPreferences."com.apple.dock".persistent-others = [
-      {
-        tile-type = "directory-tile";
-        tile-data = {
-          file-label = "Downloads";
-          file-type = 2;
-          arrangement = 2;
-          displayas = 0;
-          showas = 1;
-          file-data = {
-            _CFURLString = "file:///Users/${username}/Downloads/";
-            _CFURLStringType = 15;
+    CustomUserPreferences = {
+      "com.apple.dock".persistent-others = [
+        {
+          tile-type = "directory-tile";
+          tile-data = {
+            file-label = "Downloads";
+            file-type = 2;
+            arrangement = 2;
+            displayas = 0;
+            showas = 1;
+            file-data = {
+              _CFURLString = "file:///Users/${username}/Downloads/";
+              _CFURLStringType = 15;
+            };
           };
-        };
-      }
-    ];
-    # Keyboard input sources: only Finnish (drop the default Swedish layout),
-    # keeping the character/emoji viewer.
-    CustomUserPreferences."com.apple.HIToolbox" = {
-      AppleEnabledInputSources = [
-        {
-          InputSourceKind = "Keyboard Layout";
-          "KeyboardLayout ID" = 17;
-          "KeyboardLayout Name" = "Finnish";
-        }
-        {
-          "Bundle ID" = "com.apple.CharacterPaletteIM";
-          InputSourceKind = "Non Keyboard Input Method";
         }
       ];
-      AppleSelectedInputSources = [
-        {
-          InputSourceKind = "Keyboard Layout";
-          "KeyboardLayout ID" = 17;
-          "KeyboardLayout Name" = "Finnish";
-        }
-      ];
-    };
-    # Rebind "Move focus to next window" (default ⌘`) to ⌘§ so the section key
-    # left of 1 cycles windows of the active app (⌘⇧§ cycles backwards). This is
-    # symbolic hotkey 27; parameters = (character, key code, modifier mask):
-    #   167     = "§" character
-    #   10      = key code of the § / ISO section key (left of 1)
-    #   1048576 = ⌘ (Command) modifier
-    CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys."27" = {
-      enabled = 1;
-      value = {
-        type = "standard";
-        parameters = [
-          167
-          10
-          1048576
+      # Keyboard input sources: only Finnish (drop the default Swedish layout),
+      # keeping the character/emoji viewer.
+      "com.apple.HIToolbox" = {
+        AppleEnabledInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 17;
+            "KeyboardLayout Name" = "Finnish";
+          }
+          {
+            "Bundle ID" = "com.apple.CharacterPaletteIM";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
         ];
+        AppleSelectedInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 17;
+            "KeyboardLayout Name" = "Finnish";
+          }
+        ];
+      };
+      # Rebind "Move focus to next window" (default ⌘`) to ⌘§ so the section key
+      # left of 1 cycles windows of the active app (⌘⇧§ cycles backwards). This is
+      # symbolic hotkey 27; parameters = (character, key code, modifier mask):
+      #   167     = "§" character
+      #   10      = key code of the § / ISO section key (left of 1)
+      #   1048576 = ⌘ (Command) modifier
+      "com.apple.symbolichotkeys".AppleSymbolicHotKeys."27" = {
+        enabled = 1;
+        value = {
+          type = "standard";
+          parameters = [
+            167
+            10
+            1048576
+          ];
+        };
       };
     };
   };

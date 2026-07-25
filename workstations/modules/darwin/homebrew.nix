@@ -1,6 +1,5 @@
 # Homebrew configuration for macOS
-{ ... }:
-{
+_: {
   homebrew = {
     enable = true;
 

@@ -1,7 +1,5 @@
 # Package manager policy shared across tool-specific modules.
-{
-  ...
-}:
+_:
 let
   cooldownDays = 7;
   minimumReleaseAgeExcludes = [

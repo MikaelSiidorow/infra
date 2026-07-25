@@ -1,7 +1,7 @@
 # Linux-specific desktop applications
 {
   pkgs,
-  pkgs-unstable ? pkgs,
+  pkgs-unstable,
   ...
 }:
 let
@@ -21,10 +21,7 @@ let
     exec = "${steam-system}/bin/steam %U";
     icon = "steam";
     terminal = false;
-    categories = [
-      "Game"
-      "Network"
-    ];
+    categories = [ "Game" ];
     mimeTypes = [
       "x-scheme-handler/steam"
       "x-scheme-handler/steamlink"

@@ -1,6 +1,5 @@
 # Pop!_OS host configuration for home-manager standalone
-{ ... }:
-{
+_: {
   # This is a minimal configuration for running home-manager standalone on Pop!_OS
   # We're not managing the system itself, just the user environment
 

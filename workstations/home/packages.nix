@@ -7,133 +7,129 @@
   ...
 }:
 {
-  programs.bat = {
-    enable = true;
-  };
+  programs = {
+    bat.enable = true;
 
-  programs.eza = {
-    enable = true;
-    enableZshIntegration = true;
-    git = true;
-    icons = "auto";
-  };
+    eza = {
+      enable = true;
+      enableZshIntegration = true;
+      git = true;
+      icons = "auto";
+    };
 
-  programs.ripgrep = {
-    enable = true;
-  };
+    ripgrep.enable = true;
 
-  programs.fzf = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+    fzf = {
+      enable = true;
+      enableZshIntegration = true;
+    };
 
-  programs.zoxide = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+    zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+    };
 
-  programs.starship = {
-    enable = true;
-    enableZshIntegration = true;
-    settings = {
-      format = lib.concatStrings [
-        "$directory"
-        "$git_branch"
-        "$git_status"
-        "$nix_shell"
-        "$cmd_duration"
-        "$line_break"
-        "$character"
-      ];
-      directory = {
-        style = "bold blue";
-        truncation_length = 3;
-        truncate_to_repo = true;
-      };
-      git_branch = {
-        style = "bold purple";
-      };
-      character = {
-        success_symbol = "[>](bold green)";
-        error_symbol = "[>](bold red)";
-      };
-      cmd_duration = {
-        min_time = 2000;
+    starship = {
+      enable = true;
+      enableZshIntegration = true;
+      settings = {
+        format = lib.concatStrings [
+          "$directory"
+          "$git_branch"
+          "$git_status"
+          "$nix_shell"
+          "$cmd_duration"
+          "$line_break"
+          "$character"
+        ];
+        directory = {
+          style = "bold blue";
+          truncation_length = 3;
+          truncate_to_repo = true;
+        };
+        git_branch.style = "bold purple";
+        character = {
+          success_symbol = "[>](bold green)";
+          error_symbol = "[>](bold red)";
+        };
+        cmd_duration.min_time = 2000;
       };
     };
   };
 
-  # Global treefmt config — used as fallback when no repo-local treefmt.toml exists
-  home.file.".config/treefmt/treefmt.toml".source = ./treefmt.toml;
+  home = {
+    # Global treefmt config — used as fallback when no repo-local treefmt.toml exists
+    file.".config/treefmt/treefmt.toml".source = ./treefmt.toml;
 
-  home.packages =
-    with pkgs;
-    [
-      # Core utilities
-      coreutils
-      wget
-      jq
-      gettext
-      fd
-      btop
-      tldr
-      trash-cli
+    packages =
+      with pkgs;
+      [
+        # Core utilities
+        coreutils
+        wget
+        jq
+        gettext
+        fd
+        btop
+        tldr
+        trash-cli
 
-      # Version control
-      gh
+        # Version control
+        gh
 
-      # Languages & runtimes
-      python3
-      fnm
-      bun
-      rustup
+        # Languages & runtimes
+        python3
+        fnm
+        bun
+        rustup
 
-      # Package managers & tools
-      uv
+        # Package managers & tools
+        uv
 
-      # Nix tooling
-      nixfmt-tree
+        # Nix tooling
+        nixfmt-tree
 
-      # Formatting
-      oxfmt
+        # Formatting
+        oxfmt
 
-      # Databases
-      postgresql_18
-      redis
-      sqlite
+        # Databases
+        postgresql_18
+        redis
+        sqlite
 
-      # Cloud
-      google-cloud-sdk
-      terraform
+        # Cloud
+        google-cloud-sdk
+        terraform
 
-      # Media
-      ffmpeg
-      imagemagick
+        # Media
+        ffmpeg
+        imagemagick
 
-      # Document processing
-      # Convert Markdown to PDF: pandoc input.md -o output.pdf --pdf-engine=typst
-      pandoc
-      typst
-      poppler-utils
-      typstyle
+        # Document processing
+        # Convert Markdown to PDF: pandoc input.md -o output.pdf --pdf-engine=typst
+        pandoc
+        typst
+        poppler-utils
+        typstyle
 
-      # Development tools
-      shellcheck
-      shfmt
-      mergiraf
+        # Development tools
+        shellcheck
+        shfmt
+        mergiraf
 
-      # Security
-      _1password-cli
+        # Security
+        _1password-cli
 
-      # AI tools
-      inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ]
-    # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
-    ++ lib.optionals (!isDarwin) [
-      inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-      inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+        # AI tools
+        inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+      ]
+      # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
+      ++ lib.optionals (!isDarwin) [
+        inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+        inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
-      # Application launcher
-      # inputs.zap.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
+        # Application launcher
+        # inputs.zap.packages.${pkgs.stdenv.hostPlatform.system}.default
+      ];
+  };
 }
