@@ -2,16 +2,39 @@
 {
   pkgs,
   pkgs-unstable ? pkgs,
-  config,
   ...
 }:
 let
+  # Keep Pop!_OS Steam and all of its helper scripts on the host toolchain.
+  # Mixing Nix coreutils with Steam's older glibc causes commands such as
+  # dirname to fail once Steam configures its runtime library path.
+  steam-system = pkgs.writeShellScriptBin "steam" ''
+    export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games"
+    unset LD_LIBRARY_PATH
+    exec /usr/games/steam "$@"
+  '';
+
+  steam-desktop = pkgs.makeDesktopItem {
+    name = "steam";
+    desktopName = "Steam";
+    comment = "Application for managing and playing games on Steam";
+    exec = "${steam-system}/bin/steam %U";
+    icon = "steam";
+    terminal = false;
+    categories = [
+      "Game"
+      "Network"
+    ];
+    mimeTypes = [
+      "x-scheme-handler/steam"
+      "x-scheme-handler/steamlink"
+    ];
+  };
+
   # Launches the Steam-installed Godot so playtime is tracked.
-  # Steam appid 404790 = Godot Engine. Strips Nix env for apt Steam glibc compat.
+  # Steam appid 404790 = Godot Engine.
   godot-steam = pkgs.writeShellScriptBin "godot-steam" ''
-    exec env PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games" \
-      LD_LIBRARY_PATH="" \
-      /usr/games/steam -applaunch 404790 "$@"
+    exec ${steam-system}/bin/steam -applaunch 404790 "$@"
   '';
 in
 {
@@ -24,15 +47,15 @@ in
     # Electron 39, which nixpkgs marks as EOL/insecure.
 
     # Gaming
-    # steam - using apt version; wrapper below strips Nix PATH to avoid glibc conflicts
+    steam-system # Pop!_OS Steam with an isolated system-toolchain environment
 
     # Game development
-    (config.lib.nixGL.wrap pkgs-unstable.godot_4) # `godot4` on PATH for headless / scripting use
+    pkgs-unstable.godot_4 # `godot4` on PATH for headless / scripting use
     godot-steam # `godot-steam` launches via Steam for playtime tracking
 
     # Productivity
     obsidian
-    (config.lib.nixGL.wrap sweethome3d.application)
+    sweethome3d.application
 
     # Cloud
     azure-cli
@@ -44,25 +67,15 @@ in
     # Screenshot
     flameshot
 
-    # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
-    (config.lib.nixGL.wrap ghostty)
+    # Terminal
+    ghostty
   ];
 
-  # Wrap apt Steam to use system PATH (Nix coreutils link to newer glibc than Pop!_OS ships)
-  xdg.desktopEntries.steam = {
-    name = "Steam";
-    comment = "Application for managing and playing games on Steam";
-    exec = ''env PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games" LD_LIBRARY_PATH="" /usr/games/steam %U'';
-    icon = "steam";
-    terminal = false;
-    type = "Application";
-    categories = [
-      "Game"
-      "Network"
-    ];
-    mimeType = [
-      "x-scheme-handler/steam"
-      "x-scheme-handler/steamlink"
-    ];
+  # Steam creates its own user-level desktop symlink, which takes precedence
+  # over entries in the Home Manager profile. Replace it declaratively so
+  # desktop launches use the same system-runtime wrapper as terminal launches.
+  xdg.dataFile."applications/steam.desktop" = {
+    source = "${steam-desktop}/share/applications/steam.desktop";
+    force = true;
   };
 }

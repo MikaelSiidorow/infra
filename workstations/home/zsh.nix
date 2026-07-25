@@ -247,18 +247,6 @@
           fi
         '')
       ])
-      # Linux-specific: clear env vars inherited from nixGL/wrapGAppsHook terminal wrapper.
-      ++ (lib.optionals (!isDarwin) [
-        (lib.mkBefore ''
-          unset LD_LIBRARY_PATH
-          unset LIBGL_DRIVERS_PATH
-          unset LIBVA_DRIVERS_PATH
-          unset __EGL_VENDOR_LIBRARY_FILENAMES
-          unset GBM_BACKENDS_PATH
-          unset VK_ICD_FILENAMES
-          unset GIO_EXTRA_MODULES
-        '')
-      ])
       ++ [
         ''
           # Completion system (cached only — no full rescan on every shell)

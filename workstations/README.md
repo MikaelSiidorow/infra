@@ -182,7 +182,9 @@ Not managed by the flake (bring over manually):
 . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 ```
 
-**OpenGL issues on Linux:** GUI apps use nixGL wrappers automatically. See `home/applications-linux.nix`.
+**GPU setup on non-NixOS Linux:** Home Manager exposes the Nixpkgs graphics
+drivers through `/run/opengl-driver`. After a driver update, run the
+`non-nixos-gpu-setup` command printed by `home-manager switch`.
 
 ## License
 

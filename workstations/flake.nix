@@ -32,12 +32,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # OpenGL wrapper for non-NixOS Linux
-    nixgl = {
-      url = "github:nix-community/nixGL";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Homebrew integration for macOS. Taps are pinned for reproducibility;
     # homebrew-cask is patched in mkDarwinSystem (see patchedHomebrewCask).
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";

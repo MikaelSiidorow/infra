@@ -1,7 +1,6 @@
 # Zed editor configuration.
 {
   pkgs,
-  config,
   isDarwin ? false,
   ...
 }:
@@ -19,7 +18,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    package = if isDarwin then pkgs.zed-editor else config.lib.nixGL.wrap pkgs.zed-editor;
+    package = pkgs.zed-editor;
     extraPackages =
       with pkgs;
       [

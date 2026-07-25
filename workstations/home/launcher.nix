@@ -1,6 +1,5 @@
 # Shared launcher configuration for Raycast on macOS and Vicinae on Linux.
 {
-  config,
   hostname ? null,
   isDarwin ? false,
   lib,
@@ -9,10 +8,8 @@
 }:
 let
   isLinux = !isDarwin;
-  isGenericLinux = config.targets.genericLinux.enable or false;
 
-  launcherKeybindingPath =
-    "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launcher/";
+  launcherKeybindingPath = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launcher/";
 
   buildNodeExtension =
     {
@@ -152,7 +149,7 @@ let
 
   linux = {
     vicinae = {
-      package = if isGenericLinux then config.lib.nixGL.wrap pkgs.vicinae else pkgs.vicinae;
+      package = pkgs.vicinae;
       extensions =
         (map mkRaycastExtension shared.extensions.raycast)
         ++ (map mkVicinaeExtension shared.extensions.vicinae);
@@ -215,9 +212,9 @@ in
     };
   };
 
-  home.packages = lib.optionals (
-    isLinux && machine.linux.vicinae.enableGnomeExtension
-  ) [ pkgs.gnomeExtensions.vicinae ];
+  home.packages = lib.optionals (isLinux && machine.linux.vicinae.enableGnomeExtension) [
+    pkgs.gnomeExtensions.vicinae
+  ];
 
   home.file =
     lib.optionalAttrs isDarwin {
