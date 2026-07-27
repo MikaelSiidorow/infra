@@ -2,7 +2,11 @@
 #
 # Keep mutable runtime files (auth, caches, local settings, histories) out of
 # Nix. This module only links files we intentionally author in this repo.
-{ lib, ... }:
+{
+  lib,
+  isDarwin ? false,
+  ...
+}:
 let
   skillTargets = {
     codex = name: ".codex/skills/${name}";
@@ -10,16 +14,26 @@ let
     opencode = name: ".config/opencode/skills/${name}";
   };
 
+  # codex and opencode CLIs are Linux-only (see packages.nix). Skip their skill
+  # copies on darwin; otherwise cursor-agent, which scans both ~/.claude and
+  # ~/.codex, lists every skill twice. cursor-agent needs no target of its own
+  # since it reads ~/.claude/skills.
+  unavailableAgents = lib.optionals isDarwin [
+    "codex"
+    "opencode"
+  ];
+
   skillTargetPaths =
     name: agents:
     let
+      availableAgents = builtins.filter (agent: !(builtins.elem agent unavailableAgents)) agents;
       # OpenCode also reads ~/.claude/skills. If a skill targets both tools,
       # install it once there so OpenCode does not see duplicate skill names.
       effectiveAgents =
-        if builtins.elem "claude-code" agents && builtins.elem "opencode" agents then
-          builtins.filter (agent: agent != "opencode") agents
+        if builtins.elem "claude-code" availableAgents && builtins.elem "opencode" availableAgents then
+          builtins.filter (agent: agent != "opencode") availableAgents
         else
-          agents;
+          availableAgents;
     in
     lib.unique (map (agent: skillTargets.${agent} name) effectiveAgents);
 
@@ -39,6 +53,12 @@ let
         "claude-code"
         "opencode"
       ];
+    };
+
+    # cursor-agent reads ~/.claude/skills, so the claude-code target covers it.
+    cursor-agent = {
+      source = ./agents/skills/cursor-agent;
+      agents = [ "claude-code" ];
     };
   };
 

@@ -1,6 +1,7 @@
 # Common packages - platform-agnostic
 {
   pkgs,
+  pkgs-unstable,
   lib,
   inputs,
   isDarwin ? false,
@@ -130,6 +131,11 @@
 
         # Application launcher
         # inputs.zap.packages.${pkgs.stdenv.hostPlatform.system}.default
+      ]
+      # Platform-specific packages (macOS only)
+      ++ lib.optionals isDarwin [
+        # Cursor CLI (not in claude-code-nix-style flake; from unstable)
+        pkgs-unstable.cursor-cli
       ];
   };
 }
