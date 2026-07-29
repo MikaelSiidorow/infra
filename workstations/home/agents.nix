@@ -84,5 +84,10 @@ in
       # must be executable; nix store copies are read-only without this.
       executable = true;
     };
+    ".cursor/statusline.sh" = {
+      source = ./agents/cursor/statusline.sh;
+      # Cursor CLI spawns this without a shell, so it must be executable.
+      executable = true;
+    };
   };
 }
