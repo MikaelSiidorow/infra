@@ -37,6 +37,7 @@ in
 {
   home.packages = with pkgs; [
     # Communication
+    pkgs-unstable.thunderbird
     pkgs-unstable.vesktop
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
