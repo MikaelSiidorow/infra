@@ -35,6 +35,11 @@
       path = "${config.home.homeDirectory}/.ssh/git_signing_key";
       mode = "0600";
     };
+
+    # Hugging Face read token, used by llm-pull to avoid anonymous rate limits.
+    # Default symlink path under ~/.config/sops-nix/secrets; user-only on
+    # purpose, so it is not readable from the shared model cache.
+    secrets."hf/token".mode = "0400";
   };
 
   home.sessionVariables.SOPS_AGE_KEY_FILE = config.sops.age.keyFile;
