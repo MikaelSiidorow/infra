@@ -21,8 +21,11 @@ bash ~/.claude/skills/cursor-agent/cursor-subagent.sh <subcommand> ...
   planning mode by default; pass `--write` to allow edits and shell (adds
   `cursor-agent --force`). `--worktree` runs in an isolated git worktree.
   Prints the sub-agent's output and its `chatId`.
-- `resume <name|chatId> -- <prompt>` Continue a tracked run (or a raw chatId).
-- `list` Show tracked runs (status, name, mode, model, chatId, started).
+- `resume <name|chatId> [--model M] -- <prompt>` Continue a tracked run (or a
+  raw chatId). Reuses the tracked model by default; only pass `--model` to
+  change it (see Model selection).
+- `list` Show tracked runs (status, name, mode, model, chatId, started). Check
+  MODEL before resume/switch decisions.
 - `cancel <name>` Kill a still-running run.
 
 ## Sandbox
@@ -43,7 +46,17 @@ Always pass `--model` on `run`. Pick by task difficulty:
   lookups, mechanical follow-ups with a clear recipe.
 
 If unsure, use `cursor-grok-4.5-high`. Honor an explicit model from the user.
-`resume` keeps the original run's model unless the user asks to switch.
+
+Keep the same model across a session when possible — switching busts the prompt
+cache. `resume` reuses the tracked model automatically.
+
+When the follow-up needs a different model:
+
+- Prefer a fresh `run` (new context) over mid-session switches in most cases.
+- Avoid upgrading `composer-2.5` → `cursor-grok-4.5-high` in an existing
+  session unless truly necessary; start a new agent instead.
+- Downgrading `cursor-grok-4.5-high` → `composer-2.5` is allowed (cheaper), but
+  a fresh `run` is often still better than continuing on a colder cache.
 
 ## Rules
 

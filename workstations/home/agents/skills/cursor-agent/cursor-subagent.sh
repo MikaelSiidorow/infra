@@ -3,12 +3,13 @@
 # listed, resumed, or cancelled later. State lives outside Nix (mutable runtime).
 #
 #   cursor-subagent.sh run [--name N] [--model M] [--write] [--worktree] -- <prompt...>
-#   cursor-subagent.sh resume <name|chatId> -- <prompt...>
+#   cursor-subagent.sh resume <name|chatId> [--model M] [--write] [--worktree] -- <prompt...>
 #   cursor-subagent.sh list
 #   cursor-subagent.sh cancel <name>
 #
 # Runs block until cursor-agent finishes; use Claude's background job control to
 # run them asynchronously. Read-only (--plan) by default; --write allows edits.
+# On resume, the tracked model is reused unless --model is passed.
 set -euo pipefail
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/cursor-agent-subagent"
@@ -127,6 +128,25 @@ run_like() {
 	done
 	[ -n "$prompt" ] || die "no prompt given"
 
+	if [ -n "$resume_ref" ]; then
+		local chat
+		chat="$(field "$resume_ref" chatId)"
+		[ -n "$chat" ] || chat="$resume_ref" # allow a raw chatId
+		[ -n "$chat" ] || die "no chatId for '$resume_ref'"
+		[ -n "$name" ] || name="$resume_ref"
+		# Reuse the tracked model unless the caller passed --model (keeps
+		# prompt cache warm across turns in the same session).
+		if [ -z "$model" ]; then
+			model="$(field "$resume_ref" model)"
+			if [ -z "$model" ]; then
+				model="$(jq -r --arg c "$chat" \
+					'.jobs[] | select(.chatId==$c) | .model // empty' "$STATE_FILE" |
+					head -n1)"
+			fi
+		fi
+	fi
+	[ -n "$name" ] || name="cx-$(date +%s)"
+
 	# Sandbox is always on: the agent's commands are confined to the workspace
 	# for writes and denied network by default. (Agent mode exposes no
 	# blocked-patterns, so a .env inside the workspace stays readable.)
@@ -140,16 +160,7 @@ run_like() {
 	fi
 	[ -n "$model" ] && flags+=(--model "$model")
 	[ "$worktree" -eq 1 ] && flags+=(-w)
-
-	if [ -n "$resume_ref" ]; then
-		local chat
-		chat="$(field "$resume_ref" chatId)"
-		[ -n "$chat" ] || chat="$resume_ref" # allow a raw chatId
-		[ -n "$chat" ] || die "no chatId for '$resume_ref'"
-		flags+=(--resume "$chat")
-		[ -n "$name" ] || name="$resume_ref"
-	fi
-	[ -n "$name" ] || name="cx-$(date +%s)"
+	[ -n "$resume_ref" ] && flags+=(--resume "$chat")
 
 	launch "$name" "$mode" "$model" "enabled" "$prompt" "${flags[@]}"
 }
