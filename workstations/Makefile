@@ -113,6 +113,7 @@ update-fast:
 		claude-code-nix \
 		codex-cli-nix \
 		opencode-nix \
+		nix-homebrew \
 		homebrew-core \
 		homebrew-cask \
 		homebrew-cmux

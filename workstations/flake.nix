@@ -32,8 +32,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Homebrew integration for macOS. Taps are pinned for reproducibility;
-    # homebrew-cask is patched in mkDarwinSystem (see patchedHomebrewCask).
+    # Homebrew integration for macOS. Taps are pinned for reproducibility.
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -150,17 +149,6 @@
         }:
         let
           pkgs-unstable = mkPkgsUnstable system;
-
-          # Offline tap parsing treats `depends_on macos: :sym` as an exact
-          # match, rejecting newer macOS (e.g. orbstack on Tahoe). Rewrite bare
-          # symbols to ">= :sym" to match Homebrew's API behaviour. Existing
-          # comparators and arrays are left alone (regex matches only `: :sym`).
-          patchedHomebrewCask = pkgs-unstable.runCommand "homebrew-cask-patched" { } ''
-            cp -r ${homebrew-cask} $out
-            chmod -R u+w $out
-            find $out/Casks -name '*.rb' -print0 \
-              | xargs -0 sed -i -E 's/depends_on macos: (:[a-z_]+)/depends_on macos: ">= \1"/'
-          '';
         in
         nix-darwin.lib.darwinSystem {
           inherit system;
@@ -196,10 +184,10 @@
               nix-homebrew = {
                 enable = true;
                 user = username;
-                # homebrew-core pin is what enables offline mode; cask is patched.
+                # Pinning homebrew-core enables offline mode.
                 taps = {
                   "homebrew/homebrew-core" = homebrew-core;
-                  "homebrew/homebrew-cask" = patchedHomebrewCask;
+                  "homebrew/homebrew-cask" = homebrew-cask;
                   "manaflow-ai/homebrew-cmux" = homebrew-cmux;
                 };
                 mutableTaps = false;
