@@ -16,10 +16,11 @@ bash ~/.claude/skills/cursor-agent/cursor-subagent.sh <subcommand> ...
 
 ## Subcommands
 
-- `run [--name N] [--model M] [--write] [--worktree] -- <prompt>`
-  Start a new sub-agent. Read-only planning mode by default; pass `--write` to
-  allow edits and shell (adds `cursor-agent --force`). `--worktree` runs in an
-  isolated git worktree. Prints the sub-agent's output and its `chatId`.
+- `run [--name N] --model M [--write] [--worktree] -- <prompt>`
+  Start a new sub-agent. Always pass `--model` (see Model selection). Read-only
+  planning mode by default; pass `--write` to allow edits and shell (adds
+  `cursor-agent --force`). `--worktree` runs in an isolated git worktree.
+  Prints the sub-agent's output and its `chatId`.
 - `resume <name|chatId> -- <prompt>` Continue a tracked run (or a raw chatId).
 - `list` Show tracked runs (status, name, mode, model, chatId, started).
 - `cancel <name>` Kill a still-running run.
@@ -31,6 +32,18 @@ commands are confined to the current directory for writes and denied network by
 default. There is no opt-out. Note the agent can still *read* files inside the
 workspace, including a `.env` — agent mode has no read-blocklist. Don't launch a
 run from a directory holding secrets you don't want the sub-agent to read.
+
+## Model selection
+
+Always pass `--model` on `run`. Pick by task difficulty:
+
+- `cursor-grok-4.5-high` (default) — harder work: multi-file changes, debugging,
+  design trade-offs, ambiguous requirements, research that needs judgment.
+- `composer-2.5` — easier work: small edits, renames, boilerplate, narrow
+  lookups, mechanical follow-ups with a clear recipe.
+
+If unsure, use `cursor-grok-4.5-high`. Honor an explicit model from the user.
+`resume` keeps the original run's model unless the user asks to switch.
 
 ## Rules
 
