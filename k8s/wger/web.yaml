@@ -20,6 +20,11 @@ spec:
       containers:
         - name: web
           image: docker.io/wger/server:2.6.0
+          env:
+            # The Service named "wger" creates a WGER_PORT service-link
+            # variable. An explicit value takes precedence over that URL.
+            - name: WGER_PORT
+              value: "8000"
           envFrom:
             - configMapRef:
                 name: wger-config

@@ -42,6 +42,10 @@ kind: PersistentVolumeClaim
 metadata:
   name: wger-celery-beat
   namespace: wger
+  annotations:
+    # local-path uses WaitForFirstConsumer. Create the claim in the same wave
+    # as the Deployment that binds it so Argo CD does not wait forever.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   accessModes:
     - ReadWriteOnce
