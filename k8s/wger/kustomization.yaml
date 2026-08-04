@@ -9,6 +9,7 @@ resources:
   - celery.yaml
   - bootstrap.yaml
   - powersync.yaml
+  - fineli-import.yaml
   - monitoring.yaml
   - ingress.yaml
 configMapGenerator:
@@ -23,3 +24,6 @@ configMapGenerator:
   - name: wger-bootstrap
     files:
       - bootstrap.py=config/bootstrap.py
+  - name: wger-fineli-import
+    files:
+      - import-fineli.py=config/import-fineli.py
