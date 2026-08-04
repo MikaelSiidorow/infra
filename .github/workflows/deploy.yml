@@ -288,6 +288,11 @@ jobs:
           ssh -fN -L 6443:127.0.0.1:6443 root@${{ env.K3S_HOST }}
           ssh root@${{ env.K3S_HOST }} cat /etc/rancher/k3s/k3s.yaml > /tmp/kubeconfig
           chmod 600 /tmp/kubeconfig
+      - name: Ensure wger namespace exists
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          ssh root@${{ env.K3S_HOST }} \
+            "kubectl create namespace wger --dry-run=client -o yaml | kubectl apply -f -"
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive
@@ -370,17 +375,6 @@ jobs:
                 body: output
               });
             }
-      - name: Configure wger PostgreSQL password
-        if: steps.plan.outcome == 'success' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        env:
-          WGER_POSTGRES_PASSWORD: ${{ secrets.WGER_POSTGRES_PASSWORD }}
-        run: |
-          if [[ ! "$WGER_POSTGRES_PASSWORD" =~ ^[A-Za-z0-9_-]{32,}$ ]]; then
-            echo "WGER_POSTGRES_PASSWORD must be at least 32 URL-safe characters." >&2
-            exit 1
-          fi
-          printf "ALTER ROLE wger PASSWORD '%s';\n" "$WGER_POSTGRES_PASSWORD" |
-            ssh root@${{ env.K3S_HOST }} "sudo -u postgres psql --set=ON_ERROR_STOP=1"
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
@@ -403,3 +397,70 @@ jobs:
           TF_VAR_wger_jwt_public_key: ${{ secrets.WGER_JWT_PUBLIC_KEY }}
           TF_VAR_wger_jwt_private_key: ${{ secrets.WGER_JWT_PRIVATE_KEY }}
         run: terraform apply -auto-approve tfplan
+      - name: Reconcile wger credentials and restart consumers
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          WGER_POSTGRES_PASSWORD: ${{ secrets.WGER_POSTGRES_PASSWORD }}
+        run: |
+          if [[ ! "$WGER_POSTGRES_PASSWORD" =~ ^[A-Za-z0-9_-]{32,}$ ]]; then
+            echo "WGER_POSTGRES_PASSWORD must be at least 32 URL-safe characters." >&2
+            exit 1
+          fi
+
+          printf "ALTER ROLE wger PASSWORD '%s';\n" "$WGER_POSTGRES_PASSWORD" |
+            ssh root@${{ env.K3S_HOST }} "sudo -u postgres psql --set=ON_ERROR_STOP=1"
+
+          if ! ssh root@${{ env.K3S_HOST }} "kubectl -n wger get deployment wger-web" >/dev/null 2>&1; then
+            echo "wger has not been bootstrapped by Argo CD yet; its sync hooks will configure PowerSync."
+            exit 0
+          fi
+
+          for deployment in wger-web wger-celery-worker wger-celery-beat; do
+            # The fixed deployment name is intentionally expanded locally.
+            # shellcheck disable=SC2029
+            if ssh root@${{ env.K3S_HOST }} "kubectl -n wger get deployment $deployment" >/dev/null 2>&1; then
+              # shellcheck disable=SC2029
+              ssh root@${{ env.K3S_HOST }} "kubectl -n wger rollout restart deployment/$deployment"
+            fi
+          done
+          ssh root@${{ env.K3S_HOST }} \
+            "kubectl -n wger rollout status deployment/wger-web --timeout=10m"
+
+          ssh root@${{ env.K3S_HOST }} \
+            "kubectl -n wger delete job wger-powersync-credentials --ignore-not-found --wait=true"
+          ssh root@${{ env.K3S_HOST }} "kubectl apply -f -" <<'EOF'
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: wger-powersync-credentials
+            namespace: wger
+          spec:
+            backoffLimit: 3
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                  - name: setup
+                    image: docker.io/wger/server:2.6.0
+                    command: [./manage.py, setup-powersync-storage]
+                    envFrom:
+                      - secretRef:
+                          name: wger-secrets
+          EOF
+
+          if ! ssh root@${{ env.K3S_HOST }} \
+            "kubectl -n wger wait --for=condition=complete job/wger-powersync-credentials --timeout=5m"; then
+            ssh root@${{ env.K3S_HOST }} \
+              "kubectl -n wger logs job/wger-powersync-credentials --all-containers --tail=-1" || true
+            exit 1
+          fi
+          ssh root@${{ env.K3S_HOST }} \
+            "kubectl -n wger logs job/wger-powersync-credentials --all-containers --tail=-1"
+          ssh root@${{ env.K3S_HOST }} \
+            "kubectl -n wger delete job wger-powersync-credentials --wait=true"
+
+          if ssh root@${{ env.K3S_HOST }} "kubectl -n wger get deployment wger-powersync" >/dev/null 2>&1; then
+            ssh root@${{ env.K3S_HOST }} "kubectl -n wger rollout restart deployment/wger-powersync"
+            ssh root@${{ env.K3S_HOST }} \
+              "kubectl -n wger rollout status deployment/wger-powersync --timeout=5m"
+          fi
