@@ -182,6 +182,37 @@ let
           - 10.42.0.1
   '';
 
+  wgerDbService = pkgs.writeText "wger-db-service.yaml" ''
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: wger
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: db
+      namespace: wger
+    spec:
+      ports:
+        - port: 5432
+          targetPort: 5432
+    ---
+    apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata:
+      name: db
+      namespace: wger
+      labels:
+        kubernetes.io/service-name: db
+    addressType: IPv4
+    ports:
+      - port: 5432
+    endpoints:
+      - addresses:
+          - 10.42.0.1
+  '';
+
   clusterIssuer = pkgs.writeText "cluster-issuer.yaml" ''
     apiVersion: cert-manager.io/v1
     kind: ClusterIssuer
@@ -236,6 +267,7 @@ in
     "L+ ${manifestDir}/argocd-bootstrap.yaml - - - - ${argocdBootstrap}"
     "L+ ${manifestDir}/headscale-service.yaml - - - - ${headscaleService}"
     "L+ ${manifestDir}/refinery-db-service.yaml - - - - ${refineryDbService}"
+    "L+ ${manifestDir}/wger-db-service.yaml - - - - ${wgerDbService}"
     "L+ ${manifestDir}/ci-deploy-rbac.yaml - - - - ${ciDeployRbac}"
   ];
 

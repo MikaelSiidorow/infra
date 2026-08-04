@@ -345,6 +345,16 @@ resource "cloudflare_dns_record" "miksu_app_status" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "miksu_app_wger" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "wger.miksu.app"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = false
+  ttl     = 1
+  comment = "DNS-only for PowerSync long-lived connections"
+}
+
 # =============================================================================
 # pluck.pics records
 # =============================================================================

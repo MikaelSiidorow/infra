@@ -313,6 +313,11 @@ jobs:
           TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TF_VAR_grafana_admin_password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           TF_VAR_brawl_stars_api_key: ${{ secrets.BRAWL_STARS_API_KEY }}
+          TF_VAR_wger_postgres_password: ${{ secrets.WGER_POSTGRES_PASSWORD }}
+          TF_VAR_wger_powersync_password: ${{ secrets.WGER_POWERSYNC_PASSWORD }}
+          TF_VAR_wger_secret_key: ${{ secrets.WGER_SECRET_KEY }}
+          TF_VAR_wger_jwt_public_key: ${{ secrets.WGER_JWT_PUBLIC_KEY }}
+          TF_VAR_wger_jwt_private_key: ${{ secrets.WGER_JWT_PRIVATE_KEY }}
       - name: Comment PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -365,12 +370,22 @@ jobs:
                 body: output
               });
             }
+      - name: Configure wger PostgreSQL password
+        if: steps.plan.outcome == 'success' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          WGER_POSTGRES_PASSWORD: ${{ secrets.WGER_POSTGRES_PASSWORD }}
+        run: |
+          if [[ ! "$WGER_POSTGRES_PASSWORD" =~ ^[A-Za-z0-9_-]{32,}$ ]]; then
+            echo "WGER_POSTGRES_PASSWORD must be at least 32 URL-safe characters." >&2
+            exit 1
+          fi
+          printf "ALTER ROLE wger PASSWORD '%s';\n" "$WGER_POSTGRES_PASSWORD" |
+            ssh root@${{ env.K3S_HOST }} "sudo -u postgres psql --set=ON_ERROR_STOP=1"
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        run: terraform apply -auto-approve tfplan
         env:
           KUBE_CONFIG_PATH: /tmp/kubeconfig
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -382,3 +397,9 @@ jobs:
           TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TF_VAR_grafana_admin_password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           TF_VAR_brawl_stars_api_key: ${{ secrets.BRAWL_STARS_API_KEY }}
+          TF_VAR_wger_postgres_password: ${{ secrets.WGER_POSTGRES_PASSWORD }}
+          TF_VAR_wger_powersync_password: ${{ secrets.WGER_POWERSYNC_PASSWORD }}
+          TF_VAR_wger_secret_key: ${{ secrets.WGER_SECRET_KEY }}
+          TF_VAR_wger_jwt_public_key: ${{ secrets.WGER_JWT_PUBLIC_KEY }}
+          TF_VAR_wger_jwt_private_key: ${{ secrets.WGER_JWT_PRIVATE_KEY }}
+        run: terraform apply -auto-approve tfplan

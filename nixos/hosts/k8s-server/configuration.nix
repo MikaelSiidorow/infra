@@ -98,11 +98,21 @@
     '';
     ensureDatabases = [
       "refinery"
+      "wger"
     ];
     ensureUsers = [
       {
         name = "refinery";
         ensureDBOwnership = true;
+      }
+      {
+        name = "wger";
+        ensureDBOwnership = true;
+        ensureClauses = {
+          login = true;
+          replication = true;
+          createrole = true;
+        };
       }
     ];
     # Runs only on first cluster init (fresh deploy)
