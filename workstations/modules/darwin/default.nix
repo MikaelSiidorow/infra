@@ -8,6 +8,7 @@
   imports = [
     ./system.nix
     ./homebrew.nix
+    ./llm-service.nix
   ];
 
   environment.systemPackages = [

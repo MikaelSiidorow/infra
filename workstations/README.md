@@ -151,6 +151,12 @@ gh ssh-key add ~/.ssh/git_signing_key.pub --type signing --title "Pop!_OS git si
 
 The GitHub signing key is account-level, so a new machine that decrypts the same signing key does not need a second GitHub registration.
 
+## Local LLM
+
+macOS runs Qwen through MLX and `llama-swap` at `http://127.0.0.1:31415`.
+
+See [docs/local-llms.md](docs/local-llms.md).
+
 ## Migration checklist
 
 Not managed by the flake (bring over manually):
@@ -166,12 +172,14 @@ Not managed by the flake (bring over manually):
 ```
 ├── flake.nix              # Hosts, overlays, system constructors
 ├── Makefile               # Build commands (OS-detected)
+├── docs/                  # Longer-form notes (local LLMs)
 ├── hosts/                 # Per-host modules (Linux only; darwin lives in flake.nix)
+├── lib/                   # Shared config data (LLM catalog + python env)
 ├── modules/{common,darwin,nixos}/
 ├── home/                  # User environment (home-manager)
 │   ├── claude-code/       # CLAUDE.md + statusline
 │   └── ...
-└── pkgs/                  # Custom packages (mergiraf with PO grammar)
+└── pkgs/                  # Custom packages (mergiraf with PO grammar, MLX with Metal)
 ```
 
 ## Troubleshooting

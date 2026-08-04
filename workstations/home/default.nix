@@ -27,6 +27,7 @@
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
+    ./llm.nix
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
