@@ -105,6 +105,11 @@ resource "kubernetes_service_v1" "wger_db" {
   }
 }
 
+import {
+  to = kubernetes_service_v1.wger_db
+  id = "wger/db"
+}
+
 resource "kubernetes_endpoints_v1" "wger_db" {
   metadata {
     name      = kubernetes_service_v1.wger_db.metadata[0].name

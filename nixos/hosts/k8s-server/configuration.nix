@@ -121,11 +121,12 @@
     '';
   };
 
-  # zero-cache needs REPLICATION for logical replication.
-  # initialScript only runs on first cluster init, so this systemd
-  # oneshot ensures REPLICATION is granted on existing clusters too.
+  # Logical replication setup must also be reconciled on existing clusters.
+  # Wger's migration creates this publication itself when it is absent, but
+  # PostgreSQL requires a superuser for FOR ALL TABLES publications. Create it
+  # here as postgres so the application role does not need superuser access.
   systemd.services.postgresql-grant-replication = {
-    description = "Grant REPLICATION to PostgreSQL roles for zero-cache";
+    description = "Reconcile PostgreSQL logical replication prerequisites";
     after = [ "postgresql.service" "postgresql-setup.service" ];
     requires = [ "postgresql.service" "postgresql-setup.service" ];
     wantedBy = [ "multi-user.target" ];
@@ -135,6 +136,17 @@
     };
     script = ''
       ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE refinery WITH REPLICATION;"
+      ${config.services.postgresql.package}/bin/psql --dbname=wger --set=ON_ERROR_STOP=1 <<'SQL'
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_publication WHERE pubname = 'powersync'
+        ) THEN
+          CREATE PUBLICATION powersync FOR ALL TABLES;
+        END IF;
+      END
+      $$;
+      SQL
     '';
   };
 
