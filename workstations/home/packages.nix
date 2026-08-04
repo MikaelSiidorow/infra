@@ -123,10 +123,10 @@
 
         # AI tools
         inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+        inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
       ]
       # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
       ++ lib.optionals (!isDarwin) [
-        inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
         inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
         # Application launcher

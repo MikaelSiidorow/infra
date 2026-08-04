@@ -14,12 +14,10 @@ let
     opencode = name: ".config/opencode/skills/${name}";
   };
 
-  # codex and opencode CLIs are Linux-only (see packages.nix). Skip their skill
-  # copies on darwin; otherwise cursor-agent, which scans both ~/.claude and
-  # ~/.codex, lists every skill twice. cursor-agent needs no target of its own
-  # since it reads ~/.claude/skills.
+  # opencode CLI is Linux-only (see packages.nix). Skip its skill copies on
+  # darwin. cursor-agent needs no target of its own since it reads
+  # ~/.claude/skills.
   unavailableAgents = lib.optionals isDarwin [
-    "codex"
     "opencode"
   ];
 
