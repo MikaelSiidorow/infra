@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wger-secure-bootstrap-admin
+  namespace: wger
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: secure-admin
+          image: docker.io/wger/server:2.6.0
+          command:
+            - python3
+            - manage.py
+            - shell
+            - -c
+          args:
+            - |
+              import os
+              from django.contrib.auth import get_user_model
+              User = get_user_model()
+              user, created = User.objects.get_or_create(
+                  username="admin",
+                  defaults={"is_staff": True, "is_superuser": True},
+              )
+              if created or user.check_password("adminadmin"):
+                  user.set_password(os.environ["ADMIN_PASSWORD"])
+                  user.save(update_fields=["password"])
+                  print("Secured the bootstrap administrator account")
+              else:
+                  print("Administrator password was already changed; leaving it untouched")
+          envFrom:
+            - configMapRef:
+                name: wger-config
+            - secretRef:
+                name: wger-secrets
+            - secretRef:
+                name: wger-admin-bootstrap
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 384Mi
