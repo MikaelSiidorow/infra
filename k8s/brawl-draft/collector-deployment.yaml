@@ -70,7 +70,7 @@ spec:
             - name: COLLECTOR_CYCLE_SLEEP_SECONDS
               value: "0"
             - name: COLLECTOR_STOP_DB_SIZE_GIB
-              value: "38"
+              value: "8"
             - name: COLLECTOR_MAINTENANCE_LOCK_FILE
               value: /data/collector-maintenance.lock
             - name: COLLECTOR_MAINTENANCE_SLEEP_SECONDS
@@ -83,4 +83,4 @@ spec:
       volumes:
         - name: collector-data
           persistentVolumeClaim:
-            claimName: brawl-draft-collector-data
+            claimName: brawl-draft-collector-data-v2
