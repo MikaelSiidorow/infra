@@ -114,6 +114,10 @@
           createrole = true;
         };
       }
+      {
+        name = "powersync_storage";
+        ensureClauses.login = true;
+      }
     ];
     # Runs only on first cluster init (fresh deploy)
     initialScript = pkgs.writeText "pg-init.sql" ''
@@ -121,12 +125,13 @@
     '';
   };
 
-  # Logical replication setup must also be reconciled on existing clusters.
+  # Logical replication and PowerSync role membership must also be reconciled
+  # on existing clusters.
   # Wger's migration creates this publication itself when it is absent, but
   # PostgreSQL requires a superuser for FOR ALL TABLES publications. Create it
   # here as postgres so the application role does not need superuser access.
   systemd.services.postgresql-grant-replication = {
-    description = "Reconcile PostgreSQL logical replication prerequisites";
+    description = "Reconcile PostgreSQL replication and PowerSync prerequisites";
     after = [ "postgresql.service" "postgresql-setup.service" ];
     requires = [ "postgresql.service" "postgresql-setup.service" ];
     wantedBy = [ "multi-user.target" ];
@@ -137,6 +142,8 @@
     script = ''
       ${config.services.postgresql.package}/bin/psql -c "ALTER ROLE refinery WITH REPLICATION;"
       ${config.services.postgresql.package}/bin/psql --dbname=wger --set=ON_ERROR_STOP=1 <<'SQL'
+      GRANT powersync_storage TO wger WITH ADMIN TRUE, SET TRUE;
+
       DO $$
       BEGIN
         IF NOT EXISTS (
