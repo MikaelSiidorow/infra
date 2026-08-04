@@ -75,3 +75,18 @@ resource "kubernetes_secret_v1" "brawl_draft_secrets" {
     BRAWL_STARS_API_KEY = var.brawl_stars_api_key
   }
 }
+
+resource "kubernetes_secret_v1" "wger_secrets" {
+  metadata {
+    name      = "wger-secrets"
+    namespace = "wger"
+  }
+
+  data = {
+    SECRET_KEY        = var.wger_secret_key
+    JWT_PUBLIC_KEY    = var.wger_jwt_public_key
+    JWT_PRIVATE_KEY   = var.wger_jwt_private_key
+    PS_DATABASE_URI   = "postgresql://wger:${urlencode(var.wger_postgres_password)}@db:5432/wger"
+    PS_STORAGE_PG_URI = "postgresql://powersync_storage:${urlencode(var.wger_powersync_password)}@db:5432/wger"
+  }
+}

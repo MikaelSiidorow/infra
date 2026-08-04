@@ -16,6 +16,7 @@ NixOS (k3s.nix)                              Terraform (terraform/k8s/)
 ArgoCD auto-syncs from git
   |
   |-- k8s/apps/refinery.yaml  -->  k8s/refinery/*.yaml
+  |-- k8s/apps/wger.yaml      -->  k8s/wger/*.yaml
 ```
 
 **Separation of concerns:**
@@ -35,6 +36,7 @@ infra/
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests
 │   ├── refinery/            # Refinery K8s manifests
+│   ├── wger/                # wger workout manager manifests
 │   ├── headscale/           # Headscale ingress
 │   └── argocd-ingress/      # ArgoCD ingress
 ├── docs/                    # Architecture & observability docs
@@ -63,7 +65,7 @@ terraform  →  nixos  →  k8s-terraform
 3. **`k8s-terraform`** — creates namespaces and secrets via SSH tunnel to K3s API
 4. **ArgoCD** — automatically syncs `k8s/apps/` → application workloads (no CI needed)
 
-K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for these.
+K8s manifest changes (`k8s/refinery/`, `k8s/wger/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for these.
 
 Refinery application releases do not require per-build image tag commits in this repo. The steady-state `refinery-app` and `refinery-zero` Deployments track the promoted mutable `:production` tag, and database migrations run during `refinery-app` startup.
 
