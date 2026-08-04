@@ -20,3 +20,6 @@ configMapGenerator:
       - sync_rules.yaml=config/sync_rules.yaml
       - nginx.conf=config/nginx.conf
       - redis.conf=config/redis.conf
+  - name: wger-bootstrap
+    files:
+      - bootstrap.py=config/bootstrap.py

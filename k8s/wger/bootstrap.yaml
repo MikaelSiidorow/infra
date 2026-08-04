@@ -19,29 +19,7 @@ spec:
             - /bin/sh
             - -ec
           args:
-            - |
-              if python3 manage.py shell -c 'from wger.gym.models import GymAdminConfig; assert GymAdminConfig.objects.filter(pk=1).exists()'; then
-                  echo "Initial fixtures are already loaded"
-              else
-                  echo "Loading initial fixtures"
-                  wger load-fixtures
-              fi
-
-              python3 manage.py shell <<'PY'
-              import os
-              from django.contrib.auth import get_user_model
-              User = get_user_model()
-              user, created = User.objects.get_or_create(
-                  username="admin",
-                  defaults={"is_staff": True, "is_superuser": True},
-              )
-              if created or user.check_password("adminadmin"):
-                  user.set_password(os.environ["ADMIN_PASSWORD"])
-                  user.save(update_fields=["password"])
-                  print("Secured the bootstrap administrator account")
-              else:
-                  print("Administrator password was already changed; leaving it untouched")
-              PY
+            - python3 manage.py shell < /config/bootstrap.py
           envFrom:
             - configMapRef:
                 name: wger-config
@@ -49,6 +27,11 @@ spec:
                 name: wger-secrets
             - secretRef:
                 name: wger-admin-bootstrap
+          volumeMounts:
+            - name: config
+              mountPath: /config/bootstrap.py
+              subPath: bootstrap.py
+              readOnly: true
           resources:
             requests:
               cpu: 25m
@@ -56,3 +39,10 @@ spec:
             limits:
               cpu: 250m
               memory: 384Mi
+      volumes:
+        - name: config
+          configMap:
+            name: wger-bootstrap
+            items:
+              - key: bootstrap.py
+                path: bootstrap.py
