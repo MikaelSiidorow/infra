@@ -35,18 +35,18 @@ spec:
               containerPort: 8000
           startupProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: django
             failureThreshold: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: django
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: django
             initialDelaySeconds: 30
             periodSeconds: 30
@@ -69,18 +69,18 @@ spec:
               containerPort: 80
           startupProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: http
             failureThreshold: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: http
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/v2/
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30

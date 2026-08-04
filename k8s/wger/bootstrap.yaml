@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: wger-secure-bootstrap-admin
+  name: wger-bootstrap
   namespace: wger
   annotations:
     argocd.argoproj.io/hook: Sync
@@ -13,15 +13,21 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: secure-admin
+        - name: bootstrap
           image: docker.io/wger/server:2.6.0
           command:
-            - python3
-            - manage.py
-            - shell
-            - -c
+            - /bin/sh
+            - -ec
           args:
             - |
+              if python3 manage.py shell -c 'from wger.gym.models import GymAdminConfig; assert GymAdminConfig.objects.filter(pk=1).exists()'; then
+                  echo "Initial fixtures are already loaded"
+              else
+                  echo "Loading initial fixtures"
+                  wger load-fixtures
+              fi
+
+              python3 manage.py shell <<'PY'
               import os
               from django.contrib.auth import get_user_model
               User = get_user_model()
@@ -35,6 +41,7 @@ spec:
                   print("Secured the bootstrap administrator account")
               else:
                   print("Administrator password was already changed; leaving it untouched")
+              PY
           envFrom:
             - configMapRef:
                 name: wger-config
