@@ -6,6 +6,7 @@ metadata:
 spec:
   schedule: "0 20 * * *"
   timeZone: Europe/Helsinki
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
@@ -72,4 +73,4 @@ spec:
           volumes:
             - name: collector-data
               persistentVolumeClaim:
-                claimName: brawl-draft-collector-data
+                claimName: brawl-draft-collector-data-v2
