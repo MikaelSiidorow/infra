@@ -8,21 +8,21 @@ let
   llm = import ../../lib/llm.nix { inherit pkgs-unstable lib; };
 in
 {
-  users.knownUsers = [ llm.serviceUser ];
-  users.knownGroups = [ llm.serviceUser ];
-
-  users.groups.${llm.serviceUser} = {
-    gid = llm.serviceUid;
-    members = [ username ];
-  };
-
-  users.users.${llm.serviceUser} = {
-    uid = llm.serviceUid;
-    gid = llm.serviceUid;
-    # A cache-backed home makes macOS create SIP-protected directories in it.
-    home = "/var/empty";
-    shell = "/usr/bin/false";
-    description = "Local LLM inference service";
+  users = {
+    knownUsers = [ llm.serviceUser ];
+    knownGroups = [ llm.serviceUser ];
+    groups.${llm.serviceUser} = {
+      gid = llm.serviceUid;
+      members = [ username ];
+    };
+    users.${llm.serviceUser} = {
+      uid = llm.serviceUid;
+      gid = llm.serviceUid;
+      # A cache-backed home makes macOS create SIP-protected directories in it.
+      home = "/var/empty";
+      shell = "/usr/bin/false";
+      description = "Local LLM inference service";
+    };
   };
 
   system.activationScripts.postActivation.text = ''

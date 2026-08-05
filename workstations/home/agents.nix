@@ -4,7 +4,6 @@
 # Nix. This module only links files we intentionally author in this repo.
 {
   lib,
-  isDarwin ? false,
   ...
 }:
 let
@@ -14,24 +13,16 @@ let
     opencode = name: ".config/opencode/skills/${name}";
   };
 
-  # opencode CLI is Linux-only (see packages.nix). Skip its skill copies on
-  # darwin. cursor-agent needs no target of its own since it reads
-  # ~/.claude/skills.
-  unavailableAgents = lib.optionals isDarwin [
-    "opencode"
-  ];
-
   skillTargetPaths =
     name: agents:
     let
-      availableAgents = builtins.filter (agent: !(builtins.elem agent unavailableAgents)) agents;
       # OpenCode also reads ~/.claude/skills. If a skill targets both tools,
       # install it once there so OpenCode does not see duplicate skill names.
       effectiveAgents =
-        if builtins.elem "claude-code" availableAgents && builtins.elem "opencode" availableAgents then
-          builtins.filter (agent: agent != "opencode") availableAgents
+        if builtins.elem "claude-code" agents && builtins.elem "opencode" agents then
+          builtins.filter (agent: agent != "opencode") agents
         else
-          availableAgents;
+          agents;
     in
     lib.unique (map (agent: skillTargets.${agent} name) effectiveAgents);
 

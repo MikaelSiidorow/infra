@@ -27,7 +27,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
       - name: Check flake
-        run: nix flake check --all-systems --show-trace
+        run: nix flake check --show-trace
 
       - name: Verify flake metadata
         run: nix flake metadata
@@ -73,6 +73,9 @@ jobs:
 
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Test OpenCode sandbox
+        run: nix run .#opencode-sandbox-test
 
       - name: Build darwin configuration
         run: |

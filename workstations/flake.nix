@@ -308,6 +308,7 @@
           }
           // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
             darwin-rebuild = mkApp "${nix-darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild" "Run the locked nix-darwin rebuild CLI";
+            opencode-sandbox-test = mkApp "${(nixpkgs.legacyPackages.${system}.callPackage ./pkgs/opencode-sandbox { }).test}/bin/opencode-sandbox-test" "Test the OpenCode Seatbelt sandbox";
           };
         }) supportedSystems
       );
@@ -325,5 +326,8 @@
         aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-tree;
         x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
       };
+
+      checks.aarch64-darwin.opencode-sandbox =
+        (nixpkgs.legacyPackages.aarch64-darwin.callPackage ./pkgs/opencode-sandbox { }).test;
     };
 }
