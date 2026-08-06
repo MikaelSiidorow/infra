@@ -159,7 +159,10 @@ run_like() {
 		flags+=(--plan)
 	fi
 	[ -n "$model" ] && flags+=(--model "$model")
-	[ "$worktree" -eq 1 ] && flags+=(-w)
+	# cursor-agent's worktree option has an optional value. Passing it bare before
+	# the positional prompt makes its argument parser consume the prompt as the
+	# worktree name, so bind the tracked run name explicitly with `=`.
+	[ "$worktree" -eq 1 ] && flags+=("--worktree=$name")
 	[ -n "$resume_ref" ] && flags+=(--resume "$chat")
 
 	launch "$name" "$mode" "$model" "enabled" "$prompt" "${flags[@]}"

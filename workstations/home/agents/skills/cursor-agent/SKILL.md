@@ -19,7 +19,8 @@ bash ~/.claude/skills/cursor-agent/cursor-subagent.sh <subcommand> ...
 - `run [--name N] --model M [--write] [--worktree] -- <prompt>`
   Start a new sub-agent. Always pass `--model` (see Model selection). Read-only
   planning mode by default; pass `--write` to allow edits and shell (adds
-  `cursor-agent --force`). `--worktree` runs in an isolated git worktree.
+  `cursor-agent --force`). `--worktree` runs in an isolated git worktree named
+  after the tracked run.
   Prints the sub-agent's output and its `chatId`.
 - `resume <name|chatId> [--model M] -- <prompt>` Continue a tracked run (or a
   raw chatId). Reuses the tracked model by default; only pass `--model` to
