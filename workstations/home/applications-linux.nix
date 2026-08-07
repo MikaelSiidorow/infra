@@ -56,11 +56,7 @@ in
     sweethome3d.application
 
     # Cloud
-    azure-cli
     stripe-cli
-
-    # Document processing
-    texliveFull
 
     # Screenshot
     flameshot

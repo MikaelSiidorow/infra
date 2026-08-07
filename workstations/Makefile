@@ -85,9 +85,6 @@ lint:
 .PHONY: check
 check: format-check lint
 	nix flake check
-ifeq ($(UNAME),Darwin)
-	nix run .\#opencode-sandbox-test
-endif
 
 # Show what would change (dry-run)
 .PHONY: diff

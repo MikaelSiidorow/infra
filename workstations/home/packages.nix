@@ -99,7 +99,7 @@
         sqlite
 
         # Cloud
-        google-cloud-sdk
+        azure-cli
         terraform
 
         # Media
@@ -131,6 +131,8 @@
       ]
       # Platform-specific packages (macOS only)
       ++ lib.optionals isDarwin [
+        google-cloud-sdk
+
         # Cursor CLI (not in claude-code-nix-style flake; from unstable)
         pkgs-unstable.cursor-cli
       ];

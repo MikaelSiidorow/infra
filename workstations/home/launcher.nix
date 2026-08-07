@@ -97,8 +97,6 @@ let
       linux.vicinae.enableGnomeExtension = false;
     };
 
-    MacBook-Air = { };
-    MacBook-Pro = { };
   };
 
   machine = lib.recursiveUpdate {
