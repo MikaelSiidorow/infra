@@ -1,5 +1,6 @@
 # Desktop applications - platform-agnostic
 {
+  pkgs,
   pkgs-unstable,
   ...
 }:
@@ -29,7 +30,9 @@ let
     ms-toolsai.vscode-jupyter-cell-tags
     ms-vscode.makefile-tools
     myriad-dreamin.tinymist
-    oxc.oxc-vscode
+    # Unstable currently builds oxlint locally and its N-API packaging step is
+    # blocked by the Darwin sandbox. Stable is available from cache.
+    pkgs.vscode-extensions.oxc.oxc-vscode
     pkief.material-icon-theme
     redhat.vscode-yaml
     rust-lang.rust-analyzer
