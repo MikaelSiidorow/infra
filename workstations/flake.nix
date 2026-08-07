@@ -71,11 +71,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Local Claude Code and Codex session analytics
-    aeye = {
-      url = "github:MikaelSiidorow/aeye";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
   };
 
   outputs =

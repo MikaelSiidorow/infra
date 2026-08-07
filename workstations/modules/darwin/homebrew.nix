@@ -13,8 +13,6 @@ _: {
       brewfile = true;
     };
 
-    brews = [ ];
-
     # Chrome, 1Password, Teams and drata-agent come from the enterprise MDM.
     casks = [
       "orbstack"

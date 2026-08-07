@@ -36,9 +36,7 @@
       mode = "0600";
     };
 
-    # Hugging Face read token, used by llm-pull to avoid anonymous rate limits.
-    # Default symlink path under ~/.config/sops-nix/secrets; user-only on
-    # purpose, so it is not readable from the shared model cache.
+    # Keep the Hugging Face token available for model and dataset access.
     secrets."hf/token".mode = "0400";
   };
 

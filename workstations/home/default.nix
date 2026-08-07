@@ -7,7 +7,6 @@
 }:
 {
   imports = [
-    ./aeye.nix
     ./packages.nix
     ./nix.nix
     ./direnv.nix
@@ -27,7 +26,6 @@
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
-    ./llm.nix
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
