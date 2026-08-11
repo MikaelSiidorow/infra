@@ -175,6 +175,7 @@ jobs:
       SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
       TF_VAR_scaleway_organization_id: ${{ vars.SCW_ORGANIZATION_ID }}
       TF_VAR_scaleway_project_id: ${{ vars.SCW_PROJECT_ID }}
+      TF_VAR_scaleway_billing_alert_email: ${{ vars.SCW_BILLING_ALERT_EMAIL }}
     steps:
       - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v4
