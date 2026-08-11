@@ -15,7 +15,9 @@ output "k3s_ssh_host" {
 output "wger_email" {
   description = "SMTP settings projected into the wger-email Kubernetes Secret."
   sensitive   = true
-  value = {
+  # Keep the handoff atomic during a partial apply: until the API key exists,
+  # the whole output is unknown instead of exposing a partially known map.
+  value = scaleway_iam_api_key.wger_smtp.id != "" ? {
     ENABLE_EMAIL        = "True"
     EMAIL_HOST          = scaleway_tem_domain.notifications.smtp_host
     EMAIL_PORT          = tostring(scaleway_tem_domain.notifications.smtp_port)
@@ -24,7 +26,7 @@ output "wger_email" {
     EMAIL_USE_TLS       = "True"
     EMAIL_USE_SSL       = "False"
     FROM_EMAIL          = "wger <wger@${local.mail_domain}>"
-  }
+  } : null
 
   depends_on = [scaleway_tem_domain_validation.notifications]
 }

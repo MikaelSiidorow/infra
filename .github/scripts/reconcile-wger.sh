@@ -26,6 +26,27 @@ remote_kubectl() {
   remote k3s kubectl "$@"
 }
 
+if remote_kubectl -n wger get secret wger-email >/dev/null 2>&1; then
+  readonly -a required_email_keys=(
+    ENABLE_EMAIL
+    EMAIL_HOST
+    EMAIL_PORT
+    EMAIL_HOST_USER
+    EMAIL_HOST_PASSWORD
+    EMAIL_USE_TLS
+    EMAIL_USE_SSL
+    FROM_EMAIL
+  )
+
+  for key in "${required_email_keys[@]}"; do
+    # Test the value remotely so credential contents never enter CI output.
+    if ! remote "test -n \"\$(k3s kubectl -n wger get secret wger-email -o 'jsonpath={.data.${key}}')\""; then
+      echo "wger-email is missing or has an empty $key; refusing to restart consumers." >&2
+      exit 1
+    fi
+  done
+fi
+
 printf "ALTER ROLE wger PASSWORD '%s';\n" "$WGER_POSTGRES_PASSWORD" |
   remote sudo -u postgres psql --set=ON_ERROR_STOP=1
 

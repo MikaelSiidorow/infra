@@ -272,9 +272,10 @@ jobs:
       - name: Deploy NixOS
         run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/infra/${{ github.sha }}#k8s-server'"
   k8s-terraform:
-    needs: [changes, nixos]
+    needs: [changes, terraform, nixos]
     if: |
       always() &&
+      (needs.terraform.result == 'success' || needs.terraform.result == 'skipped') &&
       (needs.nixos.result == 'success' || needs.nixos.result == 'skipped') &&
       ((github.event_name == 'pull_request' && needs.changes.outputs.k8s_terraform == 'true') ||
       (github.event_name == 'push' && needs.changes.outputs.k8s_terraform == 'true') ||
