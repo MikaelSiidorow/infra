@@ -30,6 +30,9 @@ spec:
                 name: wger-config
             - secretRef:
                 name: wger-secrets
+            - secretRef:
+                name: wger-email
+                optional: true
           ports:
             - name: django
               containerPort: 8000

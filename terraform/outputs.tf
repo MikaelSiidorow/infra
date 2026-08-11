@@ -11,3 +11,20 @@ output "k3s_server_id" {
 output "k3s_ssh_host" {
   value = "root@${hcloud_server.k3s_server.ipv4_address}"
 }
+
+output "wger_email" {
+  description = "SMTP settings projected into the wger-email Kubernetes Secret."
+  sensitive   = true
+  value = {
+    ENABLE_EMAIL        = "True"
+    EMAIL_HOST          = scaleway_tem_domain.notifications.smtp_host
+    EMAIL_PORT          = tostring(scaleway_tem_domain.notifications.smtp_port)
+    EMAIL_HOST_USER     = scaleway_tem_domain.notifications.smtps_auth_user
+    EMAIL_HOST_PASSWORD = scaleway_iam_api_key.wger_smtp.secret_key
+    EMAIL_USE_TLS       = "True"
+    EMAIL_USE_SSL       = "False"
+    FROM_EMAIL          = "wger <wger@${local.mail_domain}>"
+  }
+
+  depends_on = [scaleway_tem_domain_validation.notifications]
+}

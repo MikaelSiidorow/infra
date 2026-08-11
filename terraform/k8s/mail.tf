@@ -1,7 +1,7 @@
-terraform {
-  required_version = "~> 1.12"
+data "terraform_remote_state" "infrastructure" {
+  backend = "s3"
 
-  backend "s3" {
+  config = {
     bucket                      = "terraform-state"
     key                         = "terraform.tfstate"
     region                      = "auto"
@@ -15,19 +15,19 @@ terraform {
       s3 = "https://0d7cd4f74493972b3d64775916c9f6ed.eu.r2.cloudflarestorage.com"
     }
   }
+}
 
-  required_providers {
-    hcloud = {
-      source  = "hetznercloud/hcloud"
-      version = ">= 1.52.0"
-    }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = ">=5.8.0"
-    }
-    scaleway = {
-      source  = "scaleway/scaleway"
-      version = "~> 2.0"
-    }
+locals {
+  wger_email = try(data.terraform_remote_state.infrastructure.outputs.wger_email, null)
+}
+
+resource "kubernetes_secret_v1" "wger_email" {
+  count = local.wger_email == null ? 0 : 1
+
+  metadata {
+    name      = "wger-email"
+    namespace = kubernetes_namespace_v1.wger.metadata[0].name
   }
+
+  data = local.wger_email
 }
