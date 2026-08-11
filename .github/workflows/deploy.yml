@@ -57,6 +57,8 @@ jobs:
               - '!terraform/k8s/**'
             k8s_terraform:
               - 'terraform/k8s/**'
+              - 'terraform/mail.tf'
+              - 'terraform/outputs.tf'
               - '.github/workflows/deploy.yml'
               - '.github/scripts/reconcile-wger.sh'
   nixos-preview:
@@ -169,6 +171,11 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      SCW_ACCESS_KEY: ${{ vars.SCW_ACCESS_KEY }}
+      SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      TF_VAR_scaleway_organization_id: ${{ vars.SCW_ORGANIZATION_ID }}
+      TF_VAR_scaleway_project_id: ${{ vars.SCW_PROJECT_ID }}
+      TF_VAR_scaleway_billing_alert_email: ${{ vars.SCW_BILLING_ALERT_EMAIL }}
     steps:
       - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v4

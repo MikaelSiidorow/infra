@@ -28,6 +28,9 @@ spec:
                 name: wger-config
             - secretRef:
                 name: wger-secrets
+            - secretRef:
+                name: wger-email
+                optional: true
           resources:
             requests:
               cpu: 50m
@@ -73,6 +76,9 @@ spec:
                 name: wger-config
             - secretRef:
                 name: wger-secrets
+            - secretRef:
+                name: wger-email
+                optional: true
           resources:
             requests:
               cpu: 25m
