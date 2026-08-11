@@ -80,9 +80,20 @@ resource "scaleway_iam_policy" "wger_smtp" {
   }
 }
 
+resource "time_rotating" "wger_smtp" {
+  # Rotate before Scaleway's one-year organization limit leaves the key
+  # unusable. The 65-day renewal buffer allows for delayed Terraform runs.
+  rotation_days = 300
+}
+
 resource "scaleway_iam_api_key" "wger_smtp" {
   application_id = scaleway_iam_application.wger_smtp.id
   description    = "wger SMTP credential"
+  expires_at     = timeadd(time_rotating.wger_smtp.rfc3339, "8760h")
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [scaleway_iam_policy.wger_smtp]
 }

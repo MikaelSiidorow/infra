@@ -4,6 +4,7 @@ terraform/*.tfvars
 terraform/*.tfvars.json
 *.tfstate
 *.tfstate.*
+**/tfplan
 
 # Logs
 *.log
