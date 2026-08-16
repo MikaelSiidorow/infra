@@ -154,6 +154,31 @@ let
       kind: Role
       name: ci-deploy
       apiGroup: rbac.authorization.k8s.io
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: ci-deploy
+      namespace: wger
+    rules:
+      - apiGroups: ["apps"]
+        resources: ["deployments"]
+        verbs: ["get", "list", "watch", "patch"]
+        resourceNames: ["wger-web", "wger-celery-worker", "wger-celery-beat"]
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: ci-deploy
+      namespace: wger
+    subjects:
+      - kind: ServiceAccount
+        name: ci-deploy
+        namespace: refinery
+    roleRef:
+      kind: Role
+      name: ci-deploy
+      apiGroup: rbac.authorization.k8s.io
   '';
 
   refineryDbService = pkgs.writeText "refinery-db-service.yaml" ''
