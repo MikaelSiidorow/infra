@@ -19,7 +19,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: web
-          image: docker.io/wger/server:2.6.0
+          image: ghcr.io/mikaelsiidorow/wger:production
+          imagePullPolicy: Always
           env:
             # The Service named "wger" creates a WGER_PORT service-link
             # variable. An explicit value takes precedence over that URL.
