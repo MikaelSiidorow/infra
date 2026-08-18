@@ -42,6 +42,25 @@
 
   services.tailscale.enable = true;
 
+  # NixOS rollbacks do not roll back Headscale's database migrations. Keep a
+  # stopped, version-specific snapshot before the newly selected binary starts.
+  systemd.services.headscale.preStart = ''
+    backup_dir=/var/lib/headscale/upgrade-backups/pre-${config.services.headscale.package.version}
+
+    if [[ ! -e "$backup_dir/.complete" && -e /var/lib/headscale/db.sqlite ]]; then
+      mkdir -p "$backup_dir"
+      for file in \
+        /var/lib/headscale/db.sqlite \
+        /var/lib/headscale/db.sqlite-wal \
+        /var/lib/headscale/db.sqlite-shm \
+        /var/lib/headscale/*.key
+      do
+        [[ ! -e "$file" ]] || cp -a "$file" "$backup_dir/"
+      done
+      touch "$backup_dir/.complete"
+    fi
+  '';
+
   networking.firewall = {
     trustedInterfaces = [ "tailscale0" ];
     allowedUDPPorts = [ 3478 ];

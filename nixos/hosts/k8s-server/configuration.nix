@@ -125,6 +125,36 @@
     '';
   };
 
+  # PostgreSQL listens on the K3s bridge address, which is created
+  # asynchronously after k3s starts. Avoid a boot-time bind failure.
+  systemd.services.wait-for-k3s-cni = {
+    description = "Wait for the K3s CNI bridge address";
+    after = [ "k3s.service" ];
+    requires = [ "k3s.service" ];
+    before = [ "postgresql.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutStartSec = 130;
+    };
+    script = ''
+      for attempt in {1..120}; do
+        if ${pkgs.iproute2}/bin/ip -4 -o address show dev cni0 2>/dev/null \
+          | ${pkgs.gnugrep}/bin/grep -Fq ' 10.42.0.1/'; then
+          exit 0
+        fi
+        ${pkgs.coreutils}/bin/sleep 1
+      done
+
+      echo "Timed out waiting for 10.42.0.1 on cni0" >&2
+      exit 1
+    '';
+  };
+
+  systemd.services.postgresql = {
+    after = [ "wait-for-k3s-cni.service" ];
+    requires = [ "wait-for-k3s-cni.service" ];
+  };
+
   # Logical replication and PowerSync role membership must also be reconciled
   # on existing clusters.
   # Wger's migration creates this publication itself when it is absent, but

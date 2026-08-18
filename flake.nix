@@ -2,7 +2,7 @@
   description = "Infrastructure NixOS configurations";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     deploy-rs = {
       url = "github:serokell/deploy-rs";
@@ -30,6 +30,8 @@
       ...
     }:
     {
+      apps.x86_64-linux.deploy = deploy-rs.apps.x86_64-linux.default;
+
       nixosConfigurations = {
         k8s-server = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
