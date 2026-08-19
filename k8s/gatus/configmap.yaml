@@ -108,13 +108,12 @@ data:
 
       - name: Argo CD
         group: Infrastructure
-        url: https://argocd.miksu.app/healthz
+        url: http://argocd-server.argocd.svc.cluster.local/healthz
         interval: 60s
         conditions:
           - "[STATUS] == 200"
           - "[BODY] == ok"
           - "[RESPONSE_TIME] < 5000"
-          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -123,13 +122,12 @@ data:
 
       - name: Grafana
         group: Infrastructure
-        url: https://grafana.miksu.app/api/health
+        url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
         interval: 60s
         conditions:
           - "[STATUS] == 200"
           - "[BODY].database == ok"
           - "[RESPONSE_TIME] < 5000"
-          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
