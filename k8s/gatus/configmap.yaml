@@ -17,6 +17,8 @@ data:
       telegram:
         token: ${TELEGRAM_BOT_TOKEN}
         id: "-1003049249814"
+        default-alert:
+          send-on-resolved: true
 
     endpoints:
       - name: Refinery
