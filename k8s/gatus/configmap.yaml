@@ -28,6 +28,7 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -41,6 +42,7 @@ data:
         conditions:
           - "[CONNECTED] == true"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -55,6 +57,7 @@ data:
           - "[STATUS] == 200"
           - "[BODY].status == ok"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -68,6 +71,7 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -81,6 +85,7 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
@@ -94,6 +99,37 @@ data:
         conditions:
           - "[STATUS] == 200"
           - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: Argo CD
+        group: Infrastructure
+        url: https://argocd.miksu.app/healthz
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY] == ok"
+          - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
+        alerts:
+          - type: telegram
+            enabled: true
+            failure-threshold: 3
+            success-threshold: 2
+
+      - name: Grafana
+        group: Infrastructure
+        url: https://grafana.miksu.app/api/health
+        interval: 60s
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY].database == ok"
+          - "[RESPONSE_TIME] < 5000"
+          - "[CERTIFICATE_EXPIRATION] > 168h"
         alerts:
           - type: telegram
             enabled: true
