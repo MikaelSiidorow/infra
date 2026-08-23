@@ -17,7 +17,10 @@
     enable = true;
     settings = {
       email = "mikael+bitwarden@siidorow.com";
-      base_url = "https://vault.bitwarden.eu";
+      base_url = "https://api.bitwarden.eu";
+      identity_url = "https://identity.bitwarden.eu";
+      ui_url = "https://vault.bitwarden.eu";
+      notifications_url = "https://notifications.bitwarden.eu";
       pinentry = if isDarwin then pkgs.pinentry_mac else pkgs.pinentry-curses;
     };
   };

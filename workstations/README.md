@@ -74,7 +74,10 @@ age-keygen -y ~/.config/sops/age/keys.txt   # optional: prints only the public a
 mkdir -p ~/.config/sops/age && chmod 700 ~/.config/sops ~/.config/sops/age
 
 nix shell nixpkgs#rbw nixpkgs#pinentry-curses -c sh -c '
-  rbw config set base_url "https://vault.bitwarden.eu"
+  rbw config set base_url "https://api.bitwarden.eu"
+  rbw config set identity_url "https://identity.bitwarden.eu"
+  rbw config set ui_url "https://vault.bitwarden.eu"
+  rbw config set notifications_url "https://notifications.bitwarden.eu"
   rbw config set email "<bitwarden-account-email>"
   rbw register
   rbw login
