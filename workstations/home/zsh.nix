@@ -37,7 +37,7 @@
       cres = "claude --resume";
       crew = "claude /review";
       cwt = "claude-worktree";
-      codex = "codex --sandbox danger-full-access --ask-for-approval untrusted";
+      codex = "codex --sandbox danger-full-access --ask-for-approval on-request";
 
       # Git (from oh-my-zsh git plugin)
       g = "git";
