@@ -67,6 +67,7 @@ in
 {
   home.file = skillFiles // {
     ".claude/CLAUDE.md".source = ./agents/shared/AGENTS.md;
+    ".codex/AGENTS.md".source = ./agents/shared/AGENTS.md;
     ".claude/statusline-command.sh" = {
       source = ./agents/claude-code/statusline-command.sh;
       # Claude Code runs the statusLine command through a shell, so the file

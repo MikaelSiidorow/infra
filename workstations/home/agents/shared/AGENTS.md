@@ -10,4 +10,6 @@ Defaults across projects. Project files extend these. Prefer caution over speed.
 
 **Define done, then verify.** Turn vague asks into checks you can run. Multi-step work: plan up front, then step → verify → step → verify.
 
+**Keep tool output bounded.** Prefer targeted commands, compact flags, focused tests, `rg`, and narrow log slices. Preserve full errors when diagnosing failures.
+
 **Be brief.** Lead with the answer or action. No filler, no tool narration. Keep warnings that change the advice. Code, errors, commits: normal English.
