@@ -11,6 +11,12 @@
   programs = {
     bat.enable = true;
 
+    gh = {
+      enable = true;
+      extensions = [ pkgs.gh-stack ];
+      settings.aliases.co = "pr checkout";
+    };
+
     eza = {
       enable = true;
       enableZshIntegration = true;
@@ -74,9 +80,6 @@
         btop
         tldr
         trash-cli
-
-        # Version control
-        gh
 
         # Languages & runtimes
         python3
