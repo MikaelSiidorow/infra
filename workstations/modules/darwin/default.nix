@@ -4,6 +4,15 @@
   pkgs,
   ...
 }:
+let
+  # The upstream zip contains an AppleDouble sidecar that unzip materializes as
+  # a regular file, invalidating the otherwise notarized app's code signature.
+  scrollReverser = pkgs.scroll-reverser.overrideAttrs (oldAttrs: {
+    postInstall = (oldAttrs.postInstall or "") + ''
+      rm -f "$out/Applications/Scroll Reverser.app/Contents/Resources/._IntroShot.png"
+    '';
+  });
+in
 {
   imports = [
     ./system.nix
@@ -11,8 +20,16 @@
   ];
 
   environment.systemPackages = [
+    scrollReverser
     pkgs.vim
   ];
+
+  # Start Scroll Reverser in the user's GUI session at login. KeepAlive is
+  # intentionally omitted so quitting the app does not immediately reopen it.
+  launchd.user.agents.scroll-reverser.serviceConfig = {
+    Program = "${scrollReverser}/Applications/Scroll Reverser.app/Contents/MacOS/Scroll Reverser";
+    RunAtLoad = true;
+  };
 
   services.skhd.enable = true;
 
