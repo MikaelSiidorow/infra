@@ -9,9 +9,9 @@
       dns = {
         magic_dns = true;
         base_domain = "vpn.miksu.app";
+        override_local_dns = true;
         nameservers.global = [
-          "1.1.1.1"
-          "1.0.0.1"
+          "https://base.dns.mullvad.net/dns-query"
         ];
         extra_records = [
           {
