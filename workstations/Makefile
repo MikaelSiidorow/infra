@@ -6,6 +6,8 @@ HOSTNAME := $(shell hostname -s)
 UNAME := $(shell uname -s)
 SHELL_SOURCES := $(shell git ls-files '*.sh' '*.bash' ':!home/agents/skills/**')
 CHECK_SHELL := nix develop .\#checks -c
+HESTIA_HOST ?= hestia.home.arpa
+HESTIA_SSH := mikaelsiidorow@$(HESTIA_HOST)
 
 # darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
 # when no flake attr is specified, so we pass `.` and let it pick.
@@ -53,6 +55,7 @@ help:
 	@echo "  make format-check - Check formatting without activating"
 	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
 	@echo "  make popos        - Build and activate Pop!_OS configuration"
+	@echo "  make deploy-hestia - Sync and activate the hestia NixOS configuration"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
 	@echo "  make rollback     - Rollback to previous generation"
@@ -154,6 +157,12 @@ fmt:
 .PHONY: popos
 popos:
 	home-manager switch --flake .#mikaelsiidorow@pop-os
+
+# Deploy the revision already pushed to the public repository. Keeping hestia's
+# checkout clean makes its running configuration easy to inspect and reproduce.
+.PHONY: deploy-hestia
+deploy-hestia:
+	ssh -t $(HESTIA_SSH) 'cd /etc/nixos-repo && git pull --ff-only && sudo nixos-rebuild switch --flake .#hestia'
 
 # Show system generations
 .PHONY: history

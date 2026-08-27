@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml/badge.svg)](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml)
 
-Multi-platform Nix configuration supporting macOS (nix-darwin) and Linux (home-manager standalone).
+Multi-platform Nix configuration supporting NixOS, macOS (nix-darwin), and Linux (home-manager standalone).
 
 Configured hosts:
 
@@ -10,6 +10,7 @@ Configured hosts:
 | ----------------------- | -------------- | ----------------------- |
 | `MacBook-Air`           | aarch64-darwin | nix-darwin              |
 | `MacBook-Pro`           | aarch64-darwin | nix-darwin              |
+| `hestia`                | x86_64-linux   | NixOS home server       |
 | `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
 
 ## Quick Start
@@ -113,6 +114,17 @@ nix run .#home-manager -- switch --flake .#mikaelsiidorow@pop-os -b backup
 make switch
 ```
 
+### NixOS (Hestia)
+
+After committing and pushing changes, pull and activate them on the server:
+
+```bash
+make deploy-hestia
+```
+
+The target defaults to `hestia.home.arpa`. Override it when needed with
+`make deploy-hestia HESTIA_HOST=<address>`.
+
 ## Common Commands
 
 ```bash
@@ -122,6 +134,7 @@ make update       # Update inputs
 make update-fast  # Update fast-moving app inputs
 make upgrade      # Update + switch
 make brew-upgrade # Explicit Homebrew update + upgrade on macOS
+make deploy-hestia # Sync and activate the Hestia NixOS configuration
 make check        # Validate flake
 make fmt          # Format code
 ```

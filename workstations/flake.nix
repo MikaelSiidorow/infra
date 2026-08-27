@@ -26,6 +26,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Declarative disk partitioning for NixOS hosts.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Prebuilt nix-index database and comma command lookup
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
@@ -80,6 +86,7 @@
       nixpkgs-unstable,
       nix-darwin,
       home-manager,
+      disko,
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
@@ -313,6 +320,17 @@
           system = "x86_64-linux";
           hostname = "pop-os";
         };
+      };
+
+      nixosConfigurations.hestia = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs username; };
+        modules = [
+          disko.nixosModules.disko
+          ./hosts/hestia/disk-config.nix
+          ./hosts/hestia/hardware-configuration.nix
+          ./hosts/hestia/default.nix
+        ];
       };
 
       # Formatter configuration for `nix fmt`
