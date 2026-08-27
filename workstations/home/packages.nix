@@ -102,7 +102,11 @@
         sqlite
 
         # Cloud
-        azure-cli
+        (azure-cli.withExtensions [
+          (azure-cli.extensions.containerapp.overridePythonAttrs {
+            pythonRelaxDeps = [ "kubernetes" ];
+          })
+        ])
         terraform
 
         # Media
