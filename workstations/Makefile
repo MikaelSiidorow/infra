@@ -56,6 +56,9 @@ help:
 	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
 	@echo "  make popos        - Build and activate Pop!_OS configuration"
 	@echo "  make deploy-hestia - Sync and activate the hestia NixOS configuration"
+	@echo "  make deploy-cerberus - Deploy the Cerberus OpenWrt configuration"
+	@echo "  make deploy-hermes - Deploy the Hermes OpenWrt configuration"
+	@echo "  make build-router-firmware - Build both OpenWrt firmware images"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
 	@echo "  make rollback     - Rollback to previous generation"
@@ -163,6 +166,18 @@ popos:
 .PHONY: deploy-hestia
 deploy-hestia:
 	ssh -t $(HESTIA_SSH) 'cd /etc/nixos-repo && git pull --ff-only && sudo nixos-rebuild switch --flake .#hestia'
+
+.PHONY: deploy-cerberus
+deploy-cerberus:
+	nix run .\#cerberus-deploy
+
+.PHONY: deploy-hermes
+deploy-hermes:
+	nix run .\#hermes-deploy
+
+.PHONY: build-router-firmware
+build-router-firmware:
+	nix build .\#cerberus-firmware .\#hermes-firmware --no-link
 
 # Show system generations
 .PHONY: history
