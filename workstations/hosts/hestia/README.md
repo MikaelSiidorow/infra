@@ -1,0 +1,75 @@
+# Hestia
+
+Hestia is the home server at `192.168.67.170`. It joins the Headscale tailnet
+and advertises the home LAN as a Tailscale subnet router. This makes devices
+that cannot run Tailscale themselves, including the OpenWrt routers, reachable
+without exposing management ports to the internet.
+
+## Enroll Hestia
+
+The NixOS configuration enables `tailscaled`, IP forwarding, the Tailscale UDP
+firewall port, and advertisement of `192.168.67.0/24`. Enrollment remains an
+intentional one-time operation so a reusable Headscale pre-auth key does not
+need to live in this repository.
+
+After the first NixOS activation, enroll the node against the existing
+Headscale control server:
+
+```bash
+sudo tailscale up \
+  --login-server=https://hs.miksu.app \
+  --advertise-routes=192.168.67.0/24
+```
+
+Complete the registration using the instructions printed by the command. The
+node state persists in `/var/lib/tailscale`; later NixOS activations keep the
+route advertisement in sync through `services.tailscale.extraSetFlags`.
+
+## Approve the route
+
+Hestia's route announcement does not make the subnet available by itself.
+Headscale keeps advertised routes disabled until an administrator approves
+them. This approval is runtime state in Headscale's database on the Hetzner VM;
+it does not require an infra repository change for the initial test.
+
+On the Headscale server, find Hestia and approve only its home-LAN route:
+
+```bash
+headscale nodes list-routes
+headscale nodes approve-routes \
+  --identifier <HESTIA_NODE_ID> \
+  --routes 192.168.67.0/24
+```
+
+Linux clients must opt in to subnet routes once:
+
+```bash
+sudo tailscale set --accept-routes=true
+```
+
+Verify from a remote tailnet client before adding split DNS:
+
+```bash
+ping 192.168.67.170
+ssh root@192.168.67.1
+ssh root@192.168.67.2
+```
+
+Router SSH remains LAN-only. Tailscale traffic reaches it through Hestia with
+the subnet router's default source NAT, so the OpenWrt routers need no WAN
+firewall openings or return routes.
+
+## Follow-up in the infra repository
+
+After the subnet route works, configure Headscale split DNS for `home.arpa`
+through Cerberus at `192.168.67.1`. Then remote clients can use:
+
+```text
+cerberus.home.arpa
+hermes.home.arpa
+hestia.home.arpa
+```
+
+Keep Mullvad DoH as the global resolver; only `home.arpa` should use the split
+DNS route. Restrict access to the advertised subnet with Headscale policy
+grants before treating the setup as complete.

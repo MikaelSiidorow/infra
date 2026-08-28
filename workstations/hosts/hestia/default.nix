@@ -29,6 +29,30 @@
     };
   };
 
+  # Join Hestia to the existing Headscale tailnet once with `tailscale up`.
+  # The persisted node state keeps that enrollment, while NixOS owns the
+  # forwarding and route-advertisement settings needed to reach the home LAN.
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;
+    useRoutingFeatures = "server";
+    extraSetFlags = [ "--advertise-routes=192.168.67.0/24" ];
+  };
+
+  # Tailscale subnet routers benefit from forwarding UDP GRO on the physical
+  # interface. Apply the upstream-recommended flags on every boot.
+  systemd.services.tailscale-udp-gro-forwarding = {
+    description = "Optimize UDP GRO forwarding for Tailscale";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    before = [ "tailscaled.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.ethtool}/bin/ethtool -K enp31s0 rx-udp-gro-forwarding on rx-gro-list off";
+    };
+  };
+
   users.users.${username} = {
     isNormalUser = true;
     description = "Mikael Siidorow";
