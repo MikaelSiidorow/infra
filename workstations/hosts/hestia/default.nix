@@ -7,6 +7,7 @@
   imports = [
     ../../modules/common
     ./home-assistant.nix
+    ./reverse-proxy.nix
     ./zigbee.nix
   ];
 

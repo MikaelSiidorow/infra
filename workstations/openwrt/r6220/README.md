@@ -162,7 +162,8 @@ them with SQM/QoS. Dnsmasq forwards upstream queries through Mullvad Base DoH
 at `https://base.dns.mullvad.net/dns-query`; DNS interception remains disabled.
 The LAN uses `home.arpa`, with `cerberus.home.arpa` at `192.168.67.1`,
 `hermes.home.arpa` at `192.168.67.2`, and a fixed Hestia lease and record at
-`192.168.67.170`.
+`192.168.67.170`. The `ha.home.arpa` and `zigbee.home.arpa` service records
+also resolve to Hestia for its local HTTP reverse proxy.
 
 Build the deployment script without contacting the router:
 

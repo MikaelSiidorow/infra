@@ -123,6 +123,14 @@ in
             name = "hestia.home.arpa";
             ip = "192.168.67.170";
           };
+          ha = {
+            name = "ha.home.arpa";
+            ip = "192.168.67.170";
+          };
+          zigbee = {
+            name = "zigbee.home.arpa";
+            ip = "192.168.67.170";
+          };
         };
 
         odhcpd.odhcpd = {
