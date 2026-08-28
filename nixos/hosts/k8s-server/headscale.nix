@@ -13,6 +13,9 @@
         nameservers.global = [
           "https://base.dns.mullvad.net/dns-query"
         ];
+        nameservers.split."home.arpa" = [
+          "192.168.67.1"
+        ];
         extra_records = [
           {
             name = "argocd.miksu.app";
