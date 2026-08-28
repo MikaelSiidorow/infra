@@ -21,6 +21,7 @@ ifeq ($(UNAME),Darwin)
 	endif
 	FLAKE_TARGET := .
 	DISPLAY_TARGET := darwinConfigurations.$(HOSTNAME)
+	SWITCH_FLAGS :=
 else
 	HOME_MANAGER := $(shell command -v home-manager 2>/dev/null || true)
 	ifeq ($(HOME_MANAGER),)
@@ -30,6 +31,7 @@ else
 	endif
 	FLAKE_TARGET := .\#mikaelsiidorow@pop-os
 	DISPLAY_TARGET := $(FLAKE_TARGET)
+	SWITCH_FLAGS := -b backup
 endif
 
 # Default target - show help
@@ -67,7 +69,7 @@ help:
 .PHONY: switch
 switch:
 	@echo "Building $(DISPLAY_TARGET)..."
-	$(BUILD_CMD) switch --flake $(FLAKE_TARGET)
+	$(BUILD_CMD) switch $(SWITCH_FLAGS) --flake $(FLAKE_TARGET)
 
 # Build without activating
 .PHONY: build
@@ -159,7 +161,7 @@ fmt:
 # Host-specific overrides (use when not running on the target host)
 .PHONY: popos
 popos:
-	home-manager switch --flake .#mikaelsiidorow@pop-os
+	home-manager switch -b backup --flake .#mikaelsiidorow@pop-os
 
 # Deploy the revision already pushed to the public repository. Keeping hestia's
 # checkout clean makes its running configuration easy to inspect and reproduce.
