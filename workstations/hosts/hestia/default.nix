@@ -6,6 +6,7 @@
 {
   imports = [
     ../../modules/common
+    ./home-assistant.nix
     ./zigbee.nix
   ];
 

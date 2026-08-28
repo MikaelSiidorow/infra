@@ -32,6 +32,25 @@
       homeassistant.enabled = true;
       permit_join = false;
 
+      devices = {
+        "0xa4c1380ce904ffff" = {
+          friendly_name = "bathroom_thermometer";
+          description = "Bathroom temperature and humidity sensor";
+        };
+        "0x8c73dafffef5d7c4" = {
+          friendly_name = "ac_leak_sensor";
+          description = "Air conditioner water leak sensor";
+        };
+        "0xa4c13811751affff" = {
+          friendly_name = "washing_machine_plug";
+          description = "Washing machine smart plug";
+        };
+        "0xa4c1380f6c86ffff" = {
+          friendly_name = "pc_plug";
+          description = "PC smart plug";
+        };
+      };
+
       serial = {
         port = "/dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_ea7c162edc9aef1186d2b79061ce3355-if00-port0";
         adapter = "ember";
