@@ -119,6 +119,17 @@ nix run .#home-manager -- switch --flake .#mikaelsiidorow@pop-os -b backup
 make switch
 ```
 
+Pop!\_OS owns the privileged `tailscaled` system service rather than Home
+Manager. After installing and enabling Tailscale through the host OS, apply the
+repeatable Headscale client preferences with:
+
+```bash
+tailscale-headscale-setup
+```
+
+The command connects to `https://hs.miksu.app`, accepts Headscale DNS, and
+accepts the home LAN subnet route. It is safe to run again.
+
 ### NixOS (Hestia)
 
 After committing and pushing changes, pull and activate them on the server:
