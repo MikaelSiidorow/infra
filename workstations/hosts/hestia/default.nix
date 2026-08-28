@@ -4,7 +4,10 @@
   ...
 }:
 {
-  imports = [ ../../modules/common ];
+  imports = [
+    ../../modules/common
+    ./zigbee.nix
+  ];
 
   boot = {
     loader = {

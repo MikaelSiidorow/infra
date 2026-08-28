@@ -1,7 +1,13 @@
 keys:
   - &mikael age1cg4jmsf6857fk9456uphmmqmjahvfv5hcxf75w7rsjay3p9kj40s0qg5tm
+  - &hestia age1nrzsajt427a8j2qed0c7cqpxw5k30vnhkl85gt54w66yvucm6vzqczrxx0
 
 creation_rules:
+  - path_regex: ^secrets/hestia\.yaml$
+    key_groups:
+      - age:
+          - *mikael
+          - *hestia
   - path_regex: ^secrets/.*\.yaml$
     key_groups:
       - age:
