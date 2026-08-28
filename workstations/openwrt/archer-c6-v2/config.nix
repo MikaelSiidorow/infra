@@ -2,7 +2,7 @@
 {
   openwrt.archer-c6-v2 = {
     deploy = {
-      host = "192.168.1.2";
+      host = "192.168.67.2";
       user = "root";
       rollbackTimeout = 90;
     };
@@ -54,10 +54,10 @@
             device = "br-lan";
             proto = "static";
             ip6assign = "60";
-            ipaddr = [ "192.168.1.2/24" ];
+            ipaddr = [ "192.168.67.2/24" ];
             multipath = "off";
-            gateway = "192.168.1.1";
-            dns = [ "192.168.1.1" ];
+            gateway = "192.168.67.1";
+            dns = [ "192.168.67.1" ];
           };
           wan = {
             device = "eth0.2";

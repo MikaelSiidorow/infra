@@ -156,13 +156,13 @@ expect to use `sysupgrade -n` followed by a fresh declarative deployment.
 
 The official OpenWrt 25.12.5 board-generated network and wireless state has
 been captured and translated into `config.nix`. The radios remain disabled and
-the R6220 remains the router at `192.168.1.1` with a DHCP WAN. Software and
+the R6220 becomes the router at `192.168.67.1` with a DHCP WAN. Software and
 hardware flow offloading are enabled for full WAN throughput; do not combine
 them with SQM/QoS. Dnsmasq forwards upstream queries through Mullvad Base DoH
 at `https://base.dns.mullvad.net/dns-query`; DNS interception remains disabled.
-The LAN uses `home.arpa`, with `cerberus.home.arpa` at `192.168.1.1`,
-`hermes.home.arpa` at `192.168.1.2`, and a fixed Hestia lease and record at
-`192.168.1.170`.
+The LAN uses `home.arpa`, with `cerberus.home.arpa` at `192.168.67.1`,
+`hermes.home.arpa` at `192.168.67.2`, and a fixed Hestia lease and record at
+`192.168.67.170`.
 
 Build the deployment script without contacting the router:
 

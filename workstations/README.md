@@ -149,6 +149,9 @@ make fmt          # Format code
 
 Router-specific outputs are built on x86_64 Linux:
 
+The staged procedure for changing the home LAN to `192.168.67.0/24` is in
+[`openwrt/subnet-migration.md`](openwrt/subnet-migration.md).
+
 ```bash
 nix build .#cerberus-firmware
 nix build .#cerberus-deploy

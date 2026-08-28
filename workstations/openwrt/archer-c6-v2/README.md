@@ -3,9 +3,9 @@
 This directory describes the EU hardware revision 2.0 currently running
 official OpenWrt 25.12.5 as a wired access point:
 
-- management address `192.168.1.2/24`
+- management address `192.168.67.2/24`
 - hostname `hermes` and local name `hermes.home.arpa`
-- gateway and DNS through the R6220 at `192.168.1.1`
+- gateway and DNS through the R6220 at `192.168.67.1`
 - DHCPv4 disabled on the Archer
 - LAN-to-LAN uplink; the Archer WAN port remains unused
 - `Mythos` on 5 GHz channel 36 at VHT80 and 2.4 GHz auto at HT20

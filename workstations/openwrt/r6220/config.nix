@@ -16,8 +16,8 @@ in
 {
   openwrt.r6220 = {
     deploy = {
-      # Use the initial OpenWrt address until local DNS is configured.
-      host = "192.168.1.1";
+      # Use the fixed LAN address so deployment does not depend on local DNS.
+      host = "192.168.67.1";
       user = "root";
       rollbackTimeout = 90;
     };
@@ -107,21 +107,21 @@ in
         host.hestia = {
           name = "hestia";
           mac = "70:85:c2:a4:50:c2";
-          ip = "192.168.1.170";
+          ip = "192.168.67.170";
         };
 
         domain = {
           cerberus = {
             name = "cerberus.home.arpa";
-            ip = "192.168.1.1";
+            ip = "192.168.67.1";
           };
           hermes = {
             name = "hermes.home.arpa";
-            ip = "192.168.1.2";
+            ip = "192.168.67.2";
           };
           hestia_dns = {
             name = "hestia.home.arpa";
-            ip = "192.168.1.170";
+            ip = "192.168.67.170";
           };
         };
 
@@ -343,7 +343,7 @@ in
           lan = {
             device = "br-lan";
             proto = "static";
-            ipaddr = [ "192.168.1.1/24" ];
+            ipaddr = [ "192.168.67.1/24" ];
             ip6assign = "60";
           };
           wan = {
