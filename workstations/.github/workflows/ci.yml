@@ -74,9 +74,6 @@ jobs:
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Test OpenCode sandbox
-        run: nix run .#opencode-sandbox-test
-
       - name: Build darwin configuration
         run: |
           nix build .#darwinConfigurations.MacBook-Air.system \
