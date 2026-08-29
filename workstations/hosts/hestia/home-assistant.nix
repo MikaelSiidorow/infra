@@ -173,6 +173,33 @@ in
               cards = [
                 {
                   type = "heading";
+                  heading = "Now playing";
+                  icon = "mdi:play-circle-outline";
+                }
+                {
+                  type = "grid";
+                  columns = 2;
+                  square = false;
+                  cards = [
+                    {
+                      type = "media-control";
+                      entity = "media_player.living_room_tv";
+                      name = "Living Room TV";
+                    }
+                    {
+                      type = "media-control";
+                      entity = "media_player.sonos_ray";
+                      name = "Sonos Ray";
+                    }
+                  ];
+                }
+              ];
+            }
+            {
+              type = "vertical-stack";
+              cards = [
+                {
+                  type = "heading";
                   heading = "Home status";
                   icon = "mdi:home-analytics";
                 }
