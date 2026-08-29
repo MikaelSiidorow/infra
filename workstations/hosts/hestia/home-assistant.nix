@@ -75,6 +75,9 @@ in
         show_in_sidebar = true;
         require_admin = false;
       };
+      # The Ray is reachable from Hestia, but SSDP discovery does not cross the
+      # current Wi-Fi/Ethernet path reliably. Its DHCP reservation owns this IP.
+      sonos.media_player.hosts = [ "192.168.67.220" ];
 
       rest = [
         {
