@@ -22,8 +22,11 @@ in
     });
 
     # Integrations added through the UI still need their Python dependencies
-    # declared here. MQTT is the only additional integration needed initially.
-    extraComponents = [ "mqtt" ];
+    # declared here.
+    extraComponents = [
+      "cast"
+      "mqtt"
+    ];
 
     config = {
       default_config = { };
