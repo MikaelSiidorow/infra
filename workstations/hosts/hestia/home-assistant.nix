@@ -62,6 +62,14 @@ in
         time_zone = "Europe/Helsinki";
         unit_system = "metric";
       };
+      lovelace.dashboards.nixos-lovelace = {
+        mode = "yaml";
+        filename = "ui-lovelace.yaml";
+        title = "Information display";
+        icon = "mdi:view-dashboard-outline";
+        show_in_sidebar = true;
+        require_admin = false;
+      };
 
       rest = [
         {
@@ -91,34 +99,184 @@ in
         }
       ];
     };
+
+    # A separate read-only dashboard managed by Nix. The normal Overview
+    # dashboard remains in storage mode and editable through the UI.
+    lovelaceConfig = {
+      title = "Information display";
+      views = [
+        {
+          title = "Departures";
+          path = "departures";
+          icon = "mdi:bus-clock";
+          cards = [
+            {
+              type = "markdown";
+              title = "Pohjantori · Louhentie";
+              entity_id = [ "sensor.pohjantori_departures" ];
+              content = ''
+                {% set departures =
+                  state_attr('sensor.pohjantori_departures', 'stoptimesWithoutPatterns')
+                  or []
+                %}
+                {% set buses = departures
+                  | selectattr('trip.route.shortName', 'in', ['111', '113'])
+                  | list
+                %}
+
+                {% if buses %}
+                | Line | Destination | Departure |
+                | :--: | --- | ---: |
+                {% for departure in buses[:3] %}
+                  {% set timestamp =
+                    departure.serviceDay + departure.realtimeDeparture
+                  %}
+                  {% set seconds = timestamp - as_timestamp(now()) %}
+                  {% if seconds <= 30 %}
+                    {% set relative_time = 'Now' %}
+                  {% elif seconds < 90 %}
+                    {% set relative_time = '~1 min' %}
+                  {% else %}
+                    {% set relative_time =
+                      ((seconds / 60) | round(0, 'ceil') | int | string) + ' min'
+                    %}
+                  {% endif %}
+                | **{{ departure.trip.route.shortName }}** | {{ departure.headsign }} | **{{ relative_time }}** · {{ timestamp | timestamp_custom('%H:%M', true) }} |
+                {% endfor %}
+                {% else %}
+                No upcoming 111 or 113 departures.
+                {% endif %}
+
+                _Real-time data: Digitransit · Stop E2052_
+              '';
+            }
+            {
+              type = "markdown";
+              title = "Mythos Wi-Fi";
+              content = ''
+                Scan to join **Mythos**:
+
+                ![Mythos Wi-Fi QR code](/local/mythos-wifi.png)
+              '';
+            }
+            {
+              type = "vertical-stack";
+              cards = [
+                {
+                  type = "heading";
+                  heading = "Home status";
+                  icon = "mdi:home-analytics";
+                }
+                {
+                  type = "grid";
+                  columns = 2;
+                  square = false;
+                  cards = [
+                    {
+                      type = "tile";
+                      entity = "sensor.bathroom_thermometer_temperature";
+                      name = "Bathroom temperature";
+                    }
+                    {
+                      type = "tile";
+                      entity = "sensor.bathroom_thermometer_humidity";
+                      name = "Bathroom humidity";
+                    }
+                    {
+                      type = "tile";
+                      entity = "switch.washing_machine_plug";
+                      name = "Washing machine";
+                      tap_action.action = "none";
+                      icon_tap_action.action = "none";
+                    }
+                    {
+                      type = "tile";
+                      entity = "switch.pc_plug";
+                      name = "PC";
+                      tap_action.action = "none";
+                      icon_tap_action.action = "none";
+                    }
+                  ];
+                }
+              ];
+            }
+          ];
+        }
+      ];
+    };
   };
 
   # Home Assistant resolves !secret values from secrets.yaml next to its
   # generated configuration. The rendered file lives in /run and never in
   # the Nix store; only this symlink is placed in Home Assistant's state dir.
-  sops.secrets.digitransit-api-key = { };
-  sops.templates."home-assistant-secrets.yaml" = {
-    owner = "hass";
-    group = "hass";
-    mode = "0400";
-    restartUnits = [ "home-assistant.service" ];
-    content = ''
-      digitransit_api_key: ${config.sops.placeholder.digitransit-api-key}
-    '';
+  sops = {
+    secrets = {
+      digitransit-api-key = { };
+      mythos-wifi-qr-payload = {
+        owner = "hass";
+        group = "hass";
+        mode = "0400";
+      };
+    };
+    templates."home-assistant-secrets.yaml" = {
+      owner = "hass";
+      group = "hass";
+      mode = "0400";
+      content = ''
+        digitransit_api_key: ${config.sops.placeholder.digitransit-api-key}
+      '';
+    };
   };
 
-  # Keep configuration.yaml declarative while allowing Home Assistant to
-  # manage automations, scenes, and scripts created through the UI.
-  systemd.tmpfiles.rules =
-    let
-      configDir = config.services.home-assistant.configDir;
-    in
-    [
-      "f ${configDir}/automations.yaml 0600 hass hass -"
-      "f ${configDir}/scenes.yaml 0600 hass hass -"
-      "f ${configDir}/scripts.yaml 0600 hass hass -"
-      "L+ ${configDir}/secrets.yaml - - - - ${config.sops.templates."home-assistant-secrets.yaml".path}"
-    ];
+  systemd = {
+    # Keep configuration.yaml declarative while allowing Home Assistant to
+    # manage automations, scenes, and scripts created through the UI.
+    tmpfiles.rules =
+      let
+        configDir = config.services.home-assistant.configDir;
+      in
+      [
+        "f ${configDir}/automations.yaml 0600 hass hass -"
+        "f ${configDir}/scenes.yaml 0600 hass hass -"
+        "f ${configDir}/scripts.yaml 0600 hass hass -"
+        "L+ ${configDir}/secrets.yaml - - - - ${config.sops.templates."home-assistant-secrets.yaml".path}"
+      ];
+
+    services = {
+      # Restart Home Assistant when the encrypted source changes. This replaces
+      # sops-nix's deprecated activation-script restartUnits mechanism.
+      home-assistant.restartTriggers = [
+        config.sops.secrets.digitransit-api-key.sopsFileHash
+      ];
+
+      # Generate the Wi-Fi QR code from its runtime secret. The QR payload and
+      # resulting image never enter the Nix store.
+      home-assistant-wifi-qr = {
+        description = "Generate the Mythos Wi-Fi QR code";
+        wantedBy = [ "multi-user.target" ];
+        before = [ "home-assistant.service" ];
+        requiredBy = [ "home-assistant.service" ];
+        restartTriggers = [ config.sops.secrets.mythos-wifi-qr-payload.sopsFileHash ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          User = "hass";
+          Group = "hass";
+          UMask = "0077";
+        };
+        script = ''
+          set -euo pipefail
+          install -d -m 0700 ${config.services.home-assistant.configDir}/www
+          payload="$(< ${config.sops.secrets.mythos-wifi-qr-payload.path})"
+          test -n "$payload"
+          printf '%s' "$payload" \
+            | ${pkgs.qrencode}/bin/qrencode \
+                -t PNG -l Q -s 8 -m 2 \
+                -o ${config.services.home-assistant.configDir}/www/mythos-wifi.png
+        '';
+      };
+    };
+  };
 
   networking.firewall.interfaces.enp31s0.allowedTCPPorts = [ 8123 ];
 }
