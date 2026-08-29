@@ -50,6 +50,8 @@ in
       "cast"
       "mqtt"
       "rest"
+      "roborock"
+      "sonos"
     ];
     customLovelaceModules = [
       unstablePkgs.home-assistant-custom-lovelace-modules.kiosk-mode
@@ -282,5 +284,9 @@ in
     };
   };
 
-  networking.firewall.interfaces.enp31s0.allowedTCPPorts = [ 8123 ];
+  # Sonos sends push updates back to Home Assistant on TCP 1400.
+  networking.firewall.interfaces.enp31s0.allowedTCPPorts = [
+    1400
+    8123
+  ];
 }

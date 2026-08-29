@@ -115,6 +115,18 @@ in
             mac = "70:85:c2:a4:50:c2";
             ip = "192.168.67.170";
           };
+          roborock = {
+            name = "roborock";
+            mac = "24:9e:7d:11:d5:0e";
+            ip = "192.168.67.107";
+          };
+          # This is the Ray's Wi-Fi interface. Replace the MAC if the soundbar
+          # is later moved to Ethernet; its hostname and address can stay put.
+          sonos_ray_wifi = {
+            name = "sonos-ray";
+            mac = "74:ca:60:82:50:62";
+            ip = "192.168.67.220";
+          };
         };
 
         domain = {
