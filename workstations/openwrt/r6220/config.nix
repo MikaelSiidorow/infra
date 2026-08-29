@@ -104,10 +104,17 @@ in
           };
         };
 
-        host.hestia = {
-          name = "hestia";
-          mac = "70:85:c2:a4:50:c2";
-          ip = "192.168.67.170";
+        host = {
+          chromecast = {
+            name = "chromecast";
+            mac = "1c:53:f9:6a:c8:04";
+            ip = "192.168.67.116";
+          };
+          hestia = {
+            name = "hestia";
+            mac = "70:85:c2:a4:50:c2";
+            ip = "192.168.67.170";
+          };
         };
 
         domain = {
