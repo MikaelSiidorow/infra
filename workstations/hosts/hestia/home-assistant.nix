@@ -52,6 +52,7 @@ in
       "rest"
       "roborock"
       "sonos"
+      "template"
     ];
     customLovelaceModules = [
       unstablePkgs.home-assistant-custom-lovelace-modules.kiosk-mode
@@ -78,6 +79,33 @@ in
       # The Ray is reachable from Hestia, but SSDP discovery does not cross the
       # current Wi-Fi/Ethernet path reliably. Its DHCP reservation owns this IP.
       sonos.media_player.hosts = [ "192.168.67.220" ];
+
+      # The Roborock app remains the schedule owner. Mirror its schedule here
+      # only so the information display can show the next planned run.
+      template = [
+        {
+          sensor = [
+            {
+              name = "Exterminator next scheduled cleaning";
+              unique_id = "exterminator_next_scheduled_cleaning";
+              default_entity_id = "sensor.exterminator_next_scheduled_cleaning";
+              device_class = "timestamp";
+              icon = "mdi:calendar-clock";
+              state = ''
+                {% set weekday = now().weekday() %}
+                {% set today_run = today_at('10:00') %}
+                {% if weekday in [0, 2, 4] and now() < today_run %}
+                  {% set days = 0 %}
+                {% else %}
+                  {% set offsets = {0: 2, 1: 1, 2: 2, 3: 1, 4: 3, 5: 2, 6: 1} %}
+                  {% set days = offsets[weekday] %}
+                {% endif %}
+                {{ (today_run + timedelta(days=days)).isoformat() }}
+              '';
+            }
+          ];
+        }
+      ];
 
       rest = [
         {
@@ -194,6 +222,32 @@ in
                   ];
                 }
               ];
+            }
+            {
+              type = "markdown";
+              title = "Exterminator";
+              entity_id = [
+                "vacuum.exterminator"
+                "sensor.exterminator_status"
+                "sensor.exterminator_battery"
+                "sensor.exterminator_cleaning_progress"
+                "sensor.exterminator_cleaning_area"
+                "sensor.exterminator_cleaning_time"
+                "sensor.exterminator_next_scheduled_cleaning"
+              ];
+              content = ''
+                {% set status = states('sensor.exterminator_status') | replace('_', ' ') | title %}
+                {% set battery = states('sensor.exterminator_battery') %}
+                {% set next_run = states('sensor.exterminator_next_scheduled_cleaning') %}
+
+                **{{ status }}** · Battery {{ battery }}%
+
+                {% if is_state('vacuum.exterminator', 'cleaning') %}
+                Cleaning: {{ states('sensor.exterminator_cleaning_progress') }}% · {{ states('sensor.exterminator_cleaning_area') }} m² · {{ states('sensor.exterminator_cleaning_time') }}
+                {% endif %}
+
+                **Next cleaning:** {% if next_run not in ['unknown', 'unavailable', 'none'] %}{{ as_timestamp(next_run) | timestamp_custom('%A %H:%M', true) }}{% else %}Unknown{% endif %}
+              '';
             }
             {
               type = "vertical-stack";
