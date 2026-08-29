@@ -51,6 +51,9 @@ in
       "mqtt"
       "rest"
     ];
+    customLovelaceModules = [
+      unstablePkgs.home-assistant-custom-lovelace-modules.kiosk-mode
+    ];
 
     config = {
       default_config = { };
@@ -104,6 +107,7 @@ in
     # dashboard remains in storage mode and editable through the UI.
     lovelaceConfig = {
       title = "Information display";
+      kiosk_mode.kiosk = true;
       views = [
         {
           title = "Departures";
@@ -112,7 +116,7 @@ in
           cards = [
             {
               type = "markdown";
-              title = "Pohjantori · Louhentie";
+              title = "Pohjantori · Louhentie · E2052";
               entity_id = [ "sensor.pohjantori_departures" ];
               content = ''
                 {% set departures =
@@ -125,8 +129,7 @@ in
                 %}
 
                 {% if buses %}
-                | Line | Destination | Departure |
-                | :--: | --- | ---: |
+                <table role="presentation" width="100%">
                 {% for departure in buses[:3] %}
                   {% set timestamp =
                     departure.serviceDay + departure.realtimeDeparture
@@ -141,21 +144,22 @@ in
                       ((seconds / 60) | round(0, 'ceil') | int | string) + ' min'
                     %}
                   {% endif %}
-                | **{{ departure.trip.route.shortName }}** | {{ departure.headsign }} | **{{ relative_time }}** · {{ timestamp | timestamp_custom('%H:%M', true) }} |
+                  <tr>
+                    <td width="15%"><strong>{{ departure.trip.route.shortName }}</strong></td>
+                    <td>{{ departure.headsign }}</td>
+                    <td width="30%" align="right"><strong>{{ relative_time }}</strong><br><small>{{ timestamp | timestamp_custom('%H:%M', true) }}</small></td>
+                  </tr>
                 {% endfor %}
+                </table>
                 {% else %}
                 No upcoming 111 or 113 departures.
                 {% endif %}
-
-                _Real-time data: Digitransit · Stop E2052_
               '';
             }
             {
               type = "markdown";
               title = "Mythos Wi-Fi";
               content = ''
-                Scan to join **Mythos**:
-
                 ![Mythos Wi-Fi QR code](/local/mythos-wifi.png)
               '';
             }
