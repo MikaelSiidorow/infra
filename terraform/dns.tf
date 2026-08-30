@@ -308,6 +308,16 @@ resource "cloudflare_dns_record" "miksu_app_headscale" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "miksu_app_home_assistant" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "ha.miksu.app"
+  content = "192.168.67.170"
+  proxied = false
+  ttl     = 1
+  comment = "Private home address for LAN and Headscale subnet access"
+}
+
 resource "cloudflare_dns_record" "miksu_app_refinery" {
   zone_id = cloudflare_zone.miksu_app.id
   type    = "A"

@@ -52,6 +52,11 @@ in
             type = "A";
             value = "100.64.0.1";
           }
+          {
+            name = "ha.miksu.app";
+            type = "A";
+            value = "192.168.67.170";
+          }
         ];
       };
       prefixes = {
