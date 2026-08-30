@@ -51,6 +51,7 @@ in
       "cast"
       "met"
       "mqtt"
+      "remote_calendar"
       "rest"
       "roborock"
       "sonos"
