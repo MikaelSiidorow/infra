@@ -80,9 +80,21 @@ Caddy gives the two local web interfaces memorable HTTP addresses and proxies
 them over loopback to their native ports:
 
 ```text
+https://ha.miksu.app      -> 127.0.0.1:8123
 http://ha.home.arpa      -> 127.0.0.1:8123
 http://zigbee.home.arpa  -> 127.0.0.1:8080
 ```
+
+The `ha.miksu.app` certificate is issued by Let's Encrypt with a Cloudflare
+DNS-01 challenge. The DNS name resolves to Hestia's private LAN address, so it
+works directly at home and through the advertised Headscale subnet without
+making Home Assistant reachable from the public Internet. Cerberus also serves
+the same private answer locally for clients using DHCP DNS.
+
+Store a Cloudflare API token with `Zone / DNS / Edit` and `Zone / Zone / Read`
+permissions scoped only to `miksu.app` in the `cloudflare-dns-api-token` key of
+`secrets/hestia.yaml`. NixOS passes it to the ACME client through a systemd
+credential file; it is not placed in the Nix store or Caddy configuration.
 
 Home Assistant 2026.8 and newer stores its HTTP server configuration in
 `.storage` and ignores `http:` in `configuration.yaml` after the one-time YAML
@@ -93,3 +105,9 @@ configuration before its five-minute rollback timer expires.
 Ports 8123 and 8080 deliberately remain open during the initial rollout. Once
 the proxy works from every required client, bind both upstream services to
 loopback and remove those ports from the LAN firewall.
+
+After HTTPS works, configure the Home Assistant app with
+`http://ha.home.arpa` as its internal URL and `https://ha.miksu.app` as its
+external URL. Keep Tailscale enabled when using the external URL away from
+home. Chromecast devices on the home LAN use the public hostname with its
+private address and do not need Tailscale.

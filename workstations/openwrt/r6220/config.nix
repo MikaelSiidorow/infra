@@ -146,6 +146,10 @@ in
             name = "ha.home.arpa";
             ip = "192.168.67.170";
           };
+          ha_public = {
+            name = "ha.miksu.app";
+            ip = "192.168.67.170";
+          };
           zigbee = {
             name = "zigbee.home.arpa";
             ip = "192.168.67.170";
