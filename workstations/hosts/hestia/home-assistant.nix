@@ -65,6 +65,7 @@ in
         name = "Home";
         time_zone = "Europe/Helsinki";
         unit_system = "metric";
+        internal_url = "http://ha.home.arpa";
         external_url = "https://ha.miksu.app";
       };
       lovelace.dashboards.nixos-lovelace = {
