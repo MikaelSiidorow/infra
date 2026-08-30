@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   username,
   ...
@@ -26,12 +27,33 @@
 
   time.timeZone = "Europe/Helsinki";
 
+  # Hestia builds and deploys the flake-pinned router configurations.
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
     };
+  };
+
+  # Dewclaw invokes the ordinary OpenSSH client when deploying the routers.
+  # Select Hestia's dedicated key explicitly because it intentionally does not
+  # use a default personal-key filename.
+  programs.ssh.extraConfig = ''
+    Host device 192.168.67.1 192.168.67.2
+      IdentityFile ${config.sops.secrets.router-deploy-ssh-key.path}
+      IdentitiesOnly yes
+  '';
+
+  sops.secrets.router-deploy-ssh-key = {
+    owner = username;
+    group = "users";
+    mode = "0600";
   };
 
   # Join Hestia to the existing Headscale tailnet once with `tailscale up`.
@@ -61,6 +83,7 @@
   users.users.${username} = {
     isNormalUser = true;
     description = "Mikael Siidorow";
+    linger = true;
     extraGroups = [ "wheel" ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBHSw1Hq0dCnEC2j78BqNKzP+hrn+MLppWELfHgVNCaG"
