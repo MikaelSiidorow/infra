@@ -34,8 +34,8 @@
 
       devices = {
         "0xa4c1380ce904ffff" = {
-          friendly_name = "bathroom_thermometer";
-          description = "Bathroom temperature and humidity sensor";
+          friendly_name = "living_room_sensor";
+          description = "Living room temperature and humidity sensor";
         };
         "0x8c73dafffef5d7c4" = {
           friendly_name = "ac_leak_sensor";

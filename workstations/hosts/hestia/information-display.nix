@@ -66,7 +66,7 @@ in
             action = "cast.show_lovelace_view";
             data = {
               entity_id = "media_player.living_room_tv";
-              dashboard_path = "nixos-lovelace";
+              dashboard_path = "information-display";
               view_path = "cast";
             };
           }

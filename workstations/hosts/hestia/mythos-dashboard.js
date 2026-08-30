@@ -19,6 +19,9 @@
  * @property {string=} source
  * @property {string=} entity_picture
  * @property {string=} media_image_url
+ * @property {number=} media_duration
+ * @property {number=} media_position
+ * @property {string=} media_position_updated_at
  * @property {string=} unit_of_measurement
  * @property {number=} temperature
  * @property {string=} temperature_unit
@@ -30,13 +33,14 @@
  */
 
 /** @typedef {{ entity_id: string, state: string, last_changed: string, attributes: EntityAttributes }} HassEntity */
-/** @typedef {{ states: Record<string, HassEntity>, callService: (domain: string, service: string, data: Record<string, unknown>) => Promise<unknown> }} HomeAssistant */
-/** @typedef {{ entity: HassEntity, entityId: string, source: string, hasArtwork: boolean }} ActiveMedia */
+/** @typedef {{ states: Record<string, HassEntity> }} HomeAssistant */
+/** @typedef {{ entity: HassEntity, source: string, hasArtwork: boolean }} ActiveMedia */
 /** @typedef {{ type: string, name: string, description: string, preview: boolean }} CustomCardRegistration */
 
 const moduleUrl = new URL(import.meta.url);
 const stylesheetUrl = new URL("./mythos-dashboard.css", moduleUrl);
 stylesheetUrl.search = moduleUrl.search;
+const wifiImageUrl = new URL("/local/mythos-wifi.png", moduleUrl);
 
 const ENTITY = {
   departures: "sensor.pohjantori_departures",
@@ -51,8 +55,8 @@ const ENTITY = {
   vacuumArea: "sensor.exterminator_cleaning_area",
   vacuumTime: "sensor.exterminator_cleaning_time",
   vacuumNextRun: "sensor.exterminator_next_scheduled_cleaning",
-  bathroomTemperature: "sensor.bathroom_thermometer_temperature",
-  bathroomHumidity: "sensor.bathroom_thermometer_humidity",
+  livingRoomTemperature: "sensor.living_room_temperature",
+  livingRoomHumidity: "sensor.living_room_humidity",
   washingMachinePower: "sensor.washing_machine_plug_power",
   washingMachineRunning: "binary_sensor.washing_machine_running",
   pcPower: "sensor.pc_plug_power",
@@ -61,7 +65,28 @@ const ENTITY = {
 
 const MEDIA_ACTIVE_STATES = new Set(["playing", "paused", "buffering"]);
 const MISSING_STATES = new Set(["unknown", "unavailable", "none", ""]);
-const WALK_TO_STOP_SECONDS = 3 * 60;
+const WALK_TO_STOP_SECONDS = 2 * 60;
+const RENDER_BATCH_MS = 100;
+
+const REGION_DEPENDENCIES = {
+  departures: [ENTITY.departures],
+  weather: [ENTITY.weather, ENTITY.weatherToday],
+  vacuum: [
+    ENTITY.vacuum,
+    ENTITY.vacuumStatus,
+    ENTITY.vacuumBattery,
+    ENTITY.vacuumProgress,
+    ENTITY.vacuumArea,
+    ENTITY.vacuumTime,
+    ENTITY.vacuumNextRun,
+  ],
+  livingRoom: [ENTITY.livingRoomTemperature, ENTITY.livingRoomHumidity],
+  washingMachine: [ENTITY.washingMachinePower, ENTITY.washingMachineRunning],
+  pc: [ENTITY.pcPower, ENTITY.pcRunning],
+  media: [ENTITY.chromecast, ENTITY.sonos],
+};
+
+const ALL_REGIONS = ["clock", ...Object.keys(REGION_DEPENDENCIES)];
 
 class MythosDashboard extends HTMLElement {
   constructor() {
@@ -69,11 +94,57 @@ class MythosDashboard extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = `
       <link rel="stylesheet" href="${stylesheetUrl.href}" />
-      <div class="render-root"></div>
+      <div class="render-root">
+        <div class="ambient-background" aria-hidden="true"></div>
+        <main class="dashboard">
+          <section class="primary-column">
+            <header class="clock">
+              <time data-value="time"></time>
+              <div class="weekday" data-value="weekday"></div>
+              <div class="date" data-value="date"></div>
+            </header>
+
+            <section class="departures panel">
+              <header>
+                <div class="departures-title">
+                  <ha-icon icon="mdi:bus-clock"></ha-icon>
+                  <div>
+                    <h1>Pohjantori</h1>
+                    <p>Louhentie · E2052</p>
+                  </div>
+                </div>
+              </header>
+              <div class="departure-list" data-region="departures"></div>
+            </section>
+          </section>
+
+          <section class="secondary-column">
+            <div class="weather-slot" data-region="weather"></div>
+            <aside class="wifi-card panel">
+              <div class="eyebrow">Wi-Fi</div>
+              <img src="${wifiImageUrl.href}" alt="Mythos Wi-Fi QR code" />
+            </aside>
+            <section class="status-strip">
+              <div class="status-region" data-region="vacuum"></div>
+              <div class="status-region" data-region="livingRoom"></div>
+              <div class="status-region" data-region="washingMachine"></div>
+              <div class="status-region" data-region="pc"></div>
+            </section>
+            <div class="media-slot" data-region="media"></div>
+          </section>
+        </main>
+      </div>
     `;
     /** @type {HomeAssistant | null} */
     this._hass = null;
-    this._lastMarkup = "";
+    /** @type {Map<string, string>} */
+    this._regionMarkup = new Map();
+    /** @type {Set<string>} */
+    this._dirtyRegions = new Set(ALL_REGIONS);
+    /** @type {number | undefined} */
+    this._renderTimer = undefined;
+    /** @type {number | undefined} */
+    this._mediaProgressTimer = undefined;
     /** @type {number | undefined} */
     this._relativeTimeTimer = undefined;
   }
@@ -82,22 +153,41 @@ class MythosDashboard extends HTMLElement {
   setConfig(config) {
     this._config = config;
     this.toggleAttribute("cast-view", config.cast_view === true);
-    this.render();
+    this.markDirty(ALL_REGIONS);
   }
 
   /** @param {HomeAssistant} hass */
   set hass(hass) {
+    const previous = this._hass;
     this._hass = hass;
-    this.render();
+    if (!previous) {
+      this.markDirty(ALL_REGIONS);
+      return;
+    }
+
+    for (const [region, entityIds] of Object.entries(REGION_DEPENDENCIES)) {
+      if (entityIds.some((entityId) => previous.states[entityId] !== hass.states[entityId])) {
+        this.markDirty([region]);
+      }
+    }
   }
 
   connectedCallback() {
-    this._relativeTimeTimer = window.setInterval(() => this.render(), 15_000);
-    this.render();
+    this._relativeTimeTimer = window.setInterval(
+      () => this.markDirty(["clock", "departures", "vacuum", "washingMachine", "pc"]),
+      15_000,
+    );
+    this._mediaProgressTimer = window.setInterval(() => this.updateMediaProgress(), 1_000);
+    this.markDirty(ALL_REGIONS);
   }
 
   disconnectedCallback() {
     if (this._relativeTimeTimer !== undefined) window.clearInterval(this._relativeTimeTimer);
+    if (this._mediaProgressTimer !== undefined) window.clearInterval(this._mediaProgressTimer);
+    if (this._renderTimer !== undefined) window.clearTimeout(this._renderTimer);
+    this._relativeTimeTimer = undefined;
+    this._mediaProgressTimer = undefined;
+    this._renderTimer = undefined;
   }
 
   getCardSize() {
@@ -125,6 +215,32 @@ class MythosDashboard extends HTMLElement {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  /** @param {string} name @param {string} markup */
+  updateRegion(name, markup) {
+    if (!this.shadowRoot || this._regionMarkup.get(name) === markup) return false;
+    const region = this.shadowRoot.querySelector(`[data-region="${name}"]`);
+    if (!(region instanceof HTMLElement)) return false;
+    region.innerHTML = markup;
+    this._regionMarkup.set(name, markup);
+    return true;
+  }
+
+  /** @param {string} name @param {string} value */
+  updateValue(name, value) {
+    const element = this.shadowRoot?.querySelector(`[data-value="${name}"]`);
+    if (element && element.textContent !== value) element.textContent = value;
+  }
+
+  /** @param {string[]} regions */
+  markDirty(regions) {
+    for (const region of regions) this._dirtyRegions.add(region);
+    if (!this.isConnected || this._renderTimer !== undefined) return;
+    this._renderTimer = window.setTimeout(() => {
+      this._renderTimer = undefined;
+      this.flushRender();
+    }, RENDER_BATCH_MS);
   }
 
   /** @param {Date} now */
@@ -217,11 +333,9 @@ class MythosDashboard extends HTMLElement {
     return `
       <section class="weather-feature" aria-label="Today's weather">
         <div class="weather-current">
-          <div class="weather-current-line">
-            <ha-icon class="weather-condition-icon" icon="${conditionIcon}"></ha-icon>
-            <strong>${this.escape(temperature)}<span>${this.escape(unit)}</span></strong>
-          </div>
+          <strong>${this.escape(temperature)}<span>${this.escape(unit)}</span></strong>
           <div class="weather-condition">${this.escape(displayCondition)}</div>
+          <ha-icon class="weather-condition-icon" icon="${conditionIcon}"></ha-icon>
         </div>
         ${
           hasRange
@@ -240,10 +354,20 @@ class MythosDashboard extends HTMLElement {
   /** @returns {ActiveMedia | null} */
   activeMedia() {
     const chromecast = this.entity(ENTITY.chromecast);
-    if (chromecast && MEDIA_ACTIVE_STATES.has(chromecast.state)) {
+    const castDescription = [
+      chromecast?.attributes.app_name,
+      chromecast?.attributes.media_title,
+      chromecast?.attributes.media_series_title,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase();
+    const isInformationDisplay = ["home assistant", "information display"].some((label) =>
+      castDescription.includes(label),
+    );
+    if (chromecast && MEDIA_ACTIVE_STATES.has(chromecast.state) && !isInformationDisplay) {
       return {
         entity: chromecast,
-        entityId: ENTITY.chromecast,
         source: "Chromecast",
         hasArtwork: Boolean(
           chromecast.attributes.entity_picture || chromecast.attributes.media_image_url,
@@ -255,7 +379,6 @@ class MythosDashboard extends HTMLElement {
     if (sonos && this.isAvailable(sonos) && !["off", "idle"].includes(sonos.state)) {
       return {
         entity: sonos,
-        entityId: ENTITY.sonos,
         source: "Sonos Ray",
         hasArtwork: Boolean(sonos.attributes.entity_picture || sonos.attributes.media_image_url),
       };
@@ -277,22 +400,70 @@ class MythosDashboard extends HTMLElement {
       attributes.source ||
       "";
     const image = attributes.entity_picture || attributes.media_image_url;
+    const imageUrl = image ? new URL(image, moduleUrl).href : "";
     const distinctDetail = detail.toLocaleLowerCase() === title.toLocaleLowerCase() ? "" : detail;
-    const playing = media.entity.state === "playing";
+    const duration = Number(attributes.media_duration);
+    const hasTimeline = Number.isFinite(duration) && duration > 0;
+    const playbackLabel =
+      media.entity.state === "paused"
+        ? "Paused"
+        : media.entity.state === "buffering"
+          ? "Buffering"
+          : "Now playing";
 
     return `
       <section class="media ${media.hasArtwork ? "with-artwork" : "compact"} panel">
-        ${image ? `<div class="artwork"><img src="${this.escape(image)}" alt="" /></div>` : ""}
+        ${imageUrl ? `<div class="artwork"><img src="${this.escape(imageUrl)}" alt="" /></div>` : ""}
         <div class="media-copy">
-          <div class="eyebrow">Now playing · ${this.escape(media.source)}</div>
+          <div class="eyebrow">${playbackLabel} · ${this.escape(media.source)}</div>
           <div class="media-title">${this.escape(title)}</div>
           ${distinctDetail ? `<div class="media-detail">${this.escape(distinctDetail)}</div>` : ""}
+          ${
+            hasTimeline
+              ? `<div class="media-progress">
+                  <div class="media-progress-track"><div class="media-progress-fill" data-media-progress></div></div>
+                  <div class="media-progress-times">
+                    <span data-media-elapsed></span>
+                    <span data-media-remaining></span>
+                  </div>
+                </div>`
+              : ""
+          }
         </div>
-        <button class="media-toggle" data-media-toggle="${this.escape(media.entityId)}" aria-label="${playing ? "Pause" : "Play"}">
-          ${playing ? "Ⅱ" : "▶"}
-        </button>
       </section>
     `;
+  }
+
+  /** @param {number} seconds */
+  formatMediaTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const minutes = Math.floor(total / 60);
+    return `${minutes}:${String(total % 60).padStart(2, "0")}`;
+  }
+
+  updateMediaProgress() {
+    const media = this.activeMedia();
+    if (!media || !this.shadowRoot) return;
+
+    const attributes = media.entity.attributes;
+    const duration = Number(attributes.media_duration);
+    let position = Number(attributes.media_position);
+    if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(position)) return;
+
+    const updatedAt = Date.parse(attributes.media_position_updated_at ?? "");
+    if (media.entity.state === "playing" && Number.isFinite(updatedAt)) {
+      position += Math.max(0, (Date.now() - updatedAt) / 1_000);
+    }
+    position = Math.min(duration, Math.max(0, position));
+
+    const progress = this.shadowRoot.querySelector("[data-media-progress]");
+    const elapsed = this.shadowRoot.querySelector("[data-media-elapsed]");
+    const remaining = this.shadowRoot.querySelector("[data-media-remaining]");
+    if (progress instanceof HTMLElement) {
+      progress.style.transform = `scaleX(${position / duration})`;
+    }
+    if (elapsed) elapsed.textContent = this.formatMediaTime(position);
+    if (remaining) remaining.textContent = `−${this.formatMediaTime(duration - position)}`;
   }
 
   renderVacuum() {
@@ -304,15 +475,32 @@ class MythosDashboard extends HTMLElement {
       ? statusEntity.state.replaceAll("_", " ")
       : "Offline";
     const displayStatus = status.charAt(0).toLocaleUpperCase() + status.slice(1);
-    const battery = this.isAvailable(batteryEntity) ? `${batteryEntity.state}%` : "";
+    const battery = this.isAvailable(batteryEntity) ? `${batteryEntity.state} %` : "";
     const isCleaning = vacuumEntity?.state === "cleaning";
 
     let cleaningDetail = "";
+    let displayValue = displayStatus;
     if (isCleaning) {
-      const progress = this.entity(ENTITY.vacuumProgress)?.state;
-      const area = this.entity(ENTITY.vacuumArea)?.state;
-      const time = this.entity(ENTITY.vacuumTime)?.state;
-      cleaningDetail = [progress && `${progress}%`, area && `${area} m²`, time]
+      const progress = this.entity(ENTITY.vacuumProgress);
+      const area = this.entity(ENTITY.vacuumArea);
+      const time = this.entity(ENTITY.vacuumTime);
+      const progressNumber = Number(progress?.state);
+      if (this.isAvailable(progress) && Number.isFinite(progressNumber)) {
+        displayValue = `${progressNumber.toLocaleString("en-FI", { maximumFractionDigits: 0 })} %`;
+      } else {
+        displayValue = "Cleaning";
+      }
+
+      /** @param {HassEntity | undefined} entity @param {string} fallbackUnit */
+      const formatReading = (entity, fallbackUnit) => {
+        if (!this.isAvailable(entity)) return "";
+        const number = Number(entity.state);
+        const value = Number.isFinite(number)
+          ? number.toLocaleString("en-FI", { maximumFractionDigits: 0 })
+          : entity.state;
+        return `${value} ${entity.attributes.unit_of_measurement ?? fallbackUnit}`;
+      };
+      cleaningDetail = [formatReading(area, "m²"), formatReading(time, "min")]
         .filter(Boolean)
         .join(" · ");
     }
@@ -336,17 +524,17 @@ class MythosDashboard extends HTMLElement {
     return `
       <article class="metric vacuum-compact ${attention ? "attention" : ""}">
         <div>
-          <div class="metric-label">Exterminator${battery ? ` · ${this.escape(battery)}` : ""}</div>
-          <div class="metric-value">${this.escape(displayStatus)}</div>
+          <div class="metric-label vacuum-label"><ha-icon icon="mdi:robot-vacuum"></ha-icon>${battery ? this.escape(battery) : ""}</div>
+          <div class="metric-value">${this.escape(displayValue)}</div>
           <div class="metric-detail">${this.escape(detail)}</div>
         </div>
       </article>
     `;
   }
 
-  renderBathroom() {
-    const temperature = this.entity(ENTITY.bathroomTemperature);
-    const humidity = this.entity(ENTITY.bathroomHumidity);
+  renderLivingRoom() {
+    const temperature = this.entity(ENTITY.livingRoomTemperature);
+    const humidity = this.entity(ENTITY.livingRoomHumidity);
     if (!this.isAvailable(temperature) && !this.isAvailable(humidity)) return "";
 
     const temperatureValue = this.isAvailable(temperature)
@@ -359,7 +547,7 @@ class MythosDashboard extends HTMLElement {
     return `
       <article class="metric">
         <div>
-          <div class="metric-label">Bathroom</div>
+          <div class="metric-label">Living room</div>
           <div class="metric-value">${this.escape(temperatureValue)}</div>
           ${humidityValue ? `<div class="metric-detail">${this.escape(humidityValue)}</div>` : ""}
         </div>
@@ -412,83 +600,60 @@ class MythosDashboard extends HTMLElement {
     return remainder ? `${hours} h ${remainder} min` : `${hours} h`;
   }
 
-  render() {
-    if (!this.shadowRoot) return;
-    const renderRoot = this.shadowRoot.querySelector(".render-root");
-    if (!(renderRoot instanceof HTMLDivElement)) return;
-
+  flushRender() {
+    if (!this._hass) return;
+    const dirty = new Set(this._dirtyRegions);
+    this._dirtyRegions.clear();
     const now = new Date();
-    const timeParts = new Intl.DateTimeFormat("en-FI", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).formatToParts(now);
-    /** @param {string} type */
-    const timePart = (type) => timeParts.find((item) => item.type === type)?.value ?? "00";
-    const hoursMinutes = `${timePart("hour")}.${timePart("minute")}`;
-    const weekday = new Intl.DateTimeFormat("en-FI", { weekday: "long" }).format(now);
-    const date = new Intl.DateTimeFormat("en-FI", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(now);
-    const media = this.activeMedia();
 
-    const markup = `
-      <div class="ambient-background" aria-hidden="true"></div>
-      <main class="dashboard ${media ? "has-media" : ""}">
-        <section class="primary-column">
-          <header class="clock">
-            <time>${hoursMinutes}</time>
-            <div class="weekday">${this.escape(weekday)}</div>
-            <div class="date">${this.escape(date)}</div>
-          </header>
-
-          <section class="departures panel">
-            <header>
-              <div class="departures-title">
-                <ha-icon icon="mdi:bus-clock"></ha-icon>
-                <div>
-                <h1>Pohjantori</h1>
-                <p>Louhentie · E2052</p>
-                </div>
-              </div>
-            </header>
-            <div class="departure-list">${this.renderDepartures(now)}</div>
-          </section>
-        </section>
-
-        <section class="secondary-column">
-          ${this.renderWeather()}
-          <aside class="wifi-card panel">
-            <div class="eyebrow">Wi-Fi</div>
-            <img src="/local/mythos-wifi.png" alt="Mythos Wi-Fi QR code" />
-          </aside>
-          <section class="status-strip">
-            ${this.renderVacuum()}
-            ${this.renderBathroom()}
-            ${this.renderPowerMetric(ENTITY.washingMachinePower, ENTITY.washingMachineRunning, "Washing machine", 3)}
-            ${this.renderPowerMetric(ENTITY.pcPower, ENTITY.pcRunning, "PC", 15)}
-          </section>
-          ${this.renderMedia(media)}
-        </section>
-      </main>
-    `;
-
-    if (markup === this._lastMarkup) return;
-    this._lastMarkup = markup;
-    renderRoot.innerHTML = markup;
-    const mediaToggle = renderRoot.querySelector("[data-media-toggle]");
-    if (mediaToggle instanceof HTMLButtonElement) {
-      mediaToggle.addEventListener("click", () => {
-        const entityId = mediaToggle.dataset.mediaToggle;
-        if (entityId && this._hass) {
-          void this._hass.callService("media_player", "media_play_pause", {
-            entity_id: entityId,
-          });
-        }
-      });
+    if (dirty.has("clock")) {
+      const timeParts = new Intl.DateTimeFormat("en-FI", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).formatToParts(now);
+      /** @param {string} type */
+      const timePart = (type) => timeParts.find((item) => item.type === type)?.value ?? "00";
+      this.updateValue("time", `${timePart("hour")}.${timePart("minute")}`);
+      this.updateValue(
+        "weekday",
+        new Intl.DateTimeFormat("en-FI", { weekday: "long" }).format(now),
+      );
+      this.updateValue(
+        "date",
+        new Intl.DateTimeFormat("en-FI", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(now),
+      );
     }
+    if (dirty.has("weather")) this.updateRegion("weather", this.renderWeather());
+    if (dirty.has("departures")) {
+      this.updateRegion("departures", this.renderDepartures(now));
+    }
+    if (dirty.has("vacuum")) this.updateRegion("vacuum", this.renderVacuum());
+    if (dirty.has("livingRoom")) {
+      this.updateRegion("livingRoom", this.renderLivingRoom());
+    }
+    if (dirty.has("washingMachine")) {
+      this.updateRegion(
+        "washingMachine",
+        this.renderPowerMetric(
+          ENTITY.washingMachinePower,
+          ENTITY.washingMachineRunning,
+          "Washing machine",
+          3,
+        ),
+      );
+    }
+    if (dirty.has("pc")) {
+      this.updateRegion("pc", this.renderPowerMetric(ENTITY.pcPower, ENTITY.pcRunning, "PC", 15));
+    }
+
+    const media = this.activeMedia();
+    if (dirty.has("media")) this.updateRegion("media", this.renderMedia(media));
+    if (dirty.has("media")) this.updateMediaProgress();
   }
 }
 

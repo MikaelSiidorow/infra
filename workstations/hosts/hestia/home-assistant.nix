@@ -68,7 +68,7 @@ in
         internal_url = "http://ha.home.arpa";
         external_url = "https://ha.miksu.app";
       };
-      lovelace.dashboards.nixos-lovelace = {
+      lovelace.dashboards.information-display = {
         mode = "yaml";
         filename = "ui-lovelace.yaml";
         title = "Information display";
