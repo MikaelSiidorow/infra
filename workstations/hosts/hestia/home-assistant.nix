@@ -36,6 +36,7 @@ in
   disabledModules = [ "services/home-automation/home-assistant.nix" ];
   imports = [
     "${inputs.nixpkgs-unstable}/nixos/modules/services/home-automation/home-assistant.nix"
+    ./information-display.nix
   ];
 
   services.home-assistant = {
@@ -48,16 +49,13 @@ in
     # declared here.
     extraComponents = [
       "cast"
+      "met"
       "mqtt"
       "rest"
       "roborock"
       "sonos"
       "template"
     ];
-    customLovelaceModules = [
-      unstablePkgs.home-assistant-custom-lovelace-modules.kiosk-mode
-    ];
-
     config = {
       default_config = { };
       "automation ui" = "!include automations.yaml";
@@ -84,6 +82,66 @@ in
       # only so the information display can show the next planned run.
       template = [
         {
+          triggers = [
+            {
+              trigger = "homeassistant";
+              event = "start";
+            }
+            {
+              trigger = "time_pattern";
+              minutes = "0";
+            }
+            {
+              trigger = "state";
+              entity_id = "weather.home";
+            }
+          ];
+          actions = [
+            {
+              condition = "template";
+              value_template = "{{ has_value('weather.home') }}";
+            }
+            {
+              action = "weather.get_forecasts";
+              target.entity_id = "weather.home";
+              data.type = "daily";
+              response_variable = "daily_weather";
+            }
+          ];
+          sensor = [
+            {
+              name = "Home weather today";
+              unique_id = "home_weather_today";
+              default_entity_id = "sensor.home_weather_today";
+              state = "{{ daily_weather['weather.home'].forecast[0].condition }}";
+              attributes = {
+                high_temperature = "{{ daily_weather['weather.home'].forecast[0].temperature }}";
+                low_temperature = "{{ daily_weather['weather.home'].forecast[0].templow }}";
+                precipitation_probability = "{{ daily_weather['weather.home'].forecast[0].precipitation_probability | default(none) }}";
+                precipitation = "{{ daily_weather['weather.home'].forecast[0].precipitation | default(none) }}";
+              };
+            }
+          ];
+        }
+        {
+          binary_sensor = [
+            {
+              name = "Washing machine running";
+              unique_id = "washing_machine_running";
+              default_entity_id = "binary_sensor.washing_machine_running";
+              device_class = "running";
+              state = "{{ states('sensor.washing_machine_plug_power') | float(0) > 3 }}";
+              delay_off.minutes = 5;
+            }
+            {
+              name = "PC running";
+              unique_id = "pc_running";
+              default_entity_id = "binary_sensor.pc_running";
+              device_class = "running";
+              state = "{{ states('sensor.pc_plug_power') | float(0) > 15 }}";
+              delay_off.seconds = 30;
+            }
+          ];
           sensor = [
             {
               name = "Exterminator next scheduled cleaning";
@@ -136,164 +194,6 @@ in
       ];
     };
 
-    # A separate read-only dashboard managed by Nix. The normal Overview
-    # dashboard remains in storage mode and editable through the UI.
-    lovelaceConfig = {
-      title = "Information display";
-      kiosk_mode.kiosk = true;
-      views = [
-        {
-          title = "Departures";
-          path = "departures";
-          icon = "mdi:bus-clock";
-          cards = [
-            {
-              type = "markdown";
-              title = "Pohjantori · Louhentie · E2052";
-              entity_id = [ "sensor.pohjantori_departures" ];
-              content = ''
-                {% set departures =
-                  state_attr('sensor.pohjantori_departures', 'stoptimesWithoutPatterns')
-                  or []
-                %}
-                {% set buses = departures
-                  | selectattr('trip.route.shortName', 'in', ['111', '113'])
-                  | list
-                %}
-
-                {% if buses %}
-                <table role="presentation" width="100%">
-                {% for departure in buses[:3] %}
-                  {% set timestamp =
-                    departure.serviceDay + departure.realtimeDeparture
-                  %}
-                  {% set seconds = timestamp - as_timestamp(now()) %}
-                  {% if seconds <= 30 %}
-                    {% set relative_time = 'Now' %}
-                  {% elif seconds < 90 %}
-                    {% set relative_time = '~1 min' %}
-                  {% else %}
-                    {% set relative_time =
-                      ((seconds / 60) | round(0, 'ceil') | int | string) + ' min'
-                    %}
-                  {% endif %}
-                  <tr>
-                    <td width="15%"><strong>{{ departure.trip.route.shortName }}</strong></td>
-                    <td>{{ departure.headsign }}</td>
-                    <td width="30%" align="right"><strong>{{ relative_time }}</strong><br><small>{{ timestamp | timestamp_custom('%H:%M', true) }}</small></td>
-                  </tr>
-                {% endfor %}
-                </table>
-                {% else %}
-                No upcoming 111 or 113 departures.
-                {% endif %}
-              '';
-            }
-            {
-              type = "markdown";
-              title = "Mythos Wi-Fi";
-              content = ''
-                ![Mythos Wi-Fi QR code](/local/mythos-wifi.png)
-              '';
-            }
-            {
-              type = "vertical-stack";
-              cards = [
-                {
-                  type = "heading";
-                  heading = "Now playing";
-                  icon = "mdi:play-circle-outline";
-                }
-                {
-                  type = "grid";
-                  columns = 2;
-                  square = false;
-                  cards = [
-                    {
-                      type = "media-control";
-                      entity = "media_player.living_room_tv";
-                      name = "Living Room TV";
-                    }
-                    {
-                      type = "media-control";
-                      entity = "media_player.sonos_ray";
-                      name = "Sonos Ray";
-                    }
-                  ];
-                }
-              ];
-            }
-            {
-              type = "markdown";
-              title = "Exterminator";
-              entity_id = [
-                "vacuum.exterminator"
-                "sensor.exterminator_status"
-                "sensor.exterminator_battery"
-                "sensor.exterminator_cleaning_progress"
-                "sensor.exterminator_cleaning_area"
-                "sensor.exterminator_cleaning_time"
-                "sensor.exterminator_next_scheduled_cleaning"
-              ];
-              content = ''
-                {% set status = states('sensor.exterminator_status') | replace('_', ' ') | title %}
-                {% set battery = states('sensor.exterminator_battery') %}
-                {% set next_run = states('sensor.exterminator_next_scheduled_cleaning') %}
-
-                **{{ status }}** · Battery {{ battery }}%
-
-                {% if is_state('vacuum.exterminator', 'cleaning') %}
-                Cleaning: {{ states('sensor.exterminator_cleaning_progress') }}% · {{ states('sensor.exterminator_cleaning_area') }} m² · {{ states('sensor.exterminator_cleaning_time') }}
-                {% endif %}
-
-                **Next cleaning:** {% if next_run not in ['unknown', 'unavailable', 'none'] %}{{ as_timestamp(next_run) | timestamp_custom('%A %H:%M', true) }}{% else %}Unknown{% endif %}
-              '';
-            }
-            {
-              type = "vertical-stack";
-              cards = [
-                {
-                  type = "heading";
-                  heading = "Home status";
-                  icon = "mdi:home-analytics";
-                }
-                {
-                  type = "grid";
-                  columns = 2;
-                  square = false;
-                  cards = [
-                    {
-                      type = "tile";
-                      entity = "sensor.bathroom_thermometer_temperature";
-                      name = "Bathroom temperature";
-                    }
-                    {
-                      type = "tile";
-                      entity = "sensor.bathroom_thermometer_humidity";
-                      name = "Bathroom humidity";
-                    }
-                    {
-                      type = "tile";
-                      entity = "switch.washing_machine_plug";
-                      name = "Washing machine";
-                      tap_action.action = "none";
-                      icon_tap_action.action = "none";
-                    }
-                    {
-                      type = "tile";
-                      entity = "switch.pc_plug";
-                      name = "PC";
-                      tap_action.action = "none";
-                      icon_tap_action.action = "none";
-                    }
-                  ];
-                }
-              ];
-            }
-          ];
-        }
-      ];
-    };
   };
 
   # Home Assistant resolves !secret values from secrets.yaml next to its
