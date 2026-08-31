@@ -2,6 +2,7 @@
 {
   self,
   pkgs,
+  pkgs-unstable,
   ...
 }:
 let
@@ -20,6 +21,7 @@ in
   ];
 
   environment.systemPackages = [
+    pkgs-unstable.notion-app
     scrollReverser
     pkgs.vim
   ];
