@@ -36,18 +36,22 @@
         "0xa4c1380ce904ffff" = {
           friendly_name = "living_room_sensor";
           description = "Living room temperature and humidity sensor";
+          homeassistant.name = "Living room sensor";
         };
         "0x8c73dafffef5d7c4" = {
           friendly_name = "ac_leak_sensor";
           description = "Air conditioner water leak sensor";
+          homeassistant.name = "AC leak sensor";
         };
         "0xa4c13811751affff" = {
           friendly_name = "washing_machine_plug";
           description = "Washing machine smart plug";
+          homeassistant.name = "Washing machine plug";
         };
         "0xa4c1380f6c86ffff" = {
           friendly_name = "pc_plug";
           description = "PC smart plug";
+          homeassistant.name = "PC plug";
         };
       };
 
