@@ -64,6 +64,16 @@ resource "cloudflare_dns_record" "siidorow_dev_www" {
   ttl     = 1
 }
 
+resource "cloudflare_dns_record" "siidorow_dev_knot" {
+  zone_id = cloudflare_zone.siidorow_dev.id
+  type    = "A"
+  name    = "knot.siidorow.dev"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = false
+  ttl     = 1
+  comment = "DNS-only because git-over-SSH cannot traverse the Cloudflare proxy"
+}
+
 resource "cloudflare_dns_record" "siidorow_dev_atproto" {
   zone_id = cloudflare_zone.siidorow_dev.id
   type    = "TXT"
