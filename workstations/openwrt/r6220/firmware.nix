@@ -20,6 +20,7 @@ openwrt-imagebuilder.lib.build (
       "htop"
       "https-dns-proxy"
       "luci-app-https-dns-proxy"
+      "luci-mod-rpc"
       "luci-ssl"
       "tcpdump"
     ];

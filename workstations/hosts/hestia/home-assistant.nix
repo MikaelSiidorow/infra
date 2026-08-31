@@ -49,6 +49,7 @@ in
     # declared here.
     extraComponents = [
       "cast"
+      "luci"
       "met"
       "mqtt"
       "remote_calendar"
