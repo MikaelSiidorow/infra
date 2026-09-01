@@ -15,6 +15,8 @@
     var(--primary-text-color, #f4f4f5) 22%
   );
   --display-accent: var(--warning-color, #fbbf24);
+  --calendar-mikael: #4f7fe8;
+  --calendar-elsa: #ed72aa;
   --display-gap: clamp(18px, 1.7vw, 28px);
   --display-radius: 18px;
   --display-radius-small: 14px;
@@ -155,18 +157,12 @@ button {
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-.weekday {
-  margin-top: 28px;
-  font-size: clamp(30px, 3vw, 44px);
+.date {
+  margin-top: 24px;
+  font-size: clamp(27px, 2.4vw, 36px);
   font-weight: 630;
   line-height: 1;
   text-transform: capitalize;
-}
-
-.date {
-  margin-top: 9px;
-  color: var(--display-muted);
-  font-size: clamp(19px, 1.6vw, 24px);
 }
 
 .weather-feature {
@@ -252,6 +248,84 @@ button {
   --mdc-icon-size: 26px;
 }
 
+.agenda-slot {
+  max-width: 560px;
+}
+
+.agenda-slot:not(:empty) {
+  margin-top: 19px;
+}
+
+.agenda header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--display-muted);
+  font-size: 14px;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.agenda header ha-icon {
+  --mdc-icon-size: 19px;
+}
+
+.agenda ol {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda-event {
+  display: grid;
+  grid-template-columns: 8px 62px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+}
+
+.agenda-event::before {
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  background: var(--display-muted);
+  border-radius: 50%;
+  content: "";
+}
+
+.agenda-event.owner-mikael::before {
+  background: var(--calendar-mikael);
+}
+
+.agenda-event.owner-elsa::before {
+  background: var(--calendar-elsa);
+}
+
+.agenda-event time {
+  color: var(--display-muted);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-event span {
+  overflow: hidden;
+  font-size: clamp(17px, 1.35vw, 20px);
+  font-weight: 630;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-more {
+  margin-top: 6px;
+  color: var(--display-muted);
+  font-size: 13px;
+  padding-left: 94px;
+}
+
 .departures {
   display: flex;
   flex-direction: column;
@@ -269,27 +343,27 @@ button {
 .departures-title {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 9px;
 }
 
 .departures-title > ha-icon {
   flex: 0 0 auto;
-  margin-top: 4px;
+  margin-top: 1px;
   color: var(--display-muted);
-  --mdc-icon-size: 34px;
+  --mdc-icon-size: 22px;
 }
 
 .departures h1 {
   margin: 0;
-  font-size: clamp(34px, 3vw, 48px);
+  font-size: clamp(19px, 1.6vw, 24px);
+  font-weight: 620;
   line-height: 1;
   letter-spacing: -0.035em;
 }
 
-.departures p {
-  margin: 8px 0 0;
+.departures h1 span {
   color: var(--display-muted);
-  font-size: 18px;
+  font-weight: 520;
 }
 
 .departure-list {
@@ -298,7 +372,7 @@ button {
   flex-direction: column;
   justify-content: center;
   min-height: 0;
-  margin-top: 18px;
+  margin-top: 10px;
 }
 
 .departure-row {
@@ -542,7 +616,6 @@ button {
   color: var(--display-muted);
   font-size: clamp(13px, 1.05vw, 16px);
   text-overflow: ellipsis;
-  text-transform: capitalize;
   white-space: nowrap;
 }
 

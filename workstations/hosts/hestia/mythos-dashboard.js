@@ -30,10 +30,22 @@
  * @property {number|string=} low_temperature
  * @property {number|string=} precipitation_probability
  * @property {number|string=} precipitation
+ * @property {CalendarEvent[]=} elsa_events
+ * @property {CalendarEvent[]=} mikael_events
+ */
+
+/**
+ * @typedef {object} CalendarEvent
+ * @property {string} summary
+ * @property {string} start
+ * @property {string} end
+ * @property {string=} location
+ * @property {"elsa"|"mikael"=} owner
  */
 
 /** @typedef {{ entity_id: string, state: string, last_changed: string, attributes: EntityAttributes }} HassEntity */
-/** @typedef {{ states: Record<string, HassEntity> }} HomeAssistant */
+/** @typedef {{ s: string, lc?: number, lu: number }} HistoryState */
+/** @typedef {{ states: Record<string, HassEntity>, callWS: (message: Record<string, unknown>) => Promise<unknown> }} HomeAssistant */
 /** @typedef {{ entity: HassEntity, source: string, hasArtwork: boolean }} ActiveMedia */
 /** @typedef {{ type: string, name: string, description: string, preview: boolean }} CustomCardRegistration */
 
@@ -46,6 +58,7 @@ const ENTITY = {
   departures: "sensor.pohjantori_departures",
   weather: "weather.home",
   weatherToday: "sensor.home_weather_today",
+  agendaToday: "sensor.household_agenda_today",
   chromecast: "media_player.living_room_tv",
   sonos: "media_player.sonos_ray",
   vacuum: "vacuum.exterminator",
@@ -71,6 +84,7 @@ const RENDER_BATCH_MS = 100;
 const REGION_DEPENDENCIES = {
   departures: [ENTITY.departures],
   weather: [ENTITY.weather, ENTITY.weatherToday],
+  agenda: [ENTITY.agendaToday],
   vacuum: [
     ENTITY.vacuum,
     ENTITY.vacuumStatus,
@@ -100,18 +114,15 @@ class MythosDashboard extends HTMLElement {
           <section class="primary-column">
             <header class="clock">
               <time data-value="time"></time>
-              <div class="weekday" data-value="weekday"></div>
               <div class="date" data-value="date"></div>
+              <div class="agenda-slot" data-region="agenda"></div>
             </header>
 
             <section class="departures panel">
               <header>
                 <div class="departures-title">
                   <ha-icon icon="mdi:bus-clock"></ha-icon>
-                  <div>
-                    <h1>Pohjantori</h1>
-                    <p>Louhentie · E2052</p>
-                  </div>
+                  <h1>Pohjantori <span>· E2052</span></h1>
                 </div>
               </header>
               <div class="departure-list" data-region="departures"></div>
@@ -147,6 +158,10 @@ class MythosDashboard extends HTMLElement {
     this._mediaProgressTimer = undefined;
     /** @type {number | undefined} */
     this._relativeTimeTimer = undefined;
+    /** @type {Map<string, string>} */
+    this._runningSince = new Map();
+    /** @type {Set<string>} */
+    this._runningHistoryPending = new Set();
   }
 
   /** @param {Record<string, unknown>} config */
@@ -160,6 +175,7 @@ class MythosDashboard extends HTMLElement {
   set hass(hass) {
     const previous = this._hass;
     this._hass = hass;
+    this.syncRunningHistory();
     if (!previous) {
       this.markDirty(ALL_REGIONS);
       return;
@@ -174,7 +190,7 @@ class MythosDashboard extends HTMLElement {
 
   connectedCallback() {
     this._relativeTimeTimer = window.setInterval(
-      () => this.markDirty(["clock", "departures", "vacuum", "washingMachine", "pc"]),
+      () => this.markDirty(["clock", "departures", "agenda", "vacuum", "washingMachine", "pc"]),
       15_000,
     );
     this._mediaProgressTimer = window.setInterval(() => this.updateMediaProgress(), 1_000);
@@ -205,6 +221,67 @@ class MythosDashboard extends HTMLElement {
    */
   isAvailable(entity) {
     return entity !== undefined && !MISSING_STATES.has(entity.state);
+  }
+
+  syncRunningHistory() {
+    const tracked = [
+      [ENTITY.washingMachineRunning, "washingMachine"],
+      [ENTITY.pcRunning, "pc"],
+    ];
+    for (const [entityId, region] of tracked) {
+      if (this.entity(entityId)?.state !== "on") {
+        this._runningSince.delete(entityId);
+        continue;
+      }
+      if (!this._runningSince.has(entityId) && !this._runningHistoryPending.has(entityId)) {
+        void this.loadRunningSince(entityId, region);
+      }
+    }
+  }
+
+  /** @param {string} entityId @param {string} region */
+  async loadRunningSince(entityId, region) {
+    if (!this._hass) return;
+    this._runningHistoryPending.add(entityId);
+    const startTime = new Date(Date.now() - 10 * 24 * 60 * 60 * 1_000);
+
+    try {
+      const response = /** @type {Record<string, HistoryState[]>} */ (
+        await this._hass.callWS({
+          type: "history/history_during_period",
+          start_time: startTime.toISOString(),
+          entity_ids: [entityId],
+          include_start_time_state: true,
+          significant_changes_only: true,
+          minimal_response: true,
+          no_attributes: true,
+        })
+      );
+      const history = response[entityId] ?? [];
+      let latestOn;
+      for (let index = history.length - 1; index >= 0; index -= 1) {
+        if (history[index].s === "on") {
+          latestOn = history[index];
+          break;
+        }
+      }
+      const changedAt = latestOn?.lc ?? latestOn?.lu;
+      const current = this.entity(entityId);
+      if (current?.state === "on") {
+        const startedAt =
+          changedAt === undefined
+            ? current.last_changed
+            : new Date(changedAt * 1_000).toISOString();
+        this._runningSince.set(entityId, startedAt);
+        this.markDirty([region]);
+      }
+    } catch (error) {
+      console.warn(`Unable to load running history for ${entityId}`, error);
+      const current = this.entity(entityId);
+      if (current?.state === "on") this._runningSince.set(entityId, current.last_changed);
+    } finally {
+      this._runningHistoryPending.delete(entityId);
+    }
   }
 
   /** @param {unknown} value */
@@ -302,8 +379,24 @@ class MythosDashboard extends HTMLElement {
       maximumFractionDigits: 0,
     });
     const unit = weather.attributes.temperature_unit ?? "°C";
-    const condition = weather.state.replaceAll("-", " ");
-    const displayCondition = condition.charAt(0).toLocaleUpperCase() + condition.slice(1);
+    /** @type {Record<string, string>} */
+    const conditionLabels = {
+      "clear-night": "Clear night",
+      cloudy: "Cloudy",
+      fog: "Fog",
+      hail: "Hail",
+      lightning: "Lightning",
+      "lightning-rainy": "Thunderstorms",
+      partlycloudy: "Partly cloudy",
+      pouring: "Heavy rain",
+      rainy: "Rainy",
+      snowy: "Snowy",
+      "snowy-rainy": "Sleet",
+      sunny: "Sunny",
+      windy: "Windy",
+      "windy-variant": "Windy",
+    };
+    const displayCondition = conditionLabels[weather.state] ?? weather.state.replaceAll("-", " ");
     const high = Number(today?.attributes.high_temperature);
     const low = Number(today?.attributes.low_temperature);
     const rainProbability = Number(today?.attributes.precipitation_probability);
@@ -347,6 +440,88 @@ class MythosDashboard extends HTMLElement {
             ? `<div class="weather-rain"><ha-icon icon="mdi:weather-rainy"></ha-icon><span><strong>${rainProbability.toLocaleString("en-FI", { maximumFractionDigits: 0 })} %</strong> rain today${hasPrecipitation ? ` · ${precipitation.toLocaleString("en-FI", { maximumFractionDigits: 1 })} mm` : ""}</span></div>`
             : ""
         }
+      </section>
+    `;
+  }
+
+  /** @param {string} value */
+  parseCalendarDate(value) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  }
+
+  /** @param {Date} now */
+  renderAgenda(now) {
+    const agenda = this.entity(ENTITY.agendaToday);
+    const elsaEvents = agenda?.attributes.elsa_events ?? [];
+    const mikaelEvents = agenda?.attributes.mikael_events ?? [];
+    const rawEvents = [
+      ...elsaEvents.map((event) => ({ ...event, owner: "elsa" })),
+      ...mikaelEvents.map((event) => ({ ...event, owner: "mikael" })),
+    ];
+
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    const eveningStart = new Date(now);
+    eveningStart.setHours(16, 0, 0, 0);
+
+    const uniqueEvents = new Map();
+    for (const event of rawEvents) {
+      if (!event || typeof event !== "object") continue;
+      const calendarEvent = /** @type {CalendarEvent} */ (event);
+      if (!calendarEvent.summary || !calendarEvent.start || !calendarEvent.end) continue;
+      const key = `${calendarEvent.summary}\u0000${calendarEvent.start}\u0000${calendarEvent.end}`;
+      uniqueEvents.set(key, calendarEvent);
+    }
+
+    const events = [...uniqueEvents.values()]
+      .map((event) => {
+        const start = this.parseCalendarDate(event.start);
+        const end = this.parseCalendarDate(event.end);
+        const allDay = /^\d{4}-\d{2}-\d{2}$/.test(event.start);
+        return { event, start, end, allDay };
+      })
+      .filter(({ start, end, allDay }) => {
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= now)
+          return false;
+        return !isWeekday || allDay || end > eveningStart;
+      })
+      .sort((left, right) => left.start.getTime() - right.start.getTime());
+
+    if (events.length === 0) return "";
+    const visibleEvents = events.slice(0, 2);
+    const hiddenCount = events.length - visibleEvents.length;
+
+    const rows = visibleEvents
+      .map(({ event, start, end, allDay }) => {
+        const active = !allDay && start <= now && end > now;
+        const time = allDay
+          ? "All day"
+          : active
+            ? "Now"
+            : new Intl.DateTimeFormat("en-FI", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })
+                .format(start)
+                .replace(":", ".");
+        return `
+          <li class="agenda-event owner-${event.owner}">
+            <time>${this.escape(time)}</time>
+            <span>${this.escape(event.summary)}</span>
+          </li>
+        `;
+      })
+      .join("");
+
+    return `
+      <section class="agenda" aria-label="${isWeekday ? "Tonight's" : "Today's"} events">
+        <header><ha-icon icon="mdi:calendar-today"></ha-icon>${isWeekday ? "Tonight" : "Today"}</header>
+        <ol>${rows}</ol>
+        ${hiddenCount > 0 ? `<div class="agenda-more">+${hiddenCount} more</div>` : ""}
       </section>
     `;
   }
@@ -509,12 +684,15 @@ class MythosDashboard extends HTMLElement {
     if (this.isAvailable(nextRunEntity)) {
       const parsed = new Date(nextRunEntity.state);
       if (!Number.isNaN(parsed.getTime())) {
-        nextRun = new Intl.DateTimeFormat("en-FI", {
-          weekday: "long",
+        const weekday = new Intl.DateTimeFormat("en-FI", { weekday: "short" }).format(parsed);
+        const time = new Intl.DateTimeFormat("en-FI", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
-        }).format(parsed);
+        })
+          .format(parsed)
+          .replace(":", ".");
+        nextRun = `${weekday} · ${time}`;
       }
     }
 
@@ -574,7 +752,8 @@ class MythosDashboard extends HTMLElement {
     if (!running) return "";
 
     const elapsed = this.formatElapsed(
-      this.isAvailable(runningEntity) ? runningEntity.last_changed : null,
+      this._runningSince.get(runningEntityId) ??
+        (this.isAvailable(runningEntity) ? runningEntity.last_changed : null),
     );
     const value = `${power.toLocaleString("en-FI", { maximumFractionDigits: 1 })} ${unit}`;
 
@@ -583,7 +762,7 @@ class MythosDashboard extends HTMLElement {
         <div>
           <div class="metric-label">${this.escape(label)}</div>
           <div class="metric-value">${this.escape(value)}</div>
-          ${elapsed ? `<div class="metric-detail">Running ${this.escape(elapsed)}</div>` : ""}
+          ${elapsed ? `<div class="metric-detail">Running for ${this.escape(elapsed)}</div>` : ""}
         </div>
       </article>
     `;
@@ -615,20 +794,12 @@ class MythosDashboard extends HTMLElement {
       /** @param {string} type */
       const timePart = (type) => timeParts.find((item) => item.type === type)?.value ?? "00";
       this.updateValue("time", `${timePart("hour")}.${timePart("minute")}`);
-      this.updateValue(
-        "weekday",
-        new Intl.DateTimeFormat("en-FI", { weekday: "long" }).format(now),
-      );
-      this.updateValue(
-        "date",
-        new Intl.DateTimeFormat("en-FI", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(now),
-      );
+      const weekday = new Intl.DateTimeFormat("en-FI", { weekday: "long" }).format(now);
+      const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(now);
+      this.updateValue("date", `${weekday} ${now.getDate()} ${month}`);
     }
     if (dirty.has("weather")) this.updateRegion("weather", this.renderWeather());
+    if (dirty.has("agenda")) this.updateRegion("agenda", this.renderAgenda(now));
     if (dirty.has("departures")) {
       this.updateRegion("departures", this.renderDepartures(now));
     }

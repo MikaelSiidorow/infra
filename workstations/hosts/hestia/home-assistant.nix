@@ -167,6 +167,45 @@ in
             }
           ];
         }
+        {
+          triggers = [
+            {
+              trigger = "homeassistant";
+              event = "start";
+            }
+            {
+              trigger = "time_pattern";
+              minutes = "/5";
+            }
+          ];
+          actions = [
+            {
+              action = "calendar.get_events";
+              target.entity_id = [
+                "calendar.elsa_outlook"
+                "calendar.mikael_gcal"
+              ];
+              data = {
+                start_date_time = "{{ today_at().isoformat() }}";
+                end_date_time = "{{ (today_at() + timedelta(days=1)).isoformat() }}";
+              };
+              response_variable = "household_agenda";
+            }
+          ];
+          sensor = [
+            {
+              name = "Household agenda today";
+              unique_id = "household_agenda_today";
+              default_entity_id = "sensor.household_agenda_today";
+              icon = "mdi:calendar-today";
+              state = "{{ (household_agenda['calendar.elsa_outlook'].events | count) + (household_agenda['calendar.mikael_gcal'].events | count) }}";
+              attributes = {
+                elsa_events = "{{ household_agenda['calendar.elsa_outlook'].events }}";
+                mikael_events = "{{ household_agenda['calendar.mikael_gcal'].events }}";
+              };
+            }
+          ];
+        }
       ];
 
       rest = [
