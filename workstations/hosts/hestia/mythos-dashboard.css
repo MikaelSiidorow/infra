@@ -69,6 +69,7 @@
 }
 
 .weather-slot,
+.wifi-slot,
 .media-slot {
   display: contents;
 }
@@ -143,7 +144,7 @@ button {
 }
 
 .clock {
-  align-self: center;
+  align-self: start;
   padding-left: 4px;
 }
 
@@ -167,9 +168,9 @@ button {
 
 .weather-feature {
   grid-area: weather;
-  align-self: center;
+  align-self: start;
   max-width: 540px;
-  padding: clamp(12px, 2vw, 32px);
+  padding: 0 clamp(12px, 2vw, 32px) clamp(12px, 2vw, 32px);
 }
 
 .weather-current {

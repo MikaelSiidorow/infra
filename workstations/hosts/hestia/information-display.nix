@@ -78,6 +78,12 @@ in
         icon = "mdi:television-dashboard";
       };
 
+      input_boolean.guest_wifi_qr = {
+        name = "Show guest Wi-Fi QR";
+        icon = "mdi:qrcode";
+        initial = false;
+      };
+
       "automation information_display" = [
         {
           id = "information_display_weekday_start";
@@ -151,6 +157,25 @@ in
             {
               action = "input_boolean.turn_off";
               target.entity_id = "input_boolean.information_display_morning_active";
+            }
+          ];
+        }
+        {
+          id = "information_display_guest_wifi_timeout";
+          alias = "Information display · hide guest Wi-Fi QR";
+          mode = "restart";
+          triggers = [
+            {
+              trigger = "state";
+              entity_id = "input_boolean.guest_wifi_qr";
+              to = "on";
+            }
+          ];
+          actions = [
+            { delay.minutes = 30; }
+            {
+              action = "input_boolean.turn_off";
+              target.entity_id = "input_boolean.guest_wifi_qr";
             }
           ];
         }

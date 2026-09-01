@@ -187,14 +187,14 @@ in
               ];
               data = {
                 start_date_time = "{{ today_at().isoformat() }}";
-                end_date_time = "{{ (today_at() + timedelta(days=1)).isoformat() }}";
+                end_date_time = "{{ (today_at() + timedelta(days=2)).isoformat() }}";
               };
               response_variable = "household_agenda";
             }
           ];
           sensor = [
             {
-              name = "Household agenda today";
+              name = "Household agenda";
               unique_id = "household_agenda_today";
               default_entity_id = "sensor.household_agenda_today";
               icon = "mdi:calendar-today";

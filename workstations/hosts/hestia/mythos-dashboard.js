@@ -59,6 +59,7 @@ const ENTITY = {
   weather: "weather.home",
   weatherToday: "sensor.home_weather_today",
   agendaToday: "sensor.household_agenda_today",
+  guestWifiQr: "input_boolean.guest_wifi_qr",
   chromecast: "media_player.living_room_tv",
   sonos: "media_player.sonos_ray",
   vacuum: "vacuum.exterminator",
@@ -85,6 +86,7 @@ const REGION_DEPENDENCIES = {
   departures: [ENTITY.departures],
   weather: [ENTITY.weather, ENTITY.weatherToday],
   agenda: [ENTITY.agendaToday],
+  wifi: [ENTITY.guestWifiQr],
   vacuum: [
     ENTITY.vacuum,
     ENTITY.vacuumStatus,
@@ -131,10 +133,7 @@ class MythosDashboard extends HTMLElement {
 
           <section class="secondary-column">
             <div class="weather-slot" data-region="weather"></div>
-            <aside class="wifi-card panel">
-              <div class="eyebrow">Wi-Fi</div>
-              <img src="${wifiImageUrl.href}" alt="Mythos Wi-Fi QR code" />
-            </aside>
+            <div class="wifi-slot" data-region="wifi"></div>
             <section class="status-strip">
               <div class="status-region" data-region="vacuum"></div>
               <div class="status-region" data-region="livingRoom"></div>
@@ -162,6 +161,9 @@ class MythosDashboard extends HTMLElement {
     this._runningSince = new Map();
     /** @type {Set<string>} */
     this._runningHistoryPending = new Set();
+    /** @type {string | null | undefined} */
+    this._washingFinishedAt = undefined;
+    this._washingCompletionPending = false;
   }
 
   /** @param {Record<string, unknown>} config */
@@ -175,7 +177,15 @@ class MythosDashboard extends HTMLElement {
   set hass(hass) {
     const previous = this._hass;
     this._hass = hass;
+    const previousWashing = previous?.states[ENTITY.washingMachineRunning];
+    const currentWashing = hass.states[ENTITY.washingMachineRunning];
+    if (previousWashing?.state === "on" && currentWashing?.state === "off") {
+      this._washingFinishedAt = currentWashing.last_changed;
+    } else if (currentWashing?.state === "on") {
+      this._washingFinishedAt = undefined;
+    }
     this.syncRunningHistory();
+    this.syncWashingCompletion();
     if (!previous) {
       this.markDirty(ALL_REGIONS);
       return;
@@ -281,6 +291,56 @@ class MythosDashboard extends HTMLElement {
       if (current?.state === "on") this._runningSince.set(entityId, current.last_changed);
     } finally {
       this._runningHistoryPending.delete(entityId);
+    }
+  }
+
+  syncWashingCompletion() {
+    if (
+      this.entity(ENTITY.washingMachineRunning)?.state === "off" &&
+      this._washingFinishedAt === undefined &&
+      !this._washingCompletionPending
+    ) {
+      void this.loadWashingCompletion();
+    }
+  }
+
+  async loadWashingCompletion() {
+    if (!this._hass) return;
+    this._washingCompletionPending = true;
+    const entityId = ENTITY.washingMachineRunning;
+    const startTime = new Date(Date.now() - 10 * 24 * 60 * 60 * 1_000);
+
+    try {
+      const response = /** @type {Record<string, HistoryState[]>} */ (
+        await this._hass.callWS({
+          type: "history/history_during_period",
+          start_time: startTime.toISOString(),
+          entity_ids: [entityId],
+          include_start_time_state: true,
+          significant_changes_only: true,
+          minimal_response: true,
+          no_attributes: true,
+        })
+      );
+      const history = response[entityId] ?? [];
+      let latestOff;
+      for (let index = history.length - 1; index >= 0; index -= 1) {
+        if (history[index].s === "off") {
+          latestOff = history[index];
+          break;
+        }
+      }
+      const changedAt = latestOff?.lc ?? latestOff?.lu;
+      if (this.entity(entityId)?.state === "off") {
+        this._washingFinishedAt =
+          changedAt === undefined ? null : new Date(changedAt * 1_000).toISOString();
+        this.markDirty(["washingMachine"]);
+      }
+    } catch (error) {
+      console.warn("Unable to load washing machine completion history", error);
+      this._washingFinishedAt = null;
+    } finally {
+      this._washingCompletionPending = false;
     }
   }
 
@@ -444,6 +504,16 @@ class MythosDashboard extends HTMLElement {
     `;
   }
 
+  renderWifi() {
+    if (this.entity(ENTITY.guestWifiQr)?.state !== "on") return "";
+    return `
+      <aside class="wifi-card panel">
+        <div class="eyebrow">Wi-Fi</div>
+        <img src="${wifiImageUrl.href}" alt="Mythos Wi-Fi QR code" />
+      </aside>
+    `;
+  }
+
   /** @param {string} value */
   parseCalendarDate(value) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -463,10 +533,6 @@ class MythosDashboard extends HTMLElement {
       ...mikaelEvents.map((event) => ({ ...event, owner: "mikael" })),
     ];
 
-    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
-    const eveningStart = new Date(now);
-    eveningStart.setHours(16, 0, 0, 0);
-
     const uniqueEvents = new Map();
     for (const event of rawEvents) {
       if (!event || typeof event !== "object") continue;
@@ -483,20 +549,47 @@ class MythosDashboard extends HTMLElement {
         const allDay = /^\d{4}-\d{2}-\d{2}$/.test(event.start);
         return { event, start, end, allDay };
       })
-      .filter(({ start, end, allDay }) => {
-        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= now)
-          return false;
-        return !isWeekday || allDay || end > eveningStart;
-      })
+      .filter(({ start, end }) => !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()))
       .sort((left, right) => left.start.getTime() - right.start.getTime());
 
-    if (events.length === 0) return "";
-    const visibleEvents = events.slice(0, 2);
-    const hiddenCount = events.length - visibleEvents.length;
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const dayAfterTomorrow = new Date(tomorrowStart);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+    /**
+     * @param {typeof events[number]} item
+     * @param {Date} dayStart
+     * @param {Date} dayEnd
+     * @param {Date} notBefore
+     */
+    const relevantOn = (item, dayStart, dayEnd, notBefore) => {
+      if (item.start >= dayEnd || item.end <= dayStart || item.end <= notBefore) return false;
+      const isWeekday = dayStart.getDay() >= 1 && dayStart.getDay() <= 5;
+      if (!isWeekday || item.allDay) return true;
+      const eveningStart = new Date(dayStart);
+      eveningStart.setHours(16, 0, 0, 0);
+      return item.end > eveningStart;
+    };
+
+    const todayEvents = events.filter((item) => relevantOn(item, todayStart, tomorrowStart, now));
+    const tomorrowEvents = events.filter((item) =>
+      relevantOn(item, tomorrowStart, dayAfterTomorrow, tomorrowStart),
+    );
+    const showingTomorrow = todayEvents.length === 0 && tomorrowEvents.length > 0;
+    const selectedEvents = showingTomorrow ? tomorrowEvents : todayEvents;
+    if (selectedEvents.length === 0) return "";
+
+    const visibleEvents = selectedEvents.slice(0, 2);
+    const hiddenCount = selectedEvents.length - visibleEvents.length;
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    const heading = showingTomorrow ? "Tomorrow" : isWeekday ? "Tonight" : "Today";
 
     const rows = visibleEvents
       .map(({ event, start, end, allDay }) => {
-        const active = !allDay && start <= now && end > now;
+        const active = !showingTomorrow && !allDay && start <= now && end > now;
         const time = allDay
           ? "All day"
           : active
@@ -518,8 +611,8 @@ class MythosDashboard extends HTMLElement {
       .join("");
 
     return `
-      <section class="agenda" aria-label="${isWeekday ? "Tonight's" : "Today's"} events">
-        <header><ha-icon icon="mdi:calendar-today"></ha-icon>${isWeekday ? "Tonight" : "Today"}</header>
+      <section class="agenda" aria-label="${heading} events">
+        <header><ha-icon icon="mdi:calendar-today"></ha-icon>${heading}</header>
         <ol>${rows}</ol>
         ${hiddenCount > 0 ? `<div class="agenda-more">+${hiddenCount} more</div>` : ""}
       </section>
@@ -738,8 +831,15 @@ class MythosDashboard extends HTMLElement {
    * @param {string} runningEntityId
    * @param {string} label
    * @param {number} fallbackThreshold
+   * @param {boolean=} showCompletion
    */
-  renderPowerMetric(powerEntityId, runningEntityId, label, fallbackThreshold) {
+  renderPowerMetric(
+    powerEntityId,
+    runningEntityId,
+    label,
+    fallbackThreshold,
+    showCompletion = false,
+  ) {
     const powerEntity = this.entity(powerEntityId);
     const runningEntity = this.entity(runningEntityId);
     if (!this.isAvailable(powerEntity)) return "";
@@ -749,7 +849,23 @@ class MythosDashboard extends HTMLElement {
     const running = this.isAvailable(runningEntity)
       ? runningEntity.state === "on"
       : Number.isFinite(power) && power > fallbackThreshold;
-    if (!running) return "";
+    if (!running) {
+      if (!showCompletion || !this._washingFinishedAt) return "";
+      const minutesAgo = Math.floor(
+        (Date.now() - new Date(this._washingFinishedAt).getTime()) / 60_000,
+      );
+      if (!Number.isFinite(minutesAgo) || minutesAgo < 0 || minutesAgo >= 60) return "";
+      const completed = minutesAgo < 1 ? "Just now" : `${minutesAgo} min ago`;
+      return `
+        <article class="metric attention">
+          <div>
+            <div class="metric-label">${this.escape(label)}</div>
+            <div class="metric-value">Done</div>
+            <div class="metric-detail">${this.escape(completed)}</div>
+          </div>
+        </article>
+      `;
+    }
 
     const elapsed = this.formatElapsed(
       this._runningSince.get(runningEntityId) ??
@@ -799,6 +915,7 @@ class MythosDashboard extends HTMLElement {
       this.updateValue("date", `${weekday} ${now.getDate()} ${month}`);
     }
     if (dirty.has("weather")) this.updateRegion("weather", this.renderWeather());
+    if (dirty.has("wifi")) this.updateRegion("wifi", this.renderWifi());
     if (dirty.has("agenda")) this.updateRegion("agenda", this.renderAgenda(now));
     if (dirty.has("departures")) {
       this.updateRegion("departures", this.renderDepartures(now));
@@ -815,6 +932,7 @@ class MythosDashboard extends HTMLElement {
           ENTITY.washingMachineRunning,
           "Washing machine",
           3,
+          true,
         ),
       );
     }
