@@ -4,6 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+    # Home Assistant moves faster than the stable NixOS release.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
