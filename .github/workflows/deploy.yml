@@ -85,6 +85,14 @@ jobs:
         id: build-pr
         run: nix build ./pr#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-pr
         continue-on-error: true
+      - name: Check PR flake
+        id: check-pr
+        run: nix flake check ./pr
+        continue-on-error: true
+      - name: Build PR Hestia config
+        id: build-hestia
+        run: nix build ./pr#nixosConfigurations.hestia.config.system.build.toplevel -o result-hestia
+        continue-on-error: true
       - name: Diff closures
         id: diff
         if: steps.build-base.outcome == 'success' && steps.build-pr.outcome == 'success'
@@ -107,6 +115,8 @@ jobs:
           script: |
             const buildBase = '${{ steps.build-base.outcome }}';
             const buildPr = '${{ steps.build-pr.outcome }}';
+            const checkPr = '${{ steps.check-pr.outcome }}';
+            const buildHestia = '${{ steps.build-hestia.outcome }}';
             const diff = '${{ steps.diff.outcome }}';
             const diffOutput = process.env.DIFF_OUTPUT || 'No diff output available.';
 
@@ -119,6 +129,8 @@ jobs:
               '|------|--------|',
               `| Build (base) | ${s(buildBase)} |`,
               `| Build (PR) | ${s(buildPr)} |`,
+              `| Check flake (PR) | ${s(checkPr)} |`,
+              `| Build Hestia (PR) | ${s(buildHestia)} |`,
               `| Diff | ${s(diff)} |`,
               '',
               '<details><summary>Show Changes</summary>',
@@ -154,7 +166,11 @@ jobs:
               });
             }
       - name: Fail on build error
-        if: steps.build-base.outcome == 'failure' || steps.build-pr.outcome == 'failure'
+        if: |
+          steps.build-base.outcome == 'failure' ||
+          steps.build-pr.outcome == 'failure' ||
+          steps.check-pr.outcome == 'failure' ||
+          steps.build-hestia.outcome == 'failure'
         run: exit 1
   terraform:
     needs: changes
