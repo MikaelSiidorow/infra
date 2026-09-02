@@ -777,7 +777,19 @@ class MythosDashboard extends HTMLElement {
     if (this.isAvailable(nextRunEntity)) {
       const parsed = new Date(nextRunEntity.state);
       if (!Number.isNaN(parsed.getTime())) {
-        const weekday = new Intl.DateTimeFormat("en-FI", { weekday: "short" }).format(parsed);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const scheduledDay = new Date(parsed);
+        scheduledDay.setHours(0, 0, 0, 0);
+        const calendarDay = (date) =>
+          Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+        const daysAway = calendarDay(scheduledDay) - calendarDay(today);
+        const day =
+          daysAway === 0
+            ? "Today"
+            : daysAway === 1
+              ? "Tomorrow"
+              : new Intl.DateTimeFormat("en-FI", { weekday: "short" }).format(parsed);
         const time = new Intl.DateTimeFormat("en-FI", {
           hour: "2-digit",
           minute: "2-digit",
@@ -785,12 +797,12 @@ class MythosDashboard extends HTMLElement {
         })
           .format(parsed)
           .replace(":", ".");
-        nextRun = `${weekday} · ${time}`;
+        nextRun = `${day} · ${time}`;
       }
     }
 
     const attention = !["charging", "docked", "idle"].includes(status.toLocaleLowerCase());
-    const detail = cleaningDetail || `Next ${nextRun}`;
+    const detail = cleaningDetail || nextRun;
 
     return `
       <article class="metric vacuum-compact ${attention ? "attention" : ""}">
