@@ -37,7 +37,7 @@ The Wi-Fi password is deliberately absent from Git and the Nix store. Before
 the first Dewclaw deployment, edit the encrypted secrets file:
 
 ```bash
-sops secrets/secrets.yaml
+sops secrets/openwrt.yaml
 ```
 
 Add a top-level value named `openwrt_archer_wifi`. Do not put the password in a
