@@ -22,7 +22,7 @@ ArgoCD auto-syncs from git
 **Separation of concerns:**
 
 - **Terraform** (`terraform/`) provisions cloud infrastructure (Hetzner server, Cloudflare DNS)
-- **NixOS** (`nixos/`) manages the server OS and cluster platform (K3s, Traefik, cert-manager, ArgoCD)
+- **NixOS** (`nixos/`) manages the Hetzner cluster host and the Hestia home server
 - **Terraform K8s** (`terraform/k8s/`) manages application secrets (the part that can't be in Git)
 - **ArgoCD** syncs application manifests from `k8s/` in Git to the cluster
 
@@ -32,7 +32,10 @@ ArgoCD auto-syncs from git
 infra/
 ├── terraform/               # Cloud resources (Hetzner, Cloudflare)
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
-├── nixos/                   # NixOS server configurations
+├── nixos/hosts/
+│   ├── k8s-server/          # Hetzner K3s and public infrastructure
+│   └── hestia/              # Home Assistant and home-network services
+├── secrets/                 # SOPS-encrypted host secrets
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests
 │   ├── refinery/            # Refinery K8s manifests
@@ -66,6 +69,16 @@ terraform  →  nixos  →  k8s-terraform
 4. **ArgoCD** — automatically syncs `k8s/apps/` → application workloads (no CI needed)
 
 K8s manifest changes (`k8s/refinery/`, `k8s/wger/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for these.
+
+Hestia is deployed independently from a machine that can resolve and reach
+`hestia.home.arpa`. Deployment uses the normal user and prompts for sudo:
+
+```bash
+nix run .#deploy -- .#hestia
+```
+
+The existing CI NixOS job continues to deploy only `k8s-server`; Hestia being
+offline does not block Hetzner deployments.
 
 Refinery application releases do not require per-build image tag commits in this repo. The steady-state `refinery-app` and `refinery-zero` Deployments track the promoted mutable `:production` tag, and database migrations run during `refinery-app` startup.
 

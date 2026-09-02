@@ -24,7 +24,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       deploy-rs,
@@ -44,6 +44,20 @@
             ./nixos/hosts/k8s-server/configuration.nix
           ];
         };
+
+        hestia = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            username = "mikaelsiidorow";
+          };
+          modules = [
+            disko.nixosModules.disko
+            ./nixos/hosts/hestia/disk-config.nix
+            ./nixos/hosts/hestia/hardware-configuration.nix
+            ./nixos/hosts/hestia/default.nix
+          ];
+        };
       };
 
       deploy = {
@@ -54,6 +68,16 @@
             profiles.system = {
               user = "root";
               path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.k8s-server;
+            };
+          };
+
+          hestia = {
+            hostname = "hestia.home.arpa";
+            sshUser = "mikaelsiidorow";
+            interactiveSudo = true;
+            profiles.system = {
+              user = "root";
+              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.hestia;
             };
           };
         };
