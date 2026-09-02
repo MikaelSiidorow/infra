@@ -17,6 +17,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    openwrt-imagebuilder = {
+      url = "github:astro/nix-openwrt-imagebuilder";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dewclaw = {
+      url = "github:MakiseKurisu/dewclaw";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -28,12 +38,45 @@
       self,
       nixpkgs,
       deploy-rs,
+      dewclaw,
       disko,
+      openwrt-imagebuilder,
       sops-nix,
       ...
     }:
     {
-      apps.x86_64-linux.deploy = deploy-rs.apps.x86_64-linux.default;
+      apps.x86_64-linux = {
+        deploy = deploy-rs.apps.x86_64-linux.default;
+        cerberus-deploy = {
+          type = "app";
+          program = "${self.packages.x86_64-linux.cerberus-deploy}/bin/deploy-r6220";
+          meta.description = "Deploy the Cerberus OpenWrt configuration";
+        };
+        hermes-deploy = {
+          type = "app";
+          program = "${self.packages.x86_64-linux.hermes-deploy}/bin/deploy-archer-c6-v2";
+          meta.description = "Deploy the Hermes OpenWrt configuration";
+        };
+      };
+
+      packages.x86_64-linux =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in
+        {
+          cerberus-firmware = pkgs.callPackage ./openwrt/r6220/firmware.nix {
+            inherit openwrt-imagebuilder;
+          };
+          cerberus-deploy = pkgs.callPackage dewclaw {
+            configuration = ./openwrt/r6220/config.nix;
+          };
+          hermes-firmware = pkgs.callPackage ./openwrt/archer-c6-v2/firmware.nix {
+            inherit openwrt-imagebuilder;
+          };
+          hermes-deploy = pkgs.callPackage dewclaw {
+            configuration = ./openwrt/archer-c6-v2/config.nix;
+          };
+        };
 
       nixosConfigurations = {
         k8s-server = nixpkgs.lib.nixosSystem {

@@ -74,13 +74,11 @@ Keep Mullvad DoH as the global resolver; only `home.arpa` should use the split
 DNS route. Restrict access to the advertised subnet with Headscale policy
 grants before treating the setup as complete.
 
-## Temporary OpenWrt dependency
+## OpenWrt deployment
 
-The Cerberus and Hermes OpenWrt configurations still live in `~/nix-config`.
-Keep Hestia's `/etc/nixos-repo` checkout pointed at that repository until those
-configurations move separately. Router deployment continues to run from that
-checkout and uses the SOPS-managed `router-deploy-ssh-key` provided by this
-Hestia configuration.
+The Cerberus and Hermes OpenWrt configurations live in this repository. Router
+deployment runs from Hestia's `/etc/nixos-repo` checkout and uses the
+SOPS-managed `router-deploy-ssh-key` provided by this Hestia configuration.
 
 ## Local reverse proxy
 
