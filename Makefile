@@ -4,6 +4,7 @@ TF=terraform
 HESTIA_HOST ?= hestia.home.arpa
 HESTIA_SSH := mikaelsiidorow@$(HESTIA_HOST)
 HESTIA_REPO ?= /etc/nixos-repo
+ROUTER_DEPLOY_SSH_KEY ?= /run/secrets/router-deploy-ssh-key
 
 # Terraform
 
@@ -25,11 +26,11 @@ ssh:
 
 .PHONY: deploy-cerberus
 deploy-cerberus:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-cerberus /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && nix run .#cerberus-deploy'"
+	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-cerberus /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run .#cerberus-deploy'"
 
 .PHONY: deploy-hermes
 deploy-hermes:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-hermes /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && nix run .#hermes-deploy'"
+	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-hermes /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run .#hermes-deploy'"
 
 .PHONY: build-router-firmware
 build-router-firmware:

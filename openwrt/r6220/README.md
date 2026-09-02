@@ -191,7 +191,7 @@ uses `opkg`. This configuration therefore disables Dewclaw package management;
 Do not put secrets in `firmware.nix`, `files/`, or a Nix string used to build
 the firmware. They would be stored as plaintext in `/nix/store`.
 
-Runtime secrets should be added to `secrets/secrets.yaml` with `sops`, then
+Runtime secrets should be added to `secrets/openwrt.yaml` with `sops`, then
 referenced through Dewclaw's `_secret` values. Secrets are decrypted on the
 deploying machine and interpolated during deployment rather than firmware
 construction.
