@@ -4,6 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+    # Home Assistant moves faster than the stable NixOS release.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,7 +24,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       deploy-rs,
@@ -41,6 +44,20 @@
             ./nixos/hosts/k8s-server/configuration.nix
           ];
         };
+
+        hestia = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            username = "mikaelsiidorow";
+          };
+          modules = [
+            disko.nixosModules.disko
+            ./nixos/hosts/hestia/disk-config.nix
+            ./nixos/hosts/hestia/hardware-configuration.nix
+            ./nixos/hosts/hestia/default.nix
+          ];
+        };
       };
 
       deploy = {
@@ -51,6 +68,15 @@
             profiles.system = {
               user = "root";
               path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.k8s-server;
+            };
+          };
+
+          hestia = {
+            hostname = "hestia.home.arpa";
+            sshUser = "root";
+            profiles.system = {
+              user = "root";
+              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.hestia;
             };
           };
         };
