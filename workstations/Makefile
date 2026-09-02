@@ -58,7 +58,6 @@ help:
 	@echo "  make format-check - Check formatting without activating"
 	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
 	@echo "  make popos        - Build and activate Pop!_OS configuration"
-	@echo "  make deploy-hestia - Sync and activate the hestia NixOS configuration"
 	@echo "  make deploy-cerberus - Deploy Cerberus persistently through Hestia"
 	@echo "  make deploy-hermes - Deploy Hermes persistently through Hestia"
 	@echo "  make build-router-firmware - Build both OpenWrt firmware images"
@@ -163,12 +162,6 @@ fmt:
 .PHONY: popos
 popos:
 	home-manager switch -b backup --flake .#mikaelsiidorow@pop-os
-
-# Deploy the revision already pushed to the public repository. Keeping hestia's
-# checkout clean makes its running configuration easy to inspect and reproduce.
-.PHONY: deploy-hestia
-deploy-hestia:
-	ssh -t $(HESTIA_SSH) 'cd /etc/nixos-repo && git pull --ff-only && sudo nixos-rebuild switch --flake .#hestia'
 
 .PHONY: deploy-cerberus
 deploy-cerberus:

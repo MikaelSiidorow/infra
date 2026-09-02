@@ -10,13 +10,15 @@ Configured hosts:
 | ----------------------- | -------------- | ----------------------- |
 | `MacBook-Air`           | aarch64-darwin | nix-darwin              |
 | `MacBook-Pro`           | aarch64-darwin | nix-darwin              |
-| `hestia`                | x86_64-linux   | NixOS home server       |
 | `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
 
 The repository also builds OpenWrt firmware and Dewclaw deployment outputs for
 the NETGEAR R6220 router and TP-Link Archer C6 v2 access point. See the
 [R6220 guide](openwrt/r6220/README.md) and
 [Archer C6 guide](openwrt/archer-c6-v2/README.md) before deploying them.
+Hestia's NixOS configuration lives in the
+[infra repository](https://github.com/MikaelSiidorow/infra); this repository
+remains checked out on Hestia temporarily for the router deployment commands.
 
 ## Quick Start
 
@@ -130,17 +132,6 @@ tailscale-headscale-setup
 The command connects to `https://hs.miksu.app`, accepts Headscale DNS, and
 accepts the home LAN subnet route. It is safe to run again.
 
-### NixOS (Hestia)
-
-After committing and pushing changes, pull and activate them on the server:
-
-```bash
-make deploy-hestia
-```
-
-The target defaults to `hestia.home.arpa`. Override it when needed with
-`make deploy-hestia HESTIA_HOST=<address>`.
-
 ## Common Commands
 
 ```bash
@@ -150,7 +141,6 @@ make update       # Update inputs
 make update-fast  # Update fast-moving app inputs
 make upgrade      # Update + switch
 make brew-upgrade # Explicit Homebrew update + upgrade on macOS
-make deploy-hestia # Sync and activate the Hestia NixOS configuration
 make deploy-cerberus # Deploy the Cerberus router configuration
 make deploy-hermes # Deploy the Hermes access-point configuration
 make build-router-firmware # Build both router firmware images
