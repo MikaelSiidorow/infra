@@ -15,6 +15,9 @@ on:
     branches: [main]
     paths:
       - "nixos/**"
+      - "openwrt/**"
+      - "secrets/openwrt.yaml"
+      - ".sops.yaml"
       - "flake.nix"
       - "flake.lock"
       - "terraform/**"
@@ -24,6 +27,9 @@ on:
     branches: [main]
     paths:
       - "nixos/**"
+      - "openwrt/**"
+      - "secrets/openwrt.yaml"
+      - ".sops.yaml"
       - "flake.nix"
       - "flake.lock"
       - "terraform/**"
@@ -39,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       nixos: ${{ steps.filter.outputs.nixos }}
+      openwrt: ${{ steps.filter.outputs.openwrt }}
       terraform: ${{ steps.filter.outputs.terraform }}
       k8s_terraform: ${{ steps.filter.outputs.k8s_terraform }}
     steps:
@@ -50,6 +57,12 @@ jobs:
           filters: |
             nixos:
               - 'nixos/**'
+              - 'flake.nix'
+              - 'flake.lock'
+            openwrt:
+              - 'openwrt/**'
+              - 'secrets/openwrt.yaml'
+              - '.sops.yaml'
               - 'flake.nix'
               - 'flake.lock'
             terraform:
@@ -172,6 +185,18 @@ jobs:
           steps.check-pr.outcome == 'failure' ||
           steps.build-hestia.outcome == 'failure'
         run: exit 1
+  openwrt-check:
+    needs: changes
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.changes.outputs.openwrt == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v30
+      - name: Build router firmware and deployment tools
+        run: nix build .#cerberus-firmware .#hermes-firmware .#cerberus-deploy .#hermes-deploy --no-link
   terraform:
     needs: changes
     if: |
