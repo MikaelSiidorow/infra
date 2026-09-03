@@ -1,9 +1,14 @@
 # Zsh configuration - platform-agnostic
 {
+  pkgs,
   lib,
+  inputs,
   isDarwin ? false,
   ...
 }:
+let
+  codex = inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+in
 {
   home = {
     sessionVariables.PNPM_HOME = "$HOME/.local/share/pnpm";
@@ -37,7 +42,8 @@
       cres = "claude --resume";
       crew = "claude /review";
       cwt = "claude-worktree";
-      codex = "codex --sandbox danger-full-access --ask-for-approval on-request";
+      codex = "${codex}/bin/codex --profile default";
+      codex-yolo = "${codex}/bin/codex --profile yolo";
 
       # Git (from oh-my-zsh git plugin)
       g = "git";
