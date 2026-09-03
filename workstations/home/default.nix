@@ -26,6 +26,7 @@
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
+    ./colima.nix
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
