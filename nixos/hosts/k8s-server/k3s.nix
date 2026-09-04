@@ -155,6 +155,21 @@ let
       name: ci-deploy
       apiGroup: rbac.authorization.k8s.io
     ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: ci-deploy
+      namespace: wger
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ci-deploy-token
+      namespace: wger
+      annotations:
+        kubernetes.io/service-account.name: ci-deploy
+    type: kubernetes.io/service-account-token
+    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -174,7 +189,7 @@ let
     subjects:
       - kind: ServiceAccount
         name: ci-deploy
-        namespace: refinery
+        namespace: wger
     roleRef:
       kind: Role
       name: ci-deploy

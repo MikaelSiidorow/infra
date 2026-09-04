@@ -38,6 +38,14 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.K8S_DEPLOY_KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
+      - name: Verify namespace deployment identity
+        run: |
+          expected="system:serviceaccount:${{ inputs.namespace }}:ci-deploy"
+          actual=$(kubectl auth whoami -o jsonpath='{.status.userInfo.username}')
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Expected $expected, authenticated as $actual" >&2
+            exit 1
+          fi
       - name: Rollout restart
         run: |
           IFS=',' read -ra DEPS <<< "${{ inputs.deployments }}"
