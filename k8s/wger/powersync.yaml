@@ -38,7 +38,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  replicas: 1
+  # Keep PowerSync stopped while the wger 2.7 database migrations run.
+  # Restore this to 1 after the new server image is healthy.
+  replicas: 0
   strategy:
     type: Recreate
   selector:
