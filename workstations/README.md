@@ -30,21 +30,24 @@ The flake assumes Determinate Nix (`nix.enable = false`), so the upstream instal
 # 1. Install Determinate Nix
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
-# 2. Set LocalHostName to match a darwinConfigurations attr.
+# 2. Install Rosetta. Colima uses it to run amd64 containers on Apple silicon.
+softwareupdate --install-rosetta --agree-to-license
+
+# 3. Set LocalHostName to match a darwinConfigurations attr.
 #    darwin-rebuild reads scutil --get LocalHostName as the default target.
 sudo scutil --set HostName MacBook-Pro
 sudo scutil --set LocalHostName MacBook-Pro
 sudo scutil --set ComputerName MacBook-Pro
 
-# 3. Clone.
+# 4. Clone.
 git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
 cd ~/nix-config
 
-# 4. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
+# 5. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
 #    Succeeds without secrets; sops-nix decryption fails quietly until the age key exists.
 nix run .#darwin-rebuild -- switch --flake .
 
-# 5. Restore the SOPS age key (see "SOPS age key restore" below), then `make switch` again to decrypt.
+# 6. Restore the SOPS age key (see "SOPS age key restore" below), then `make switch` again to decrypt.
 ```
 
 If you need a different hostname, add it to `darwinHosts` (top of `flake.nix`) before switching.
