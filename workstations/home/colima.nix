@@ -21,8 +21,7 @@ let
   '';
 in
 {
-  # Colima provides the engine; keep the Docker and Compose clients independent
-  # from OrbStack while its context remains available during the migration.
+  # Colima provides the engine; install the Docker and Compose clients separately.
   home.packages = with pkgs; [
     docker
     docker-compose

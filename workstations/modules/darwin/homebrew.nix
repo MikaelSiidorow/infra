@@ -15,7 +15,6 @@ _: {
 
     # Chrome, 1Password, Teams and drata-agent come from the enterprise MDM.
     casks = [
-      "orbstack"
       "ghostty"
       "cmux"
       "raycast"
