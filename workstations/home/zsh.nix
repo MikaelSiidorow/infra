@@ -42,8 +42,8 @@ in
       cres = "claude --resume";
       crew = "claude /review";
       cwt = "claude-worktree";
-      codex = "${codex}/bin/codex --profile default";
-      codex-yolo = "${codex}/bin/codex --profile yolo";
+      codex = "${codex}/bin/codex --ask-for-approval on-request -c 'approvals_reviewer=\"auto_review\"' -c 'default_permissions=\":workspace\"' -c 'plan_mode_reasoning_effort=\"xhigh\"' -c 'web_search=\"live\"'";
+      codex-yolo = "${codex}/bin/codex --ask-for-approval never -c 'default_permissions=\":danger-full-access\"' -c 'plan_mode_reasoning_effort=\"xhigh\"' -c 'web_search=\"live\"'";
 
       # Git (from oh-my-zsh git plugin)
       g = "git";
