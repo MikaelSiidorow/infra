@@ -1,5 +1,6 @@
 # Desktop applications - platform-agnostic
 {
+  lib,
   pkgs,
   pkgs-unstable,
   ...
@@ -50,7 +51,7 @@ in
     # macOS: install via Homebrew (see modules/darwin/homebrew.nix)
     # Linux: install from nixpkgs (see home/applications-linux.nix)
 
-    vscode = {
+    vscode = lib.mkIf pkgs.stdenv.isLinux {
       enable = true;
       package = pkgs-unstable.vscode;
       mutableExtensionsDir = false;

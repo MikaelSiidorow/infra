@@ -40,7 +40,7 @@
           app = "/Applications/cmux.app";
         }
         {
-          app = "${pkgs.vscode}/Applications/Visual Studio Code.app";
+          app = "${pkgs.zed-editor}/Applications/Zed.app";
         }
       ];
     };
