@@ -76,7 +76,7 @@ jobs:
 
       - name: Build darwin configuration
         run: |
-          nix build .#darwinConfigurations.mikael-mbp-2026.system \
+          nix build .#darwinConfigurations.Mikael-MacBook-Pro-H7D6Q4TMVY.system \
             --show-trace \
             --fallback
 

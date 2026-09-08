@@ -14,6 +14,7 @@ HESTIA_REPO ?= /etc/nixos-repo
 # when no flake attr is specified, so we pass `.` and let it pick.
 # home-manager has no equivalent default, so we pass the full target.
 ifeq ($(UNAME),Darwin)
+	HOSTNAME := $(shell scutil --get LocalHostName)
 	DARWIN_REBUILD := $(shell command -v darwin-rebuild 2>/dev/null || true)
 	ifeq ($(DARWIN_REBUILD),)
 		BUILD_CMD := nix run .\#darwin-rebuild --

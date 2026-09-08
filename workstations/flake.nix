@@ -145,7 +145,7 @@
       # `scutil --get LocalHostName`, which is what darwin-rebuild uses
       # to resolve the default flake target).
       darwinHosts = {
-        "mikael-mbp-2026" = "aarch64-darwin";
+        "Mikael-MacBook-Pro-H7D6Q4TMVY" = "aarch64-darwin";
       };
 
       # Helper function to create a darwin system

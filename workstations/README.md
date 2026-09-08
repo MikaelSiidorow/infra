@@ -8,8 +8,7 @@ Configured hosts:
 
 | Attr                    | Platform       | Notes                   |
 | ----------------------- | -------------- | ----------------------- |
-| `MacBook-Air`           | aarch64-darwin | nix-darwin              |
-| `MacBook-Pro`           | aarch64-darwin | nix-darwin              |
+| `Mikael-MacBook-Pro-H7D6Q4TMVY`           | aarch64-darwin | nix-darwin              |
 | `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
 
 The repository also builds OpenWrt firmware and Dewclaw deployment outputs for
@@ -35,9 +34,9 @@ softwareupdate --install-rosetta --agree-to-license
 
 # 3. Set LocalHostName to match a darwinConfigurations attr.
 #    darwin-rebuild reads scutil --get LocalHostName as the default target.
-sudo scutil --set HostName MacBook-Pro
-sudo scutil --set LocalHostName MacBook-Pro
-sudo scutil --set ComputerName MacBook-Pro
+sudo scutil --set HostName Mikael-MacBook-Pro-H7D6Q4TMVY
+sudo scutil --set LocalHostName Mikael-MacBook-Pro-H7D6Q4TMVY
+sudo scutil --set ComputerName Mikael-MacBook-Pro-H7D6Q4TMVY
 
 # 4. Clone.
 git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
@@ -166,7 +165,7 @@ nix build .#hermes-deploy
 nix run .#hermes-deploy
 ```
 
-On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.
+On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(scutil --get LocalHostName)`. Run `make help` for the full list.
 
 Homebrew packages are not upgraded during `make switch`; run `make brew-upgrade` when you want casks and brews updated.
 
