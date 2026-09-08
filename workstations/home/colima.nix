@@ -25,6 +25,7 @@ in
   home.packages = with pkgs; [
     docker
     docker-compose
+    docker-credential-helpers
   ];
 
   services.colima = {
