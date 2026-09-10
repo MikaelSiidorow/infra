@@ -21,10 +21,13 @@ let
   '';
 in
 {
-  # Colima provides the engine; install the Docker and Compose clients separately.
+  # Colima provides the engine; Docker bundles the Compose and Buildx plugins.
   home.packages = with pkgs; [
     docker
-    docker-compose
+    # Use Docker's plugin lookup for legacy docker-compose invocations too.
+    (writeShellScriptBin "docker-compose" ''
+      exec ${lib.getExe docker} compose "$@"
+    '')
     docker-credential-helpers
   ];
 
