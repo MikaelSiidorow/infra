@@ -6,10 +6,10 @@ Multi-platform Nix configuration supporting NixOS, macOS (nix-darwin), and Linux
 
 Configured hosts:
 
-| Attr                    | Platform       | Notes                   |
-| ----------------------- | -------------- | ----------------------- |
-| `Mikael-MacBook-Pro-H7D6Q4TMVY`           | aarch64-darwin | nix-darwin              |
-| `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
+| Attr                            | Platform       | Notes                   |
+| ------------------------------- | -------------- | ----------------------- |
+| `Mikael-MacBook-Pro-H7D6Q4TMVY` | aarch64-darwin | nix-darwin              |
+| `mikaelsiidorow@pop-os`         | x86_64-linux   | home-manager standalone |
 
 The repository also builds OpenWrt firmware and Dewclaw deployment outputs for
 the NETGEAR R6220 router and TP-Link Archer C6 v2 access point. See the
