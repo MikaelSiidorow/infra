@@ -8,9 +8,9 @@
     # Fast lane for browsers and selected fast-moving desktop apps.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Darwin (macOS) support
+    # Darwin (macOS) support; keep the release aligned with nixpkgs.
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/master";
+      url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
