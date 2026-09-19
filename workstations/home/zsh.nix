@@ -38,6 +38,7 @@ in
       treefmt = "treefmt --config-file ~/.config/treefmt/treefmt.toml --allow-missing-formatter";
       tp = "trash-put";
       c = "claude";
+      claude-yolo = "claude --dangerously-skip-permissions";
       cco = "claude --continue";
       cres = "claude --resume";
       crew = "claude /review";
