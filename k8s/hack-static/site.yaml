@@ -61,6 +61,8 @@ spec:
       app: hack-static
   template:
     metadata:
+      annotations:
+        presentation-config-version: "no-store-gzip-1"
       labels:
         app: hack-static
     spec:
