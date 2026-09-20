@@ -21,8 +21,8 @@ the entire repository, recordings, datasets, credentials or private documents.
 This uses your existing SSH access to `root@89.167.124.71` (override with
 `HACK_SSH_HOST`). Files live under `/var/lib/hack-static/releases/`; an atomic
 `current` symlink selects the active version. Old releases remain on disk and are
-not served by URL; keep them only as long as needed for rollback. Browser caching
-is set to revalidate so updates appear on reload. Uploading does not rebuild the
+not served by URL; keep them only as long as needed for rollback. Browser storage is disabled with `Cache-Control: no-store`; text responses use
+gzip compression to reduce bandwidth without caching. Uploading does not rebuild the
 container or require a Git commit.
 
 Rollback: over SSH, point a temporary relative symlink at an existing
