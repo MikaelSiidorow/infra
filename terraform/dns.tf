@@ -554,3 +554,13 @@ resource "cloudflare_dns_record" "siidorow_com_google_verification" {
   proxied = false
   ttl     = 1
 }
+
+# Public hackathon presentation; direct connection to Hetzner, no Cloudflare proxy.
+resource "cloudflare_dns_record" "miksu_app_hack" {
+  zone_id = cloudflare_zone.miksu_app.id
+  type    = "A"
+  name    = "elisa.hack.miksu.app"
+  content = hcloud_server.k3s_server.ipv4_address
+  proxied = false
+  ttl     = 60
+}
