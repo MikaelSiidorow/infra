@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: knot
+  namespace: knot
+spec:
+  selector:
+    app: knot
+  ports:
+    - port: 80
+      targetPort: 5555

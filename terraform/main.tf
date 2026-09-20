@@ -17,6 +17,14 @@ resource "hcloud_firewall" "k3s" {
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
+  # Tangled knot git-over-SSH
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "2222"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
   # HTTP
   rule {
     direction  = "in"

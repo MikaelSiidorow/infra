@@ -53,6 +53,7 @@
       enable = true;
       allowedTCPPorts = [
         22 # SSH
+        2222 # Tangled knot git-over-SSH
         80 # HTTP
         443 # HTTPS
       ];

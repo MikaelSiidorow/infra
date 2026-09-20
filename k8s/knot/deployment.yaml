@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knot
+  namespace: knot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: knot
+  template:
+    metadata:
+      labels:
+        app: knot
+        app.kubernetes.io/name: knot
+        app.kubernetes.io/component: server
+        app.kubernetes.io/part-of: tangled
+    spec:
+      containers:
+        - name: knot
+          image: atcr.io/tangled.org/knot:v1.15.0-alpha
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5555
+              name: http
+            - containerPort: 22
+              name: ssh
+              hostPort: 2222
+          securityContext:
+            capabilities:
+              add:
+                - SETUID
+                - SETGID
+                - CHOWN
+          env:
+            - name: KNOT_SERVER_HOSTNAME
+              value: knot.siidorow.dev
+            - name: KNOT_SERVER_OWNER
+              value: did:plc:7ajjqbub3qxysvscwvugeq5z
+            - name: APPVIEW_ENDPOINT
+              value: https://tangled.org
+            - name: KNOT_SERVER_DB_PATH
+              value: /app/knotserver.db
+            - name: KNOT_REPO_SCAN_PATH
+              value: /home/git/repositories
+            - name: KNOT_SERVER_INTERNAL_LISTEN_ADDR
+              value: localhost:5444
+            - name: KNOT_SERVER_LISTEN_ADDR
+              value: 0.0.0.0:5555
+          volumeMounts:
+            - name: knot-data
+              mountPath: /home/git/repositories
+              subPath: repositories
+            - name: knot-data
+              mountPath: /app
+              subPath: server
+            - name: knot-data
+              mountPath: /etc/ssh/keys
+              subPath: keys
+      volumes:
+        - name: knot-data
+          persistentVolumeClaim:
+            claimName: knot-data
