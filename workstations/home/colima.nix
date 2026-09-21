@@ -21,6 +21,8 @@ let
   '';
 in
 {
+  programs.zsh.shellAliases.fix-colima = "colima stop --force && colima start --save-config=false";
+
   # Colima provides the engine; Docker bundles the Compose and Buildx plugins.
   home.packages = with pkgs; [
     docker
