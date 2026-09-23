@@ -107,7 +107,6 @@
             pythonRelaxDeps = [ "kubernetes" ];
           })
         ])
-        terraform
 
         # Media
         ffmpeg
@@ -134,10 +133,12 @@
       ]
       # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
       ++ lib.optionals (!isDarwin) [
+        terraform
         inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
       ]
       # Platform-specific packages (macOS only)
       ++ lib.optionals isDarwin [
+        opentofu
         google-cloud-sdk
 
         # Cursor CLI (not in claude-code-nix-style flake; from unstable)

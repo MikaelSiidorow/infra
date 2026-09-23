@@ -33,7 +33,7 @@ in
     shellAliases = {
       # Custom
       p = "pnpm";
-      tf = "terraform";
+      tf = if isDarwin then "tofu" else "terraform";
       bb = "bun --bun";
       treefmt = "treefmt --config-file ~/.config/treefmt/treefmt.toml --allow-missing-formatter";
       tp = "trash-put";
