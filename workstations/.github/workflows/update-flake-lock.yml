@@ -68,7 +68,7 @@ jobs:
         run: |
           {
             echo '```'
-            make "$TARGET" 2>&1 | grep -v '^warning:'
+            make -s "$TARGET" 2>&1 | grep -v -E '^(warning:|unpacking )'
             echo '```'
           } > "$RUNNER_TEMP/body.md"
 
