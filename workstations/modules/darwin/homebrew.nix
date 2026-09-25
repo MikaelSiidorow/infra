@@ -1,23 +1,36 @@
 # Homebrew configuration for macOS
-_: {
+{ config, ... }:
+{
   homebrew = {
     enable = true;
 
     onActivation = {
       autoUpdate = false;
+      cleanup = "uninstall";
       # cleanup = "zap";
+      # TODO: back to true once the cmux 0.64.25 checksum is fixed upstream
+      # (https://github.com/manaflow-ai/cmux/issues/14415).
       upgrade = false;
     };
 
-    global = {
-      brewfile = true;
-    };
+    # Disabled: ~/.Brewfile below already points at the generated Brewfile, and the
+    # HOMEBREW_BUNDLE_FILE this sets makes `brew bundle --global` error out.
+    # global = {
+    #   brewfile = true;
+    # };
+
+    taps = builtins.attrNames config.nix-homebrew.taps;
+
+    greedyCasks = true;
 
     # Chrome, 1Password, Teams and drata-agent come from the enterprise MDM.
     casks = [
       "ghostty"
       "cmux"
-      "raycast"
+      # "raycast" # Now installed and updated by the enterprise MDM.
     ];
   };
+
+  home-manager.users.${config.system.primaryUser}.home.file.".Brewfile".text =
+    config.homebrew.brewfile;
 }

@@ -42,10 +42,6 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
-    homebrew-cmux = {
-      url = "github:manaflow-ai/homebrew-cmux";
-      flake = false;
-    };
 
     # Nix User Repository (Firefox extensions, etc.)
     nur = {
@@ -95,7 +91,6 @@
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
-      homebrew-cmux,
       nur,
       openwrt-imagebuilder,
       dewclaw,
@@ -197,7 +192,6 @@
                 taps = {
                   "homebrew/homebrew-core" = homebrew-core;
                   "homebrew/homebrew-cask" = homebrew-cask;
-                  "manaflow-ai/homebrew-cmux" = homebrew-cmux;
                 };
                 mutableTaps = false;
                 autoMigrate = true;

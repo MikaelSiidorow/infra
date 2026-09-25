@@ -124,8 +124,7 @@ update-fast:
 		opencode-nix \
 		nix-homebrew \
 		homebrew-core \
-		homebrew-cask \
-		homebrew-cmux
+		homebrew-cask
 
 # Update and switch
 .PHONY: upgrade

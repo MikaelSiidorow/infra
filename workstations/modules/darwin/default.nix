@@ -2,7 +2,6 @@
 {
   self,
   pkgs,
-  pkgs-unstable,
   ...
 }:
 let
@@ -21,7 +20,7 @@ in
   ];
 
   environment.systemPackages = [
-    pkgs-unstable.notion-app
+    # pkgs-unstable.notion-app # Now installed and updated by the enterprise MDM.
     scrollReverser
     pkgs.vim
   ];
