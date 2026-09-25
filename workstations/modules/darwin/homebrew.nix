@@ -27,6 +27,7 @@
     casks = [
       "ghostty"
       "cmux"
+      "postico"
       # "raycast" # Now installed and updated by the enterprise MDM.
     ];
   };
