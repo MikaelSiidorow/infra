@@ -1,0 +1,93 @@
+name: Update flake.lock
+
+on:
+  schedule:
+    # Fast-moving inputs (make update-fast) daily, except Mondays.
+    - cron: "0 4 * * 0,2-6"
+    # All inputs (make update) on Mondays.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Make target to run"
+        type: choice
+        options: [update-fast, update]
+        default: update-fast
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    name: Update flake inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select target
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_TARGET: ${{ inputs.target }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            target="$INPUT_TARGET"
+          elif [ "$SCHEDULE" = "0 4 * * 1" ]; then
+            target=update
+          else
+            target=update-fast
+          fi
+          if [ "$target" = update ]; then
+            title="chore: update inputs"
+          else
+            title="chore: update fast inputs"
+          fi
+          echo "name=$target" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+
+      # PRs opened with GITHUB_TOKEN don't trigger CI, so use a GitHub App token.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Update inputs
+        env:
+          TARGET: ${{ steps.target.outputs.name }}
+        run: |
+          {
+            echo '```'
+            make "$TARGET" 2>&1 | grep -v '^warning:'
+            echo '```'
+          } > "$RUNNER_TEMP/body.md"
+
+      - name: Create pull request
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: update/flake-${{ steps.target.outputs.name }}
+          delete-branch: true
+          add-paths: flake.lock
+          commit-message: ${{ steps.target.outputs.title }}
+          title: ${{ steps.target.outputs.title }}
+          body-path: ${{ runner.temp }}/body.md
+          labels: dependencies
+
+      - name: Enable auto-merge
+        if: steps.pr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+        run: gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
