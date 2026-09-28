@@ -8,9 +8,7 @@
       autoUpdate = false;
       cleanup = "uninstall";
       # cleanup = "zap";
-      # TODO: back to true once the cmux 0.64.25 checksum is fixed upstream
-      # (https://github.com/manaflow-ai/cmux/issues/14415).
-      upgrade = false;
+      upgrade = true;
     };
 
     # Disabled: ~/.Brewfile below already points at the generated Brewfile, and the
