@@ -3,9 +3,9 @@ name: Update flake.lock
 on:
   schedule:
     # Fast-moving inputs (make update-fast) daily, except Mondays.
-    - cron: "17 1 * * 0,2-6"
+    - cron: "17 0 * * 0,2-6"
     # All inputs (make update) on Mondays.
-    - cron: "17 1 * * 1"
+    - cron: "17 0 * * 1"
   workflow_dispatch:
     inputs:
       target:
@@ -31,7 +31,7 @@ jobs:
         run: |
           if [ "$EVENT" = "workflow_dispatch" ]; then
             target="$INPUT_TARGET"
-          elif [ "$SCHEDULE" = "17 1 * * 1" ]; then
+          elif [ "$SCHEDULE" = "17 0 * * 1" ]; then
             target=update
           else
             target=update-fast
