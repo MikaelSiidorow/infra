@@ -69,7 +69,7 @@ let
     spec:
       project: default
       source:
-        repoURL: https://github.com/MikaelSiidorow/infra.git
+        repoURL: https://github.com/MikaelSiidorow/systems.git
         targetRevision: main
         path: k8s/apps
       destination:
