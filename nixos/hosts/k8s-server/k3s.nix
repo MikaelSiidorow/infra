@@ -278,6 +278,10 @@ in
     "L+ ${manifestDir}/refinery-db-service.yaml - - - - ${refineryDbService}"
     # wger's namespace and database service are managed by Kubernetes Terraform.
     "r ${manifestDir}/wger-db-service.yaml - - - -"
+    # Marginalia was removed, but its links were left behind and now dangle.
+    # K3s aborts the whole manifest scan on a dangling link.
+    "r ${manifestDir}/marginalia-ci-deploy-rbac.yaml - - - -"
+    "r ${manifestDir}/marginalia-db-service.yaml - - - -"
     "L+ ${manifestDir}/ci-deploy-rbac.yaml - - - - ${ciDeployRbac}"
   ];
 
