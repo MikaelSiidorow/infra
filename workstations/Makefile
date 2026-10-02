@@ -6,9 +6,6 @@ HOSTNAME := $(shell hostname -s)
 UNAME := $(shell uname -s)
 SHELL_SOURCES := $(shell git ls-files '*.sh' '*.bash' ':!home/agents/skills/**')
 CHECK_SHELL := nix develop .\#checks -c
-HESTIA_HOST ?= hestia.home.arpa
-HESTIA_SSH := mikaelsiidorow@$(HESTIA_HOST)
-HESTIA_REPO ?= /etc/nixos-repo
 
 # darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
 # when no flake attr is specified, so we pass `.` and let it pick.
@@ -59,9 +56,6 @@ help:
 	@echo "  make format-check - Check formatting without activating"
 	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
 	@echo "  make popos        - Build and activate Pop!_OS configuration"
-	@echo "  make deploy-cerberus - Deploy Cerberus persistently through Hestia"
-	@echo "  make deploy-hermes - Deploy Hermes persistently through Hestia"
-	@echo "  make build-router-firmware - Build both OpenWrt firmware images"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
 	@echo "  make rollback     - Rollback to previous generation"
@@ -162,18 +156,6 @@ fmt:
 .PHONY: popos
 popos:
 	home-manager switch -b backup --flake .#mikaelsiidorow@pop-os
-
-.PHONY: deploy-cerberus
-deploy-cerberus:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-cerberus /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && nix run .#cerberus-deploy'"
-
-.PHONY: deploy-hermes
-deploy-hermes:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-hermes /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && nix run .#hermes-deploy'"
-
-.PHONY: build-router-firmware
-build-router-firmware:
-	nix build .\#cerberus-firmware .\#hermes-firmware --no-link
 
 # Show system generations
 .PHONY: history

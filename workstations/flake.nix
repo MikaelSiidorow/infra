@@ -67,18 +67,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Build reproducible OpenWrt firmware images from upstream ImageBuilder releases.
-    openwrt-imagebuilder = {
-      url = "github:astro/nix-openwrt-imagebuilder";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Apply semi-declarative OpenWrt UCI configuration over SSH.
-    dewclaw = {
-      url = "github:MakiseKurisu/dewclaw";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
   };
 
   outputs =
@@ -92,8 +80,6 @@
       homebrew-core,
       homebrew-cask,
       nur,
-      openwrt-imagebuilder,
-      dewclaw,
       ...
     }@inputs:
     let
@@ -275,20 +261,6 @@
             in
             {
               mergiraf = pkgs.callPackage ./pkgs/mergiraf-custom { };
-            }
-            // lib.optionalAttrs (system == "x86_64-linux") {
-              cerberus-firmware = pkgs.callPackage ./openwrt/r6220/firmware.nix {
-                inherit openwrt-imagebuilder;
-              };
-              cerberus-deploy = pkgs.callPackage dewclaw {
-                configuration = ./openwrt/r6220/config.nix;
-              };
-              hermes-firmware = pkgs.callPackage ./openwrt/archer-c6-v2/firmware.nix {
-                inherit openwrt-imagebuilder;
-              };
-              hermes-deploy = pkgs.callPackage dewclaw {
-                configuration = ./openwrt/archer-c6-v2/config.nix;
-              };
             };
         }) supportedSystems
       );
@@ -322,10 +294,6 @@
           name = system;
           value = {
             home-manager = mkApp "${home-manager.packages.${system}.home-manager}/bin/home-manager" "Run the locked Home Manager CLI";
-          }
-          // lib.optionalAttrs (system == "x86_64-linux") {
-            cerberus-deploy = mkApp "${self.packages.${system}.cerberus-deploy}/bin/deploy-r6220" "Deploy the Cerberus OpenWrt configuration";
-            hermes-deploy = mkApp "${self.packages.${system}.hermes-deploy}/bin/deploy-archer-c6-v2" "Deploy the Hermes OpenWrt configuration";
           }
           // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
             darwin-rebuild = mkApp "${nix-darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild" "Run the locked nix-darwin rebuild CLI";

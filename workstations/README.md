@@ -11,13 +11,8 @@ Configured hosts:
 | `Mikael-MacBook-Pro-H7D6Q4TMVY` | aarch64-darwin | nix-darwin              |
 | `mikaelsiidorow@pop-os`         | x86_64-linux   | home-manager standalone |
 
-The repository also builds OpenWrt firmware and Dewclaw deployment outputs for
-the NETGEAR R6220 router and TP-Link Archer C6 v2 access point. See the
-[R6220 guide](openwrt/r6220/README.md) and
-[Archer C6 guide](openwrt/archer-c6-v2/README.md) before deploying them.
-Hestia's NixOS configuration lives in the
-[infra repository](https://github.com/MikaelSiidorow/infra); this repository
-remains checked out on Hestia temporarily for the router deployment commands.
+Hestia's NixOS configuration and the OpenWrt router configurations live in the
+[infra repository](https://github.com/MikaelSiidorow/infra).
 
 ## Quick Start
 
@@ -143,26 +138,8 @@ make update       # Update inputs
 make update-fast  # Update fast-moving app inputs
 make upgrade      # Update + switch
 make brew-upgrade # Explicit Homebrew update + upgrade on macOS
-make deploy-cerberus # Deploy the Cerberus router configuration
-make deploy-hermes # Deploy the Hermes access-point configuration
-make build-router-firmware # Build both router firmware images
 make check        # Validate flake
 make fmt          # Format code
-```
-
-Router-specific outputs are built on x86_64 Linux:
-
-The staged procedure for changing the home LAN to `192.168.67.0/24` is in
-[`openwrt/subnet-migration.md`](openwrt/subnet-migration.md).
-
-```bash
-nix build .#cerberus-firmware
-nix build .#cerberus-deploy
-nix run .#cerberus-deploy
-
-nix build .#hermes-firmware
-nix build .#hermes-deploy
-nix run .#hermes-deploy
 ```
 
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(scutil --get LocalHostName)`. Run `make help` for the full list.
