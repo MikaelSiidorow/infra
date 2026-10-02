@@ -162,8 +162,14 @@
   # here as postgres so the application role does not need superuser access.
   systemd.services.postgresql-grant-replication = {
     description = "Reconcile PostgreSQL replication and PowerSync prerequisites";
-    after = [ "postgresql.service" "postgresql-setup.service" ];
-    requires = [ "postgresql.service" "postgresql-setup.service" ];
+    after = [
+      "postgresql.service"
+      "postgresql-setup.service"
+    ];
+    requires = [
+      "postgresql.service"
+      "postgresql-setup.service"
+    ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
