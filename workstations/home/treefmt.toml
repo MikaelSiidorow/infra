@@ -1,0 +1,32 @@
+excludes = ["home/agents/skills/**"]
+
+[formatter.nix]
+command = "nixfmt"
+includes = ["*.nix"]
+
+[formatter.shell]
+command = "shfmt"
+includes = ["*.sh", "*.bash"]
+
+[formatter.oxfmt]
+command = "oxfmt"
+options = ["--write"]
+includes = [
+  "*.js",
+  "*.jsx",
+  "*.ts",
+  "*.tsx",
+  "*.json",
+  "*.jsonc",
+  "*.yaml",
+  "*.yml",
+  "*.md",
+  "*.mdx",
+  "*.html",
+  "*.vue",
+  "*.css",
+  "*.scss",
+  "*.less",
+  "*.graphql",
+  "*.toml",
+]
