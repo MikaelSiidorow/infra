@@ -41,6 +41,7 @@ infra/
 ├── bin/                     # Utility scripts (ssh)
 └── .github/workflows/
     ├── deploy.yml           # CI pipeline
+    ├── refinery-deploy.yml  # Refinery image deploy + migration (reusable)
     └── k8s-rollout.yml      # K8s rollout restart (reusable)
 ```
 
@@ -63,9 +64,11 @@ terraform  →  nixos  →  k8s-terraform
 3. **`k8s-terraform`** — creates namespaces and secrets via SSH tunnel to K3s API
 4. **ArgoCD** — automatically syncs `k8s/apps/` → application workloads (no CI needed)
 
-K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for these.
+K8s manifest changes (`k8s/refinery/`) are deployed by ArgoCD within ~3 minutes of pushing to `main`. No CI job is needed for those steady-state manifest changes.
 
-Refinery application releases do not require per-build image tag commits in this repo. The steady-state `refinery-app` and `refinery-zero` Deployments track the promoted mutable `:production` tag, and the app repo deploy pipeline creates a one-shot `refinery-migrate-<sha>` Job with `ghcr.io/mikaelsiidorow/refinery/migrate:production`.
+Refinery application releases use the reusable `refinery-deploy.yml` workflow in this repo. The caller passes immutable image digests for `app`, `zero`, and `migrate`; the workflow runs the one-shot migration Job, updates the two Deployment image fields imperatively, waits for rollout, and prints diagnostics on failure.
+
+ArgoCD still owns the steady-state Refinery manifests, but `k8s/apps/refinery.yaml` now ignores only the `refinery-app` and `refinery-zero` container `image` fields with `RespectIgnoreDifferences=true`. That keeps Argo from fighting the infra workflow over runtime image version while preserving Git as the source of truth for the rest of the manifests. The `:production` values in `k8s/refinery/*.yaml` are now bootstrap defaults for first creation, not the long-term runtime source of truth.
 
 ### Initial setup (new server)
 

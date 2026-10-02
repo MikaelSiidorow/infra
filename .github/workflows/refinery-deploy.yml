@@ -1,0 +1,246 @@
+name: Refinery Deploy
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: false
+        type: string
+        default: refinery
+      app-image:
+        required: true
+        type: string
+      zero-image:
+        required: true
+        type: string
+      migrate-image:
+        required: true
+        type: string
+      release-sha:
+        required: false
+        type: string
+      headscale-login-server:
+        required: false
+        type: string
+        default: https://hs.miksu.app
+    secrets:
+      HEADSCALE_PREAUTH_KEY:
+        required: true
+      K8S_DEPLOY_KUBECONFIG:
+        required: true
+  repository_dispatch:
+    types:
+      - refinery-deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refinery-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    env:
+      NAMESPACE: ${{ inputs.namespace || github.event.client_payload.namespace || 'refinery' }}
+      APP_IMAGE: ${{ inputs['app-image'] || github.event.client_payload.app_image }}
+      ZERO_IMAGE: ${{ inputs['zero-image'] || github.event.client_payload.zero_image }}
+      MIGRATE_IMAGE: ${{ inputs['migrate-image'] || github.event.client_payload.migrate_image }}
+      RELEASE_SHA: ${{ inputs['release-sha'] || github.event.client_payload.release_sha }}
+      HEADSCALE_LOGIN_SERVER: ${{ inputs['headscale-login-server'] || github.event.client_payload.headscale_login_server || 'https://hs.miksu.app' }}
+    steps:
+      - name: Validate deploy inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          require_digest() {
+            local name="$1"
+            local image="$2"
+            if [[ -z "$image" ]]; then
+              echo "$name is required" >&2
+              exit 1
+            fi
+            if [[ "$image" != *@sha256:* ]]; then
+              echo "$name must be pinned by digest: $image" >&2
+              exit 1
+            fi
+          }
+
+          require_digest "app-image" "$APP_IMAGE"
+          require_digest "zero-image" "$ZERO_IMAGE"
+          require_digest "migrate-image" "$MIGRATE_IMAGE"
+      - name: Connect to Headscale VPN
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
+        with:
+          authkey: ${{ secrets.HEADSCALE_PREAUTH_KEY }}
+          version: 1.96.4
+          sha256sum: a1cba18826b1f91cb25ef7f5b8259b5258339b42db7867af9269e21829ea78cc
+          use-cache: "false"
+          args: --login-server=${{ env.HEADSCALE_LOGIN_SERVER }} --accept-routes
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.kube
+          echo "${{ secrets.K8S_DEPLOY_KUBECONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+      - name: Run refinery migration
+        id: migrate
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          prefix="${RELEASE_SHA:-deploy}"
+          prefix="${prefix:0:7}"
+          job_name="refinery-migrate-${prefix}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "job_name=$job_name" >> "$GITHUB_OUTPUT"
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${job_name}
+            namespace: ${NAMESPACE}
+            labels:
+              app.kubernetes.io/name: refinery-migrate
+              app.kubernetes.io/component: migrate
+              app.kubernetes.io/part-of: refinery
+          spec:
+            ttlSecondsAfterFinished: 3600
+            backoffLimit: 0
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: refinery-migrate
+                  app.kubernetes.io/component: migrate
+                  app.kubernetes.io/part-of: refinery
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: migrate
+                    image: ${MIGRATE_IMAGE}
+                    imagePullPolicy: Always
+                    envFrom:
+                      - configMapRef:
+                          name: refinery-config
+                    env:
+                      - name: NODE_ENV
+                        value: production
+                      - name: DATABASE_URL
+                        valueFrom:
+                          secretKeyRef:
+                            name: refinery-secrets
+                            key: DATABASE_URL
+                      - name: ENCRYPTION_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            name: refinery-secrets
+                            key: ENCRYPTION_KEY
+                      - name: GITHUB_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: refinery-secrets
+                            key: GITHUB_CLIENT_SECRET
+                      - name: LINKEDIN_CLIENT_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: refinery-secrets
+                            key: LINKEDIN_CLIENT_SECRET
+          EOF
+
+          end=$((SECONDS + 900))
+          while (( SECONDS < end )); do
+            complete="$(kubectl get job "$job_name" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' 2>/dev/null || true)"
+            failed="$(kubectl get job "$job_name" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}' 2>/dev/null || true)"
+
+            if [[ "$complete" == "True" ]]; then
+              exit 0
+            fi
+
+            if [[ "$failed" == "True" ]]; then
+              echo "Migration job failed" >&2
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Timed out waiting for migration job completion" >&2
+          exit 1
+      - name: Migration diagnostics
+        if: steps.migrate.outcome == 'failure'
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          job_name="${{ steps.migrate.outputs.job_name }}"
+          kubectl describe job "$job_name" -n "$NAMESPACE" || true
+
+          while IFS= read -r pod; do
+            [[ -n "$pod" ]] || continue
+            kubectl describe "$pod" -n "$NAMESPACE" || true
+            kubectl logs "$pod" -n "$NAMESPACE" --all-containers=true || true
+            kubectl logs "$pod" -n "$NAMESPACE" --all-containers=true --previous || true
+          done < <(kubectl get pods -n "$NAMESPACE" -l "job-name=$job_name" -o name 2>/dev/null || true)
+
+          exit 1
+      - name: Update refinery deployment images
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl set image deployment/refinery-app app="$APP_IMAGE" -n "$NAMESPACE"
+          kubectl set image deployment/refinery-zero zero="$ZERO_IMAGE" -n "$NAMESPACE"
+      - name: Wait for refinery-app rollout
+        id: rollout_app
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl rollout status deployment/refinery-app -n "$NAMESPACE" --timeout=300s
+      - name: refinery-app rollout diagnostics
+        if: steps.rollout_app.outcome == 'failure'
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          kubectl describe deployment/refinery-app -n "$NAMESPACE" || true
+          kubectl describe rs -n "$NAMESPACE" -l app=refinery-app || true
+          kubectl get pods -n "$NAMESPACE" -l app=refinery-app -o wide || true
+
+          while IFS= read -r pod; do
+            [[ -n "$pod" ]] || continue
+            kubectl describe "$pod" -n "$NAMESPACE" || true
+            kubectl logs "$pod" -n "$NAMESPACE" -c app || true
+            kubectl logs "$pod" -n "$NAMESPACE" -c app --previous || true
+          done < <(kubectl get pods -n "$NAMESPACE" -l app=refinery-app -o name 2>/dev/null || true)
+
+          exit 1
+      - name: Wait for refinery-zero rollout
+        id: rollout_zero
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl rollout status deployment/refinery-zero -n "$NAMESPACE" --timeout=300s
+      - name: refinery-zero rollout diagnostics
+        if: steps.rollout_zero.outcome == 'failure'
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          kubectl describe deployment/refinery-zero -n "$NAMESPACE" || true
+          kubectl describe rs -n "$NAMESPACE" -l app=refinery-zero || true
+          kubectl get pods -n "$NAMESPACE" -l app=refinery-zero -o wide || true
+
+          while IFS= read -r pod; do
+            [[ -n "$pod" ]] || continue
+            kubectl describe "$pod" -n "$NAMESPACE" || true
+            kubectl logs "$pod" -n "$NAMESPACE" -c zero || true
+            kubectl logs "$pod" -n "$NAMESPACE" -c zero --previous || true
+          done < <(kubectl get pods -n "$NAMESPACE" -l app=refinery-zero -o name 2>/dev/null || true)
+
+          exit 1

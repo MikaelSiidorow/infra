@@ -12,9 +12,23 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: refinery
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: refinery-app
+      namespace: refinery
+      jqPathExpressions:
+        - '.spec.template.spec.containers[] | select(.name == "app").image'
+    - group: apps
+      kind: Deployment
+      name: refinery-zero
+      namespace: refinery
+      jqPathExpressions:
+        - '.spec.template.spec.containers[] | select(.name == "zero").image'
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true

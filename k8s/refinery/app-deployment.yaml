@@ -18,6 +18,7 @@ spec:
     spec:
       containers:
         - name: app
+          # Bootstrap value only; runtime image is set by the infra deploy workflow.
           image: ghcr.io/mikaelsiidorow/refinery/app:production
           imagePullPolicy: Always
           ports:
