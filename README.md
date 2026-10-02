@@ -23,6 +23,7 @@ ArgoCD auto-syncs from git
 
 - **Terraform** (`terraform/`) provisions cloud infrastructure (Hetzner server, Cloudflare DNS)
 - **NixOS** (`nixos/`) manages the Hetzner cluster host and the Hestia home server
+- **OpenWrt** (`openwrt/`) manages the Cerberus router and Hermes access point
 - **Terraform K8s** (`terraform/k8s/`) manages application secrets (the part that can't be in Git)
 - **ArgoCD** syncs application manifests from `k8s/` in Git to the cluster
 
@@ -35,6 +36,7 @@ infra/
 ├── nixos/hosts/
 │   ├── k8s-server/          # Hetzner K3s and public infrastructure
 │   └── hestia/              # Home Assistant and home-network services
+├── openwrt/                 # Router firmware and declarative UCI configuration
 ├── secrets/                 # SOPS-encrypted host secrets
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests
@@ -79,6 +81,16 @@ nix run .#deploy -- .#hestia
 
 The existing CI NixOS job continues to deploy only `k8s-server`; Hestia being
 offline does not block Hetzner deployments.
+
+Router firmware and deployment outputs are built on x86_64 Linux. Deployments
+run persistently through Hestia so they continue if the router briefly drops
+the caller's network connection:
+
+```bash
+make build-router-firmware
+make deploy-cerberus
+make deploy-hermes
+```
 
 Refinery application releases do not require per-build image tag commits in this repo. The steady-state `refinery-app` and `refinery-zero` Deployments track the promoted mutable `:production` tag, and database migrations run during `refinery-app` startup.
 
