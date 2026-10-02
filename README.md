@@ -30,7 +30,7 @@ ArgoCD auto-syncs from git
 ## Structure
 
 ```
-infra/
+systems/
 ├── terraform/               # Cloud resources (Hetzner, Cloudflare)
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
 ├── nixos/hosts/

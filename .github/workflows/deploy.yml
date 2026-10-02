@@ -348,7 +348,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ env.K3S_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy NixOS
-        run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/infra/${{ github.sha }}#k8s-server'"
+        run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/systems/${{ github.sha }}#k8s-server'"
   k8s-terraform:
     needs: [changes, terraform, nixos]
     if: |
