@@ -4,17 +4,17 @@ keys:
   - &router_deploy ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRoq5iJ3VLK2FH4RlmnxGozwTpD9wHxULtPkMI+hZjM
 
 creation_rules:
-  - path_regex: ^secrets/hestia\.yaml$
+  - path_regex: ^infra/secrets/hestia\.yaml$
     key_groups:
       - age:
           - *mikael
           - *hestia
-  - path_regex: ^secrets/openwrt\.yaml$
+  - path_regex: ^infra/secrets/openwrt\.yaml$
     key_groups:
       - age:
           - *mikael
           - *router_deploy
-  - path_regex: ^secrets/.*\.yaml$
+  - path_regex: ^infra/secrets/.*\.yaml$
     key_groups:
       - age:
           - *mikael

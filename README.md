@@ -22,8 +22,8 @@ ArgoCD auto-syncs from git
 **Separation of concerns:**
 
 - **Terraform** (`terraform/`) provisions cloud infrastructure (Hetzner server, Cloudflare DNS)
-- **NixOS** (`nixos/`) manages the Hetzner cluster host and the Hestia home server
-- **OpenWrt** (`openwrt/`) manages the Cerberus router and Hermes access point
+- **NixOS** (`infra/nixos/`) manages the Hetzner cluster host and the Hestia home server
+- **OpenWrt** (`infra/openwrt/`) manages the Cerberus router and Hermes access point
 - **Terraform K8s** (`terraform/k8s/`) manages application secrets (the part that can't be in Git)
 - **ArgoCD** syncs application manifests from `k8s/` in Git to the cluster
 
@@ -33,11 +33,12 @@ ArgoCD auto-syncs from git
 systems/
 ├── terraform/               # Cloud resources (Hetzner, Cloudflare)
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
-├── nixos/hosts/
-│   ├── k8s-server/          # Hetzner K3s and public infrastructure
-│   └── hestia/              # Home Assistant and home-network services
-├── openwrt/                 # Router firmware and declarative UCI configuration
-├── secrets/                 # SOPS-encrypted host secrets
+├── infra/                   # NixOS + OpenWrt flake (own flake.lock)
+│   ├── nixos/hosts/
+│   │   ├── k8s-server/      # Hetzner K3s and public infrastructure
+│   │   └── hestia/          # Home Assistant and home-network services
+│   ├── openwrt/             # Router firmware and declarative UCI configuration
+│   └── secrets/             # SOPS-encrypted host secrets
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests
 │   ├── refinery/            # Refinery K8s manifests
@@ -76,7 +77,7 @@ Hestia is deployed independently from a machine that can resolve and reach
 `hestia.home.arpa`. Deployment uses the normal user and prompts for sudo:
 
 ```bash
-nix run .#deploy -- .#hestia
+nix run ./infra#deploy -- ./infra#hestia
 ```
 
 The existing CI NixOS job continues to deploy only `k8s-server`; Hestia being
@@ -103,13 +104,13 @@ Refinery application releases do not require per-build image tag commits in this
    terraform output k3s_ipv4_address
    ```
 
-2. Update `flake.nix` with the new IP.
+2. Update `infra/flake.nix` with the new IP.
 
 3. Install NixOS via nixos-anywhere:
 
    ```bash
    nix run github:nix-community/nixos-anywhere -- \
-     --flake .#k8s-server --target-host root@<IP>
+     --flake ./infra#k8s-server --target-host root@<IP>
    ```
 
 4. Wait for ArgoCD to start:

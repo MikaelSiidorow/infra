@@ -26,12 +26,12 @@ ssh:
 
 .PHONY: deploy-cerberus
 deploy-cerberus:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-cerberus /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run .#cerberus-deploy'"
+	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-cerberus /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run ./infra#cerberus-deploy'"
 
 .PHONY: deploy-hermes
 deploy-hermes:
-	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-hermes /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run .#hermes-deploy'"
+	ssh -t $(HESTIA_SSH) "systemd-run --user --wait --pipe --collect --unit=deploy-hermes /run/current-system/sw/bin/bash -lc 'cd $(HESTIA_REPO) && git pull --ff-only && SOPS_AGE_SSH_PRIVATE_KEY_FILE=$(ROUTER_DEPLOY_SSH_KEY) nix run ./infra#hermes-deploy'"
 
 .PHONY: build-router-firmware
 build-router-firmware:
-	nix build .\#cerberus-firmware .\#hermes-firmware --no-link
+	nix build ./infra\#cerberus-firmware ./infra\#hermes-firmware --no-link

@@ -14,24 +14,24 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "nixos/**"
-      - "openwrt/**"
-      - "secrets/openwrt.yaml"
+      - "infra/nixos/**"
+      - "infra/openwrt/**"
+      - "infra/secrets/openwrt.yaml"
       - ".sops.yaml"
-      - "flake.nix"
-      - "flake.lock"
+      - "infra/flake.nix"
+      - "infra/flake.lock"
       - "terraform/**"
       - ".github/workflows/deploy.yml"
       - ".github/scripts/reconcile-wger.sh"
   push:
     branches: [main]
     paths:
-      - "nixos/**"
-      - "openwrt/**"
-      - "secrets/openwrt.yaml"
+      - "infra/nixos/**"
+      - "infra/openwrt/**"
+      - "infra/secrets/openwrt.yaml"
       - ".sops.yaml"
-      - "flake.nix"
-      - "flake.lock"
+      - "infra/flake.nix"
+      - "infra/flake.lock"
       - "terraform/**"
       - ".github/workflows/deploy.yml"
       - ".github/scripts/reconcile-wger.sh"
@@ -56,16 +56,16 @@ jobs:
         with:
           filters: |
             nixos:
-              - 'nixos/**'
-              - 'flake.nix'
-              - 'flake.lock'
+              - 'infra/nixos/**'
+              - 'infra/flake.nix'
+              - 'infra/flake.lock'
               - '.github/workflows/deploy.yml'
             openwrt:
-              - 'openwrt/**'
-              - 'secrets/openwrt.yaml'
+              - 'infra/openwrt/**'
+              - 'infra/secrets/openwrt.yaml'
               - '.sops.yaml'
-              - 'flake.nix'
-              - 'flake.lock'
+              - 'infra/flake.nix'
+              - 'infra/flake.lock'
             terraform:
               - 'terraform/**'
               - '!terraform/k8s/**'
@@ -104,19 +104,23 @@ jobs:
           save: false
       - name: Build base config
         id: build-base
-        run: nix build ./base#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-base
+        run: |
+          # Bases from before the flake moved into infra/ keep it at the root.
+          base=./base/infra
+          [ -f "$base/flake.nix" ] || base=./base
+          nix build "$base#nixosConfigurations.k8s-server.config.system.build.toplevel" -o result-base
         continue-on-error: true
       - name: Build PR config
         id: build-pr
-        run: nix build ./pr#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-pr
+        run: nix build ./pr/infra#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-pr
         continue-on-error: true
       - name: Evaluate PR deploy config
         id: check-pr
-        run: nix eval --json ./pr#deploy > /dev/null
+        run: nix eval --json ./pr/infra#deploy > /dev/null
         continue-on-error: true
       - name: Evaluate PR Hestia config
         id: build-hestia
-        run: nix eval --raw ./pr#nixosConfigurations.hestia.config.system.build.toplevel.drvPath
+        run: nix eval --raw ./pr/infra#nixosConfigurations.hestia.config.system.build.toplevel.drvPath
         continue-on-error: true
       - name: Diff closures
         id: diff
@@ -221,7 +225,7 @@ jobs:
           purge-created: 0
           purge-primary-key: never
       - name: Build k8s-server config
-        run: nix build .#nixosConfigurations.k8s-server.config.system.build.toplevel --no-link
+        run: nix build ./infra#nixosConfigurations.k8s-server.config.system.build.toplevel --no-link
   openwrt-check:
     needs: changes
     if: |
@@ -233,7 +237,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v30
       - name: Build router firmware and deployment tools
-        run: nix build .#cerberus-firmware .#hermes-firmware .#cerberus-deploy .#hermes-deploy --no-link
+        run: nix build ./infra#cerberus-firmware ./infra#hermes-firmware ./infra#cerberus-deploy ./infra#hermes-deploy --no-link
   terraform:
     needs: changes
     if: |
@@ -348,7 +352,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ env.K3S_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy NixOS
-        run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/systems/${{ github.sha }}#k8s-server'"
+        run: ssh root@${{ env.K3S_HOST }} "nixos-rebuild switch --flake 'github:MikaelSiidorow/systems/${{ github.sha }}?dir=infra#k8s-server'"
   k8s-terraform:
     needs: [changes, terraform, nixos]
     if: |
