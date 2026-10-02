@@ -14,6 +14,10 @@ creation_rules:
       - age:
           - *mikael
           - *router_deploy
+  - path_regex: ^workstations/secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *mikael
   - path_regex: ^infra/secrets/.*\.yaml$
     key_groups:
       - age:

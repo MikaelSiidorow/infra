@@ -1,6 +1,6 @@
 # Nix Configuration
 
-[![CI](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml/badge.svg)](https://github.com/MikaelSiidorow/nix-config/actions/workflows/ci.yml)
+[![Workstations](https://github.com/MikaelSiidorow/systems/actions/workflows/workstations.yml/badge.svg)](https://github.com/MikaelSiidorow/systems/actions/workflows/workstations.yml)
 
 Multi-platform Nix configuration supporting NixOS, macOS (nix-darwin), and Linux (home-manager standalone).
 

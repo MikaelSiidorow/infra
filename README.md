@@ -1,6 +1,11 @@
-# Infrastructure
+# Systems
 
-Infrastructure as Code for personal projects.
+Configuration for my machines, servers and the services on them.
+
+- [`workstations/`](workstations/): nix-darwin work Mac and Pop!_OS home-manager, rebuilt by hand ([README](workstations/README.md))
+- [`infra/`](infra/), [`k8s/`](k8s/), [`terraform/`](terraform/): servers, routers and cloud resources, deployed by CI (below)
+
+Each flake has its own `flake.lock`.
 
 ## Architecture
 
@@ -33,6 +38,7 @@ ArgoCD auto-syncs from git
 systems/
 ├── terraform/               # Cloud resources (Hetzner, Cloudflare)
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
+├── workstations/            # nix-darwin + home-manager flake (own flake.lock)
 ├── infra/                   # NixOS + OpenWrt flake (own flake.lock)
 │   ├── nixos/hosts/
 │   │   ├── k8s-server/      # Hetzner K3s and public infrastructure

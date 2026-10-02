@@ -1,14 +1,24 @@
-name: CI
+name: Workstations
 
 on:
   pull_request:
     branches: ["*"]
+    paths:
+      - "workstations/**"
+      - ".github/workflows/workstations.yml"
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
+    paths:
+      - "workstations/**"
+      - ".github/workflows/workstations.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    working-directory: workstations
 
 # Cancel in-progress runs when a new commit is pushed (except on main/master)
 concurrency:

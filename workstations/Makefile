@@ -75,7 +75,7 @@ build:
 # Check formatting in treefmt's CI mode
 .PHONY: format-check
 format-check:
-	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --ci
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root . --ci
 
 # Lint shell and Nix sources
 .PHONY: lint
@@ -150,7 +150,7 @@ deep-clean:
 # Format all supported repository files
 .PHONY: fmt
 fmt:
-	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root .
 
 # Host-specific overrides (use when not running on the target host)
 .PHONY: popos
