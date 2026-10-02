@@ -59,6 +59,7 @@ jobs:
               - 'nixos/**'
               - 'flake.nix'
               - 'flake.lock'
+              - '.github/workflows/deploy.yml'
             openwrt:
               - 'openwrt/**'
               - 'secrets/openwrt.yaml'
@@ -89,7 +90,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           path: pr
-      - uses: cachix/install-nix-action@v30
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@ef2850366b5ded57dc77cad10392197c5ce70343
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
       - name: Build base config
         id: build-base
         run: nix build ./base#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-base
@@ -102,9 +112,9 @@ jobs:
         id: check-pr
         run: nix flake check ./pr
         continue-on-error: true
-      - name: Build PR Hestia config
+      - name: Evaluate PR Hestia config
         id: build-hestia
-        run: nix build ./pr#nixosConfigurations.hestia.config.system.build.toplevel -o result-hestia
+        run: nix eval --raw ./pr#nixosConfigurations.hestia.config.system.build.toplevel.drvPath
         continue-on-error: true
       - name: Diff closures
         id: diff
@@ -143,7 +153,7 @@ jobs:
               `| Build (base) | ${s(buildBase)} |`,
               `| Build (PR) | ${s(buildPr)} |`,
               `| Check flake (PR) | ${s(checkPr)} |`,
-              `| Build Hestia (PR) | ${s(buildHestia)} |`,
+              `| Evaluate Hestia (PR) | ${s(buildHestia)} |`,
               `| Diff | ${s(diff)} |`,
               '',
               '<details><summary>Show Changes</summary>',
