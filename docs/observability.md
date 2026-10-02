@@ -102,7 +102,7 @@ Defined in `terraform/k8s/secrets.tf`, variables in `terraform/k8s/variables.tf`
 
 - `kubeEtcd`, `kubeScheduler`, `kubeControllerManager`, `kubeProxy` scrapers are disabled (K3s doesn't expose these metrics)
 - `ServerSideApply=true` is required for kube-prometheus-stack and Loki (large CRDs)
-- `grafana.miksu.app` DNS is via Headscale MagicDNS extra records (`nixos/hosts/k8s-server/headscale.nix`)
+- `grafana.miksu.app` DNS is via Headscale MagicDNS extra records (`infra/nixos/hosts/k8s-server/headscale.nix`)
 
 ## Datasource Correlation
 
@@ -126,7 +126,7 @@ terraform/k8s/
   secrets.tf                   # Grafana + Telegram secrets
   variables.tf                 # Secret variable declarations
 
-nixos/hosts/k8s-server/
+infra/nixos/hosts/k8s-server/
   headscale.nix                # grafana.miksu.app MagicDNS record
 
 .github/workflows/
