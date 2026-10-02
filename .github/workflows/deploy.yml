@@ -108,9 +108,9 @@ jobs:
         id: build-pr
         run: nix build ./pr#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-pr
         continue-on-error: true
-      - name: Check PR flake
+      - name: Evaluate PR deploy config
         id: check-pr
-        run: nix flake check ./pr
+        run: nix eval --json ./pr#deploy > /dev/null
         continue-on-error: true
       - name: Evaluate PR Hestia config
         id: build-hestia
@@ -152,7 +152,7 @@ jobs:
               '|------|--------|',
               `| Build (base) | ${s(buildBase)} |`,
               `| Build (PR) | ${s(buildPr)} |`,
-              `| Check flake (PR) | ${s(checkPr)} |`,
+              `| Evaluate deploy config (PR) | ${s(checkPr)} |`,
               `| Evaluate Hestia (PR) | ${s(buildHestia)} |`,
               `| Diff | ${s(diff)} |`,
               '',
