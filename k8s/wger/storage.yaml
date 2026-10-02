@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: wger-static
   namespace: wger
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
 spec:
   accessModes:
     - ReadWriteOnce
@@ -16,6 +18,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: wger-media
   namespace: wger
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
 spec:
   accessModes:
     - ReadWriteOnce
@@ -29,6 +33,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: wger-redis
   namespace: wger
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
 spec:
   accessModes:
     - ReadWriteOnce
@@ -46,6 +52,7 @@ metadata:
     # local-path uses WaitForFirstConsumer. Create the claim in the same wave
     # as the Deployment that binds it so Argo CD does not wait forever.
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: Delete=false
 spec:
   accessModes:
     - ReadWriteOnce
