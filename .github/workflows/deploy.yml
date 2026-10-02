@@ -110,7 +110,7 @@ jobs:
         continue-on-error: true
       - name: Check PR flake
         id: check-pr
-        run: nix flake check --no-build ./pr
+        run: nix flake check ./pr
         continue-on-error: true
       - name: Evaluate PR Hestia config
         id: build-hestia
