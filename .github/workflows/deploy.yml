@@ -100,6 +100,8 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
+          # PR caches are only visible to the same PR; main saves the shared one.
+          save: false
       - name: Build base config
         id: build-base
         run: nix build ./base#nixosConfigurations.k8s-server.config.system.build.toplevel -o result-base
@@ -195,6 +197,31 @@ jobs:
           steps.check-pr.outcome == 'failure' ||
           steps.build-hestia.outcome == 'failure'
         run: exit 1
+  nix-cache:
+    needs: changes
+    if: github.event_name == 'push' && needs.changes.outputs.nixos == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@ef2850366b5ded57dc77cad10392197c5ce70343
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-
+          purge-created: 0
+          purge-primary-key: never
+      - name: Build k8s-server config
+        run: nix build .#nixosConfigurations.k8s-server.config.system.build.toplevel --no-link
   openwrt-check:
     needs: changes
     if: |
