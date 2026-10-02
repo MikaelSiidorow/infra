@@ -41,13 +41,39 @@
   };
 
   # Dewclaw invokes the ordinary OpenSSH client when deploying the routers.
-  # Select Hestia's dedicated key explicitly because it intentionally does not
-  # use a default personal-key filename.
+  # Select Hestia's dedicated keys explicitly because they intentionally do
+  # not use default personal-key filenames.
   programs.ssh.extraConfig = ''
+    Host github.com
+      User git
+      IdentityFile ${config.sops.secrets.github-ssh-key.path}
+      IdentitiesOnly yes
+
     Host device 192.168.67.1 192.168.67.2
       IdentityFile ${config.sops.secrets.router-deploy-ssh-key.path}
       IdentitiesOnly yes
   '';
+
+  # Pin GitHub's published Ed25519 host key so unattended Git operations do
+  # not depend on an interactive first-connection prompt.
+  programs.ssh.knownHosts."github.com" = {
+    hostNames = [ "github.com" ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+  };
+
+  programs.git = {
+    enable = true;
+    config.user = {
+      name = "Mikael Siidorow";
+      email = "mikael@siidorow.com";
+    };
+  };
+
+  sops.secrets.github-ssh-key = {
+    owner = username;
+    group = "users";
+    mode = "0400";
+  };
 
   sops.secrets.router-deploy-ssh-key = {
     owner = username;
@@ -95,7 +121,6 @@
 
   environment.systemPackages = with pkgs; [
     ddrescue
-    git
     ntfs3g
     rsync
     smartmontools
