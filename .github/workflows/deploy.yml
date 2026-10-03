@@ -51,12 +51,13 @@ jobs:
               - 'infra/flake.nix'
               - 'infra/flake.lock'
               - '.github/workflows/deploy.yml'
+            # Only router changes. OpenWrt republishes package indexes often,
+            # so the firmware build fails on upstream drift unrelated to other
+            # infra changes (e.g. a Hestia input in infra/flake.lock).
             openwrt:
               - 'infra/openwrt/**'
               - 'infra/secrets/openwrt.yaml'
               - '.sops.yaml'
-              - 'infra/flake.nix'
-              - 'infra/flake.lock'
             terraform:
               # Top-level files only; terraform/k8s/ is k8s_terraform. A '!' entry
               # would match every other path, since the patterns are OR'd.
