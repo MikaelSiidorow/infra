@@ -118,3 +118,40 @@ jobs:
           nix build .#homeConfigurations.\"mikaelsiidorow@tpad\".activationPackage \
             --show-trace \
             --fallback
+
+  report:
+    name: CI report section
+    runs-on: ubuntu-latest
+    needs: [check, format, build-darwin, build-linux]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Write CI report section
+        env:
+          CHECK: ${{ needs.check.result }}
+          FORMAT: ${{ needs.format.result }}
+          DARWIN: ${{ needs.build-darwin.result }}
+          LINUX: ${{ needs.build-linux.result }}
+        run: |
+          mark() { [ "$1" = success ] && echo ✅ || echo "❌ $1"; }
+          status=success summary="flake check, format, mbp + tpad builds"
+          for result in "$CHECK" "$FORMAT" "$DARWIN" "$LINUX"; do
+            [ "$result" = success ] || { status=failure; summary="a check or build failed"; }
+          done
+          {
+            echo "| Job | Result |"
+            echo "|---|---|"
+            echo "| Flake check | $(mark "$CHECK") |"
+            echo "| Formatting | $(mark "$FORMAT") |"
+            echo "| mbp (darwin) build | $(mark "$DARWIN") |"
+            echo "| tpad (home-manager) build | $(mark "$LINUX") |"
+          } >"$RUNNER_TEMP/details.md"
+          "$GITHUB_WORKSPACE/.github/scripts/report-section.sh" workstations 10 Workstations "$status" "$summary" "$RUNNER_TEMP/details.md"
+      - name: Upload CI report section
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-report-workstations
+          path: ${{ runner.temp }}/report/workstations.json
