@@ -129,64 +129,47 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
         continue-on-error: true
-      - name: Comment PR
-        uses: actions/github-script@v7
+      - name: Write CI report section
+        if: always()
         env:
-          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
+          BUILD_BASE: ${{ steps.build-base.outcome }}
+          BUILD_PR: ${{ steps.build-pr.outcome }}
+          CHECK_PR: ${{ steps.check-pr.outcome }}
+          BUILD_HESTIA: ${{ steps.build-hestia.outcome }}
+          DIFF: ${{ steps.diff.outputs.diff }}
+        run: |
+          mark() { [ "$1" = success ] && echo ✅ || echo ❌; }
+          status=success
+          for outcome in "$BUILD_BASE" "$BUILD_PR" "$CHECK_PR" "$BUILD_HESTIA"; do
+            [ "$outcome" = success ] || status=failure
+          done
+          if [ "$status" = failure ]; then
+            summary="build or evaluation failed"
+          elif [ "$DIFF" = "No changes detected." ]; then
+            summary="no k8s-server closure changes; Hestia evaluates"
+          else
+            status=changes
+            summary="$(printf '%s\n' "$DIFF" | grep -c .) k8s-server closure changes; Hestia evaluates"
+          fi
+          {
+            echo "| Step | Result |"
+            echo "|---|---|"
+            echo "| Build k8s-server (base) | $(mark "$BUILD_BASE") |"
+            echo "| Build k8s-server (PR) | $(mark "$BUILD_PR") |"
+            echo "| Evaluate deploy config | $(mark "$CHECK_PR") |"
+            echo "| Evaluate Hestia | $(mark "$BUILD_HESTIA") |"
+            echo
+            echo '```'
+            echo "${DIFF:-No closure diff available.}"
+            echo '```'
+          } >"$RUNNER_TEMP/details.md"
+          pr/.github/scripts/report-section.sh nixos 20 "k8s-server + Hestia" "$status" "$summary" "$RUNNER_TEMP/details.md"
+      - name: Upload CI report section
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const buildBase = '${{ steps.build-base.outcome }}';
-            const buildPr = '${{ steps.build-pr.outcome }}';
-            const checkPr = '${{ steps.check-pr.outcome }}';
-            const buildHestia = '${{ steps.build-hestia.outcome }}';
-            const diff = '${{ steps.diff.outcome }}';
-            const diffOutput = process.env.DIFF_OUTPUT || 'No diff output available.';
-
-            const s = (v) => v === 'success' ? '✅' : '❌';
-
-            const body = [
-              '### NixOS Preview',
-              '',
-              '| Step | Status |',
-              '|------|--------|',
-              `| Build (base) | ${s(buildBase)} |`,
-              `| Build (PR) | ${s(buildPr)} |`,
-              `| Evaluate deploy config (PR) | ${s(checkPr)} |`,
-              `| Evaluate Hestia (PR) | ${s(buildHestia)} |`,
-              `| Diff | ${s(diff)} |`,
-              '',
-              '<details><summary>Show Changes</summary>',
-              '',
-              '```',
-              diffOutput,
-              '```',
-              '',
-              '</details>',
-              '',
-              `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
-            ].join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.includes('### NixOS Preview'));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body
-              });
-            }
+          name: pr-report-nixos
+          path: ${{ runner.temp }}/report/nixos.json
       - name: Fail on build error
         if: |
           steps.build-base.outcome == 'failure' ||
@@ -230,7 +213,25 @@ jobs:
       - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v30
       - name: Build router firmware and deployment tools
+        id: build
         run: nix build ./infra#cerberus-firmware ./infra#hermes-firmware ./infra#cerberus-deploy ./infra#hermes-deploy --no-link
+      - name: Write CI report section
+        if: always()
+        env:
+          BUILD: ${{ steps.build.outcome }}
+        run: |
+          if [ "$BUILD" = success ]; then
+            status=success summary="cerberus + hermes firmware and deploy tools build"
+          else
+            status=failure summary="firmware or deploy tool build failed"
+          fi
+          .github/scripts/report-section.sh openwrt 30 "OpenWrt routers" "$status" "$summary"
+      - name: Upload CI report section
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-report-openwrt
+          path: ${{ runner.temp }}/report/openwrt.json
   terraform:
     needs: changes
     # Dependabot PRs only get Dependabot secrets, so their plans cannot reach
@@ -282,58 +283,47 @@ jobs:
             ([(.output_changes // {})[] | select(.actions != ["no-op"])] | length == 0)' >/dev/null; then
             echo "none=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Comment PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - name: Write CI report section
+        if: always() && github.event_name == 'pull_request'
+        env:
+          FMT: ${{ steps.fmt.outcome }}
+          INIT: ${{ steps.init.outcome }}
+          VALIDATE: ${{ steps.validate.outcome }}
+          PLAN: ${{ steps.plan.outcome }}
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+          NO_CHANGES: ${{ steps.plan-changes.outputs.none }}
+        run: |
+          mark() { case "$1" in success) echo ✅ ;; skipped | "") echo ⏭️ ;; *) echo ❌ ;; esac; }
+          if [ "$INIT" != success ] || [ "$VALIDATE" != success ] || [ "$PLAN" != success ]; then
+            status=failure summary="init, validate or plan failed"
+          elif [ "$FMT" != success ]; then
+            status=failure summary="terraform fmt found unformatted files"
+          elif [ "$NO_CHANGES" = true ]; then
+            status=success summary="no changes"
+          else
+            status=changes
+            summary=$(printf '%s\n' "$PLAN_OUTPUT" | grep -oE '[0-9]+ to add, [0-9]+ to change, [0-9]+ to destroy' | head -1)
+            summary=${summary:-changes}
+          fi
+          {
+            echo "| Step | Result |"
+            echo "|---|---|"
+            echo "| Format | $(mark "$FMT") |"
+            echo "| Init | $(mark "$INIT") |"
+            echo "| Validate | $(mark "$VALIDATE") |"
+            echo "| Plan | $(mark "$PLAN") |"
+            echo
+            echo '```terraform'
+            echo "${PLAN_OUTPUT:-No plan output.}"
+            echo '```'
+          } >"$RUNNER_TEMP/details.md"
+          "$GITHUB_WORKSPACE/.github/scripts/report-section.sh" terraform 40 "Terraform" "$status" "$summary" "$RUNNER_TEMP/details.md"
+      - name: Upload CI report section
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fmt = '${{ steps.fmt.outcome }}';
-            const init = '${{ steps.init.outcome }}';
-            const validate = '${{ steps.validate.outcome }}';
-            const plan = '${{ steps.plan.outcome }}';
-
-            const output = [
-              '### Terraform Results',
-              '',
-              '| Step | Status |',
-              '|------|--------|',
-              `| Format | ${fmt === 'success' ? '✅' : '❌'} |`,
-              `| Init | ${init === 'success' ? '✅' : '❌'} |`,
-              `| Validate | ${validate === 'success' ? '✅' : '❌'} |`,
-              `| Plan | ${plan === 'success' ? '✅' : '❌'} |`,
-              '',
-              '<details><summary>Show Plan</summary>',
-              '',
-              '```terraform',
-              `${{ steps.plan.outputs.stdout }}`,
-              '```',
-              '',
-              '</details>',
-              '',
-              `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
-            ].join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.includes('### Terraform Results'));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: output
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: output
-              });
-            }
+          name: pr-report-terraform
+          path: ${{ runner.temp }}/report/terraform.json
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
@@ -480,58 +470,49 @@ jobs:
             exit 1
           fi
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
-      - name: Comment PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - name: Write CI report section
+        if: always() && github.event_name == 'pull_request'
+        env:
+          FMT: ${{ steps.fmt.outcome }}
+          INIT: ${{ steps.init.outcome }}
+          VALIDATE: ${{ steps.validate.outcome }}
+          PLAN: ${{ steps.plan.outcome }}
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+          NO_CHANGES: ${{ steps.plan-changes.outputs.none }}
+          WGER_CHANGED: ${{ steps.wger-changes.outputs.changed }}
+        run: |
+          mark() { case "$1" in success) echo ✅ ;; skipped | "") echo ⏭️ ;; *) echo ❌ ;; esac; }
+          if [ "$INIT" != success ] || [ "$VALIDATE" != success ] || [ "$PLAN" != success ]; then
+            status=failure summary="init, validate or plan failed"
+          elif [ "$FMT" != success ]; then
+            status=failure summary="terraform fmt found unformatted files"
+          elif [ "$NO_CHANGES" = true ]; then
+            status=success summary="no changes"
+          else
+            status=changes
+            summary=$(printf '%s\n' "$PLAN_OUTPUT" | grep -oE '[0-9]+ to add, [0-9]+ to change, [0-9]+ to destroy' | head -1)
+            summary=${summary:-changes}
+          fi
+          if [ "$WGER_CHANGED" = true ]; then summary="$summary; wger credentials change"; fi
+          {
+            echo "| Step | Result |"
+            echo "|---|---|"
+            echo "| Format | $(mark "$FMT") |"
+            echo "| Init | $(mark "$INIT") |"
+            echo "| Validate | $(mark "$VALIDATE") |"
+            echo "| Plan | $(mark "$PLAN") |"
+            echo
+            echo '```terraform'
+            echo "${PLAN_OUTPUT:-No plan output.}"
+            echo '```'
+          } >"$RUNNER_TEMP/details.md"
+          "$GITHUB_WORKSPACE/.github/scripts/report-section.sh" k8s-terraform 50 "k8s Terraform" "$status" "$summary" "$RUNNER_TEMP/details.md"
+      - name: Upload CI report section
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fmt = '${{ steps.fmt.outcome }}';
-            const init = '${{ steps.init.outcome }}';
-            const validate = '${{ steps.validate.outcome }}';
-            const plan = '${{ steps.plan.outcome }}';
-
-            const output = [
-              '### K8s Terraform Results',
-              '',
-              '| Step | Status |',
-              '|------|--------|',
-              `| Format | ${fmt === 'success' ? '✅' : '❌'} |`,
-              `| Init | ${init === 'success' ? '✅' : '❌'} |`,
-              `| Validate | ${validate === 'success' ? '✅' : '❌'} |`,
-              `| Plan | ${plan === 'success' ? '✅' : '❌'} |`,
-              '',
-              '<details><summary>Show Plan</summary>',
-              '',
-              '```terraform',
-              `${{ steps.plan.outputs.stdout }}`,
-              '```',
-              '',
-              '</details>',
-              '',
-              `*Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`
-            ].join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.includes('### K8s Terraform Results'));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: output
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: output
-              });
-            }
+          name: pr-report-k8s-terraform
+          path: ${{ runner.temp }}/report/k8s-terraform.json
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
