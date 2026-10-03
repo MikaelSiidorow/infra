@@ -269,6 +269,9 @@ in
 
   # Auto-deploy infrastructure manifests via K3s
   systemd.tmpfiles.rules = [
+    # Helm never upgrades a chart's CRDs, so the traefik chart's CRDs are
+    # committed (see .github/scripts/traefik-crds.sh) and applied by k3s.
+    "L+ ${manifestDir}/traefik-crds.yaml - - - - ${./traefik-crds.yaml}"
     "L+ ${manifestDir}/traefik-helmchart.yaml - - - - ${traefikChart}"
     "L+ ${manifestDir}/cert-manager-helmchart.yaml - - - - ${certManagerChart}"
     "L+ ${manifestDir}/cluster-issuer.yaml - - - - ${clusterIssuer}"
