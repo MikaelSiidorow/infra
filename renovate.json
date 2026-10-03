@@ -44,6 +44,17 @@
       "automerge": false
     },
     {
+      "description": "Regenerate the committed Traefik CRDs in the same PR; Helm never upgrades them",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["traefik"],
+      "postUpgradeTasks": {
+        "commands": ["bash .github/scripts/traefik-crds.sh {{{newVersion}}}"],
+        "fileFilters": ["infra/nixos/hosts/k8s-server/traefik-crds.yaml"],
+        "executionMode": "update",
+        "installTools": { "helm": {} }
+      }
+    },
+    {
       "description": "Cluster, infra and cloud changes deploy on merge; never auto-merge",
       "matchFileNames": ["infra/**", "k8s/**", "terraform/**"],
       "automerge": false
