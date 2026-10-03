@@ -191,7 +191,8 @@ Not managed by the flake (bring over manually):
 ├── home/                  # User environment (home-manager)
 │   ├── claude-code/       # CLAUDE.md + statusline
 │   └── ...
-└── pkgs/                  # Custom packages and wrappers
+├── pkgs/                  # Custom packages and wrappers
+└── profiles/apple/        # Configuration profiles, installed by opening them on the device
 ```
 
 ## Troubleshooting
