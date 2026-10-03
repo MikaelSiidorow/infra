@@ -100,8 +100,8 @@ spec:
                         labels:
                           severity: critical
                         annotations:
-                          summary: "{{ $labels.level | title }} in {{ $labels.namespace }}/{{ $labels.app }}"
-                          description: "{{ $labels.namespace }}/{{ $labels.app }} logged {{ $value }} {{ $labels.level }}-level message(s) in the last minute."
+                          summary: "{{`{{ $labels.level | title }} in {{ $labels.namespace }}/{{ $labels.app }}`}}"
+                          description: "{{`{{ $labels.namespace }}/{{ $labels.app }} logged {{ $value }} {{ $labels.level }}-level message(s) in the last minute.`}}"
   destination:
     server: https://kubernetes.default.svc
     namespace: loki
