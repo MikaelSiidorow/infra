@@ -34,8 +34,8 @@ sudo scutil --set LocalHostName Mikael-MacBook-Pro-H7D6Q4TMVY
 sudo scutil --set ComputerName Mikael-MacBook-Pro-H7D6Q4TMVY
 
 # 4. Clone.
-git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
-cd ~/nix-config
+git clone https://github.com/MikaelSiidorow/systems.git ~/systems
+cd ~/systems/workstations
 
 # 5. Bootstrap nix-darwin using the locked flake input. After this, `make switch` is available.
 #    Succeeds without secrets; sops-nix decryption fails quietly until the age key exists.
@@ -102,8 +102,8 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
-git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
-cd ~/nix-config
+git clone https://github.com/MikaelSiidorow/systems.git ~/systems
+cd ~/systems/workstations
 
 # Restore the SOPS age key using the commands above before activating.
 ```
