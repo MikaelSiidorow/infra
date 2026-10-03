@@ -146,7 +146,9 @@ jobs:
             summary="no k8s-server closure changes; Hestia evaluates"
           else
             status=changes
-            summary="$(printf '%s\n' "$DIFF" | grep -c .) k8s-server closure changes; Hestia evaluates"
+            n=$(printf '%s\n' "$DIFF" | grep -c .)
+            [ "$n" = 1 ] && noun=change || noun=changes
+            summary="$n k8s-server closure $noun; Hestia evaluates"
           fi
           {
             echo "| Step | Result |"
