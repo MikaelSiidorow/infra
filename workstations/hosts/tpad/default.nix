@@ -21,4 +21,15 @@ in
   # Pop!_OS owns the privileged tailscaled service. Keep using its matching
   # system CLI and expose an idempotent command for applying our client prefs.
   home.packages = [ tailscale-headscale-setup ];
+
+  home.file.".codex/hestia.config.toml".text = ''
+    model_provider = "hestia"
+
+    [model_providers.hestia]
+    name = "Hestia CLIProxyAPI"
+    base_url = "https://hestia.vpn.miksu.app:8317/v1"
+    wire_api = "responses"
+    requires_openai_auth = false
+  '';
+  programs.zsh.shellAliases.codex-hestia = "codex";
 }

@@ -6,6 +6,7 @@
 }:
 {
   imports = [
+    ./cli-proxy-api.nix
     ./home.nix
     ./home-assistant.nix
     ./reverse-proxy.nix
