@@ -24,6 +24,15 @@
     users.${username} = {
       imports = [ ../../../../modules/home/core ];
       home.stateVersion = "26.05";
+
+      # Persistent sessions for SSH: `tmux new -A -s main` reattaches.
+      programs.tmux = {
+        enable = true;
+        clock24 = true;
+        historyLimit = 50000;
+        mouse = true;
+        terminal = "tmux-256color";
+      };
     };
   };
 }
