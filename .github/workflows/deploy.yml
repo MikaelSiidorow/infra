@@ -40,7 +40,7 @@ jobs:
       terraform: ${{ steps.filter.outputs.terraform }}
       k8s_terraform: ${{ steps.filter.outputs.k8s_terraform }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         if: github.event_name != 'workflow_dispatch'
@@ -74,11 +74,11 @@ jobs:
       needs.changes.outputs.nixos == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: pr
       - name: Install Nix
@@ -87,7 +87,7 @@ jobs:
           nix_conf: |
             experimental-features = nix-command flakes
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        uses: nix-community/cache-nix-action@b16f249a0248efec86dd9d4224cb75f1ffa48bcc
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
@@ -128,7 +128,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
         continue-on-error: true
       - name: Comment PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
         with:
@@ -200,14 +200,14 @@ jobs:
       actions: write
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@ef2850366b5ded57dc77cad10392197c5ce70343
         with:
           nix_conf: |
             experimental-features = nix-command flakes
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        uses: nix-community/cache-nix-action@b16f249a0248efec86dd9d4224cb75f1ffa48bcc
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
@@ -225,8 +225,8 @@ jobs:
       needs.changes.outputs.openwrt == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v30
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
       - name: Build router firmware and deployment tools
         run: nix build ./infra#cerberus-firmware ./infra#hermes-firmware ./infra#cerberus-deploy ./infra#hermes-deploy --no-link
   terraform:
@@ -253,7 +253,7 @@ jobs:
       TF_VAR_scaleway_project_id: ${{ vars.SCW_PROJECT_ID }}
       TF_VAR_scaleway_billing_alert_email: ${{ vars.SCW_BILLING_ALERT_EMAIL }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ~1.12
@@ -273,7 +273,7 @@ jobs:
         continue-on-error: true
       - name: Comment PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fmt = '${{ steps.fmt.outcome }}';
@@ -365,7 +365,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ~1.12
@@ -438,7 +438,7 @@ jobs:
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
       - name: Comment PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fmt = '${{ steps.fmt.outcome }}';
