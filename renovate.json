@@ -5,6 +5,7 @@
   "semanticCommits": "enabled",
   "labels": ["dependencies"],
   "dependencyDashboard": true,
+  "prHourlyLimit": 0,
   "enabledManagers": ["github-actions", "argocd", "kubernetes", "terraform", "custom.regex"],
   "argocd": {
     "managerFilePatterns": ["/^k8s/apps/.+\\.ya?ml$/"]
