@@ -54,7 +54,11 @@ systems/
 ├── docs/                    # Architecture & observability docs
 ├── bin/                     # Utility scripts (ssh)
 └── .github/workflows/
-    ├── deploy.yml           # CI pipeline
+    ├── ci.yml               # PR entry point; CI Summary is the only required check
+    ├── workstations.yml     # Workstation flake checks and builds
+    ├── deploy.yml           # Infra checks on PRs, deploys on push to main
+    ├── update-flake-lock.yml # Lock update PRs per flake
+    ├── dependabot-auto-merge.yml
     └── k8s-rollout.yml      # K8s rollout restart (reusable)
 ```
 
