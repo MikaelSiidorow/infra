@@ -44,6 +44,7 @@ jobs:
           filters: |
             workstations:
               - 'workstations/**'
+              - 'modules/**'
               - '.github/workflows/workstations.yml'
               - '.github/workflows/ci.yml'
 

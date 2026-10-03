@@ -1,14 +1,9 @@
 # Zsh configuration - platform-agnostic
 {
-  pkgs,
   lib,
-  inputs,
   isDarwin ? false,
   ...
 }:
-let
-  codex = inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
-in
 {
   home = {
     sessionVariables.PNPM_HOME = "$HOME/.local/share/pnpm";
@@ -37,14 +32,6 @@ in
       bb = "bun --bun";
       treefmt = "treefmt --config-file ~/.config/treefmt/treefmt.toml --allow-missing-formatter";
       tp = "trash-put";
-      c = "claude";
-      claude-yolo = "claude --dangerously-skip-permissions";
-      cco = "claude --continue";
-      cres = "claude --resume";
-      crew = "claude /review";
-      cwt = "claude-worktree";
-      codex = "${codex}/bin/codex --ask-for-approval on-request -c 'approvals_reviewer=\"auto_review\"' -c 'default_permissions=\":workspace\"' -c 'plan_mode_reasoning_effort=\"xhigh\"' -c 'web_search=\"live\"'";
-      codex-yolo = "${codex}/bin/codex --ask-for-approval never -c 'default_permissions=\":danger-full-access\"' -c 'plan_mode_reasoning_effort=\"xhigh\"' -c 'web_search=\"live\"'";
 
       # Git (from oh-my-zsh git plugin)
       g = "git";

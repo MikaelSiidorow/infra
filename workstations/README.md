@@ -188,12 +188,14 @@ Not managed by the flake (bring over manually):
 ├── Makefile               # Build commands (OS-detected)
 ├── hosts/{mbp,tpad}/      # Per-host modules
 ├── modules/darwin/
-├── home/                  # User environment (home-manager)
-│   ├── claude-code/       # CLAUDE.md + statusline
-│   └── ...
+├── home/                  # Workstation home-manager: desktop apps, git, sops, dev toolchain
 ├── pkgs/                  # Custom packages and wrappers
 └── profiles/apple/        # Configuration profiles, installed by opening them on the device
 ```
+
+Shared home-manager modules live outside this flake, in `../modules/home/`:
+`core/` (shell and everyday CLI tools) and `agents/` (coding agent CLIs,
+skills and config). Both are imported by `home/default.nix`.
 
 ## Troubleshooting
 

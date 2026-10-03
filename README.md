@@ -39,6 +39,7 @@ systems/
 ├── terraform/               # Cloud resources (Hetzner, Cloudflare)
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
 ├── workstations/            # nix-darwin + home-manager flake (own flake.lock)
+├── modules/home/            # Shared home-manager modules: core (shell, CLI tools), agents
 ├── infra/                   # NixOS + OpenWrt flake (own flake.lock)
 │   ├── nixos/hosts/
 │   │   ├── k8s-server/      # Hetzner K3s and public infrastructure
