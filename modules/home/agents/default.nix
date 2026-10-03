@@ -28,7 +28,7 @@ let
 
   skills = {
     humanizer = {
-      source = ./agents/skills/humanizer;
+      source = ./skills/humanizer;
       agents = [
         "codex"
         "claude-code"
@@ -36,7 +36,7 @@ let
     };
 
     ponytail = {
-      source = ./agents/skills/ponytail;
+      source = ./skills/ponytail;
       agents = [
         "codex"
         "claude-code"
@@ -46,7 +46,7 @@ let
 
     # cursor-agent reads ~/.claude/skills, so the claude-code target covers it.
     cursor-agent = {
-      source = ./agents/skills/cursor-agent;
+      source = ./skills/cursor-agent;
       agents = [ "claude-code" ];
     };
   };
@@ -65,18 +65,23 @@ let
   skillFiles = lib.foldl' (acc: fileSet: acc // fileSet) { } (lib.mapAttrsToList mkSkillFiles skills);
 in
 {
+  imports = [
+    ./packages.nix
+    ./scripts.nix
+  ];
+
   home.file = skillFiles // {
-    ".claude/CLAUDE.md".source = ./agents/shared/AGENTS.md;
-    ".codex/AGENTS.md".source = ./agents/shared/AGENTS.md;
-    ".codex/rules/nix-managed.rules".source = ./agents/codex/rules/nix-managed.rules;
+    ".claude/CLAUDE.md".source = ./shared/AGENTS.md;
+    ".codex/AGENTS.md".source = ./shared/AGENTS.md;
+    ".codex/rules/nix-managed.rules".source = ./codex/rules/nix-managed.rules;
     ".claude/statusline-command.sh" = {
-      source = ./agents/claude-code/statusline-command.sh;
+      source = ./claude-code/statusline-command.sh;
       # Claude Code runs the statusLine command through a shell, so the file
       # must be executable; nix store copies are read-only without this.
       executable = true;
     };
     ".cursor/statusline.sh" = {
-      source = ./agents/cursor/statusline.sh;
+      source = ./cursor/statusline.sh;
       # Cursor CLI spawns this without a shell, so it must be executable.
       executable = true;
     };

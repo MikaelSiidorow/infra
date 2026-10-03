@@ -4,7 +4,9 @@
 # Detect platform
 HOSTNAME := $(shell hostname -s)
 UNAME := $(shell uname -s)
-SHELL_SOURCES := $(shell git ls-files '*.sh' '*.bash' ':!home/agents/skills/**')
+# Shared home-manager modules in ../modules are checked along with this flake.
+SHELL_SOURCES := $(shell git ls-files '*.sh' '*.bash') \
+	$(addprefix ../modules/,$(shell git -C ../modules ls-files '*.sh' '*.bash' ':!home/agents/skills/**'))
 CHECK_SHELL := nix develop .\#checks -c
 
 # darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
@@ -76,13 +78,15 @@ build:
 .PHONY: format-check
 format-check:
 	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root . --ci
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root ../modules --ci
 
 # Lint shell and Nix sources
 .PHONY: lint
 lint:
 	$(CHECK_SHELL) shellcheck $(SHELL_SOURCES)
-	$(CHECK_SHELL) deadnix --fail .
+	$(CHECK_SHELL) deadnix --fail . ../modules
 	$(CHECK_SHELL) statix check .
+	$(CHECK_SHELL) statix check ../modules
 
 # Check formatting, lint, and flake outputs
 .PHONY: check
@@ -151,6 +155,7 @@ deep-clean:
 .PHONY: fmt
 fmt:
 	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root .
+	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root ../modules
 
 # Host-specific overrides (use when not running on the target host)
 .PHONY: tpad
