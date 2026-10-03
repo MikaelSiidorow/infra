@@ -18,8 +18,6 @@ on:
     branches: [main]
     paths:
       - "infra/nixos/**"
-      - "infra/openwrt/**"
-      - "infra/secrets/openwrt.yaml"
       - ".sops.yaml"
       - "infra/flake.nix"
       - "infra/flake.lock"
@@ -51,12 +49,10 @@ jobs:
               - 'infra/flake.nix'
               - 'infra/flake.lock'
               - '.github/workflows/deploy.yml'
-            # Only router changes. OpenWrt republishes package indexes often,
-            # so the firmware build fails on upstream drift unrelated to other
-            # infra changes (e.g. a Hestia input in infra/flake.lock).
+            # Router changes only; OpenWrt has its own flake and lock, updated
+            # daily because OpenWrt republishes package indexes often.
             openwrt:
-              - 'infra/openwrt/**'
-              - 'infra/secrets/openwrt.yaml'
+              - 'openwrt/**'
               - '.sops.yaml'
             terraform:
               # Top-level files only; terraform/k8s/ is k8s_terraform. A '!' entry
@@ -232,7 +228,7 @@ jobs:
       - uses: cachix/install-nix-action@v30
       - name: Build router firmware and deployment tools
         id: build
-        run: nix build ./infra#cerberus-firmware ./infra#hermes-firmware ./infra#cerberus-deploy ./infra#hermes-deploy --no-link
+        run: nix build ./openwrt#cerberus-firmware ./openwrt#hermes-firmware ./openwrt#cerberus-deploy ./openwrt#hermes-deploy --no-link
       - name: Write CI report section
         if: always()
         env:

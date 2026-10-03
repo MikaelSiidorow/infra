@@ -460,8 +460,8 @@ in
       };
     };
 
-    # TODO: After adding encrypted router secrets to secrets/secrets.yaml:
-    # sopsSecrets = ../../secrets/secrets.yaml;
+    # TODO: After adding encrypted router secrets to secrets/openwrt.yaml:
+    # sopsSecrets = ../secrets/openwrt.yaml;
     # users.root.hashedPasswordSecret = "openwrt_r6220_root_password_hash";
   };
 }
