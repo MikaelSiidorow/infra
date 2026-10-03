@@ -8,12 +8,13 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://grafana.github.io/helm-charts
+    # Community fork of the Loki chart; grafana/helm-charts stopped at 6.55.
+    repoURL: https://grafana-community.github.io/helm-charts
     chart: loki
-    targetRevision: 6.55.0
+    targetRevision: 18.13.7
     helm:
       values: |
-        deploymentMode: SingleBinary
+        deploymentMode: Monolithic
 
         loki:
           auth_enabled: false
