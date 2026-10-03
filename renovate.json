@@ -1,0 +1,51 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Helsinki",
+  "semanticCommits": "enabled",
+  "labels": ["dependencies"],
+  "dependencyDashboard": true,
+  "enabledManagers": ["github-actions", "argocd", "kubernetes", "terraform", "custom.regex"],
+  "argocd": {
+    "managerFilePatterns": ["/^k8s/apps/.+\\.ya?ml$/"]
+  },
+  "kubernetes": {
+    "managerFilePatterns": ["/^k8s/.+\\.ya?ml$/"]
+  },
+  "customManagers": [
+    {
+      "description": "k3s HelmChart manifests embedded in the k8s-server NixOS config",
+      "customType": "regex",
+      "managerFilePatterns": ["/^infra/nixos/hosts/k8s-server/k3s\\.nix$/"],
+      "matchStrings": [
+        "chart: (?<depName>\\S+)\\s+repo: (?<registryUrl>\\S+)[\\s\\S]*?version: (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Flake inputs are updated by update-flake-lock.yml",
+      "matchFileNames": ["**/flake.nix", "**/flake.lock"],
+      "enabled": false
+    },
+    {
+      "description": "One weekly PR for action updates; auto-merge once CI Summary passes",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "description": "Merging these workflows runs deploys, so review their updates",
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/deploy.yml", ".github/workflows/k8s-rollout.yml"],
+      "automerge": false
+    },
+    {
+      "description": "Cluster, infra and cloud changes deploy on merge; never auto-merge",
+      "matchFileNames": ["infra/**", "k8s/**", "terraform/**"],
+      "automerge": false
+    }
+  ]
+}
