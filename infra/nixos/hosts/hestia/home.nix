@@ -17,6 +17,9 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    # Move pre-existing files aside (e.g. ~/.config/gh/config.yml) instead of
+    # failing activation.
+    backupFileExtension = "backup";
     extraSpecialArgs = {
       inherit inputs;
       isDarwin = false;
