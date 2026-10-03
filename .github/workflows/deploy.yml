@@ -273,6 +273,15 @@ jobs:
         id: plan
         run: terraform plan -no-color -out=tfplan
         continue-on-error: true
+      - name: Check for infrastructure changes
+        id: plan-changes
+        if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        run: |
+          if terraform show -json tfplan | jq -e '
+            ([.resource_changes[]? | select(.change.actions != ["no-op"])] | length == 0) and
+            ([(.output_changes // {})[] | select(.actions != ["no-op"])] | length == 0)' >/dev/null; then
+            echo "none=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Comment PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -328,6 +337,30 @@ jobs:
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
+      # Renovate updates that change no infrastructure merge themselves once
+      # CI Summary passes. The app token makes that merge trigger the deploy.
+      - name: Create GitHub App token
+        id: app-token
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'mikael-systems-bot[bot]' &&
+          steps.plan-changes.outputs.none == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Enable auto-merge for a no-op update
+        if: steps.app-token.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Only when every changed file belongs to this Terraform root.
+          if gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --name-only | grep -qvE '^terraform/[^/]+$'; then
+            echo "The PR changes files outside this Terraform root; leaving it for review."
+            exit 0
+          fi
+          gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: terraform apply -auto-approve tfplan
@@ -416,6 +449,15 @@ jobs:
           TF_VAR_wger_secret_key: ${{ secrets.WGER_SECRET_KEY }}
           TF_VAR_wger_jwt_public_key: ${{ secrets.WGER_JWT_PUBLIC_KEY }}
           TF_VAR_wger_jwt_private_key: ${{ secrets.WGER_JWT_PRIVATE_KEY }}
+      - name: Check for infrastructure changes
+        id: plan-changes
+        if: github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        run: |
+          if terraform show -json tfplan | jq -e '
+            ([.resource_changes[]? | select(.change.actions != ["no-op"])] | length == 0) and
+            ([(.output_changes // {})[] | select(.actions != ["no-op"])] | length == 0)' >/dev/null; then
+            echo "none=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Detect Wger credential changes
         id: wger-changes
         if: steps.plan.outcome == 'success'
@@ -493,6 +535,30 @@ jobs:
       - name: Fail on format or plan error
         if: steps.fmt.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1
+      # Renovate updates that change no infrastructure merge themselves once
+      # CI Summary passes. The app token makes that merge trigger the deploy.
+      - name: Create GitHub App token
+        id: app-token
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'mikael-systems-bot[bot]' &&
+          steps.plan-changes.outputs.none == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Enable auto-merge for a no-op update
+        if: steps.app-token.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Only when every changed file belongs to this Terraform root.
+          if gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --name-only | grep -qvE '^terraform/k8s/[^/]+$'; then
+            echo "The PR changes files outside this Terraform root; leaving it for review."
+            exit 0
+          fi
+          gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
