@@ -28,7 +28,7 @@ else
 	else
 		BUILD_CMD := home-manager
 	endif
-	FLAKE_TARGET := .\#mikaelsiidorow@pop-os
+	FLAKE_TARGET := .\#mikaelsiidorow@tpad
 	DISPLAY_TARGET := $(FLAKE_TARGET)
 	SWITCH_FLAGS := -b backup
 endif
@@ -55,7 +55,7 @@ help:
 	@echo "Other targets:"
 	@echo "  make format-check - Check formatting without activating"
 	@echo "  make lint         - Run ShellCheck, deadnix, and statix"
-	@echo "  make popos        - Build and activate Pop!_OS configuration"
+	@echo "  make tpad         - Build and activate the ThinkPad (Pop!_OS) configuration"
 	@echo "  make diff         - Show what would change"
 	@echo "  make history      - Show system generations"
 	@echo "  make rollback     - Rollback to previous generation"
@@ -153,9 +153,9 @@ fmt:
 	$(CHECK_SHELL) treefmt --config-file home/treefmt.toml --tree-root .
 
 # Host-specific overrides (use when not running on the target host)
-.PHONY: popos
-popos:
-	home-manager switch -b backup --flake .#mikaelsiidorow@pop-os
+.PHONY: tpad
+tpad:
+	home-manager switch -b backup --flake .#mikaelsiidorow@tpad
 
 # Show system generations
 .PHONY: history

@@ -116,7 +116,7 @@ jobs:
 
       - name: Build home-manager configuration
         run: |
-          nix build .#homeConfigurations.\"mikaelsiidorow@pop-os\".activationPackage \
+          nix build .#homeConfigurations.\"mikaelsiidorow@tpad\".activationPackage \
             --show-trace \
             --fallback
 
