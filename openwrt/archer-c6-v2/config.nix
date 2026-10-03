@@ -15,7 +15,7 @@
     };
 
     # The encrypted key must exist before this configuration can be deployed.
-    sopsSecrets = ../../secrets/openwrt.yaml;
+    sopsSecrets = ../secrets/openwrt.yaml;
 
     uci.retain = [
       "attendedsysupgrade"

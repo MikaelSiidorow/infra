@@ -28,7 +28,7 @@ ArgoCD auto-syncs from git
 
 - **Terraform** (`terraform/`) provisions cloud infrastructure (Hetzner server, Cloudflare DNS)
 - **NixOS** (`infra/nixos/`) manages the Hetzner cluster host and the Hestia home server
-- **OpenWrt** (`infra/openwrt/`) manages the Cerberus router and Hermes access point
+- **OpenWrt** (`openwrt/`, own flake and lock) manages the Cerberus router and Hermes access point
 - **Terraform K8s** (`terraform/k8s/`) manages application secrets (the part that can't be in Git)
 - **ArgoCD** syncs application manifests from `k8s/` in Git to the cluster
 
@@ -40,11 +40,11 @@ systems/
 │   └── k8s/                 # K8s secrets (Terraform + kubernetes provider)
 ├── workstations/            # nix-darwin + home-manager flake (own flake.lock)
 ├── modules/home/            # Shared home-manager modules: core (shell, CLI tools), agents
-├── infra/                   # NixOS + OpenWrt flake (own flake.lock)
+├── openwrt/                 # Router firmware + UCI config flake (own flake.lock, updated daily)
+├── infra/                   # NixOS flake: Hestia, k8s-server (own flake.lock)
 │   ├── nixos/hosts/
 │   │   ├── k8s-server/      # Hetzner K3s and public infrastructure
 │   │   └── hestia/          # Home Assistant and home-network services
-│   ├── openwrt/             # Router firmware and declarative UCI configuration
 │   └── secrets/             # SOPS-encrypted host secrets
 ├── k8s/
 │   ├── apps/                # ArgoCD Application manifests

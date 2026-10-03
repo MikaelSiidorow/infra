@@ -9,7 +9,7 @@ creation_rules:
       - age:
           - *mikael
           - *hestia
-  - path_regex: ^infra/secrets/openwrt\.yaml$
+  - path_regex: ^openwrt/secrets/openwrt\.yaml$
     key_groups:
       - age:
           - *mikael
