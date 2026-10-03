@@ -288,6 +288,10 @@ in
             zle -N zle-line-finish
           fi
 
+          # ~/systems shortcuts: `cd workstations` or `cd infra` from anywhere, and ~sys
+          cdpath=(~/systems $cdpath)
+          hash -d sys=~/systems
+
           # Misc settings (from oh-my-zsh lib/misc.zsh)
           setopt multios
           setopt long_list_jobs

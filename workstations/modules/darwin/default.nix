@@ -13,18 +13,19 @@ let
     '';
   });
 
-  # Notify once per new commit when GitHub main is ahead of the running system.
-  nixConfigUpdateCheck = pkgs.writeShellApplication {
-    name = "nix-config-update-check";
+  # Notify once per new commit when GitHub main has workstation changes the
+  # running system lacks.
+  systemsUpdateCheck = pkgs.writeShellApplication {
+    name = "systems-update-check";
     runtimeInputs = [
       pkgs.git
       pkgs.jq
     ];
     text = ''
-      repo="$HOME/nix-config"
-      state="''${XDG_CACHE_HOME:-$HOME/.cache}/nix-config-update-check"
+      repo="$HOME/systems"
+      state="''${XDG_CACHE_HOME:-$HOME/.cache}/systems-update-check"
 
-      remote=$(git ls-remote https://github.com/MikaelSiidorow/nix-config refs/heads/main | cut -f1)
+      remote=$(git ls-remote https://github.com/MikaelSiidorow/systems refs/heads/main | cut -f1)
       current=$(/run/current-system/sw/bin/darwin-version --json | jq -r '.configurationRevision // empty')
       # Builds from uncommitted changes record "<rev>-dirty"; compare their base commit.
       current="''${current%-dirty}"
@@ -32,17 +33,24 @@ let
       [ -n "$current" ] || exit 0
       [ -n "$remote" ] || exit 0
       [ "$remote" != "$current" ] || exit 0
+      [ "$(cat "$state" 2>/dev/null)" != "$remote" ] || exit 0
+
+      git -C "$repo" fetch -q origin main || exit 0
+      mkdir -p "$(dirname "$state")"
 
       # Running system already includes remote main (e.g. unpushed local commits).
-      if git -C "$repo" cat-file -e "$remote^{commit}" 2>/dev/null &&
-        git -C "$repo" merge-base --is-ancestor "$remote" "$current" 2>/dev/null; then
+      if git -C "$repo" merge-base --is-ancestor "$remote" "$current" 2>/dev/null; then
         exit 0
       fi
 
-      [ "$(cat "$state" 2>/dev/null)" != "$remote" ] || exit 0
+      # infra/, k8s/ and terraform/ are deployed elsewhere; only workstation
+      # changes need a rebuild here.
+      if git -C "$repo" diff --quiet "$current" "$remote" -- workstations 2>/dev/null; then
+        echo "$remote" >"$state"
+        exit 0
+      fi
 
-      /usr/bin/osascript -e 'display notification "New commits on GitHub main" with title "nix-config"'
-      mkdir -p "$(dirname "$state")"
+      /usr/bin/osascript -e 'display notification "New workstation commits on GitHub main" with title "systems"'
       echo "$remote" >"$state"
     '';
   };
@@ -67,8 +75,8 @@ in
       RunAtLoad = true;
     };
 
-    nix-config-update-check.serviceConfig = {
-      Program = "${nixConfigUpdateCheck}/bin/nix-config-update-check";
+    systems-update-check.serviceConfig = {
+      Program = "${systemsUpdateCheck}/bin/systems-update-check";
       RunAtLoad = true;
       StartInterval = 2 * 60 * 60;
     };
