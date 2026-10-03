@@ -6,6 +6,7 @@
 }:
 {
   imports = [
+    ./home.nix
     ./home-assistant.nix
     ./reverse-proxy.nix
     ./zigbee.nix
