@@ -1,4 +1,4 @@
-# Pop!_OS host configuration for home-manager standalone
+# ThinkPad (Pop!_OS) host configuration for home-manager standalone
 { pkgs, ... }:
 let
   tailscale-headscale-setup = pkgs.writeShellApplication {

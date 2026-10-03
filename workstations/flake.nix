@@ -85,7 +85,7 @@
     let
       inherit (nixpkgs) lib;
 
-      # NixOS / Linux home-manager (pop-os) account.
+      # Linux home-manager (tpad, Pop!_OS) account.
       username = "mikaelsiidorow";
       # macOS account (different local username).
       darwinUsername = "mikael";
@@ -124,9 +124,13 @@
 
       # Darwin hosts: attr key is the LocalHostName (must match
       # `scutil --get LocalHostName`, which is what darwin-rebuild uses
-      # to resolve the default flake target).
+      # to resolve the default flake target). `hostname` is the
+      # directory under hosts/.
       darwinHosts = {
-        "Mikael-MacBook-Pro-H7D6Q4TMVY" = "aarch64-darwin";
+        "Mikael-MacBook-Pro-H7D6Q4TMVY" = {
+          system = "aarch64-darwin";
+          hostname = "mbp";
+        };
       };
 
       # Helper function to create a darwin system
@@ -134,7 +138,7 @@
         {
           system,
           username,
-          hostname ? null,
+          hostname,
           extraModules ? [ ],
         }:
         let
@@ -160,12 +164,9 @@
               ];
             }
 
-            # Common darwin host wiring (was hosts/macbook-air/default.nix)
             {
-              imports = [ ./modules/darwin ];
+              imports = [ ./hosts/${hostname} ];
               nixpkgs.hostPlatform = system;
-              system.primaryUser = username;
-              users.users.${username}.home = "/Users/${username}";
             }
 
             # Homebrew integration
@@ -244,9 +245,9 @@
     {
       # Darwin (macOS) configurations
       darwinConfigurations = builtins.mapAttrs (
-        hostname: system:
+        _: host:
         mkDarwinSystem {
-          inherit system hostname;
+          inherit (host) system hostname;
           username = darwinUsername;
         }
       ) darwinHosts;
@@ -303,9 +304,9 @@
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {
-        "mikaelsiidorow@pop-os" = mkHomeConfig {
+        "mikaelsiidorow@tpad" = mkHomeConfig {
           system = "x86_64-linux";
-          hostname = "pop-os";
+          hostname = "tpad";
         };
       };
 

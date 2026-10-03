@@ -2,17 +2,17 @@
 
 [![Workstations](https://github.com/MikaelSiidorow/systems/actions/workflows/workstations.yml/badge.svg)](https://github.com/MikaelSiidorow/systems/actions/workflows/workstations.yml)
 
-Multi-platform Nix configuration supporting NixOS, macOS (nix-darwin), and Linux (home-manager standalone).
+Nix configuration for macOS (nix-darwin) and Linux (home-manager standalone).
 
 Configured hosts:
 
-| Attr                            | Platform       | Notes                   |
-| ------------------------------- | -------------- | ----------------------- |
-| `Mikael-MacBook-Pro-H7D6Q4TMVY` | aarch64-darwin | nix-darwin              |
-| `mikaelsiidorow@pop-os`         | x86_64-linux   | home-manager standalone |
+| Host   | Attr                            | Platform       | Notes                                 |
+| ------ | ------------------------------- | -------------- | ------------------------------------- |
+| `mbp`  | `Mikael-MacBook-Pro-H7D6Q4TMVY` | aarch64-darwin | nix-darwin; attr is the LocalHostName |
+| `tpad` | `mikaelsiidorow@tpad`           | x86_64-linux   | home-manager standalone on Pop!\_OS   |
 
-Hestia's NixOS configuration and the OpenWrt router configurations live in the
-[infra repository](https://github.com/MikaelSiidorow/infra).
+Hestia's NixOS configuration and the OpenWrt router configurations live in
+[`infra/`](../infra/) in this repository.
 
 ## Quick Start
 
@@ -112,7 +112,7 @@ Activate Home Manager:
 
 ```bash
 # Bootstrap using the locked home-manager input.
-nix run .#home-manager -- switch --flake .#mikaelsiidorow@pop-os -b backup
+nix run .#home-manager -- switch --flake .#mikaelsiidorow@tpad -b backup
 
 # Subsequent updates
 make switch
@@ -186,8 +186,8 @@ Not managed by the flake (bring over manually):
 ```
 ├── flake.nix              # Hosts, overlays, system constructors
 ├── Makefile               # Build commands (OS-detected)
-├── hosts/                 # Per-host modules (Linux only; darwin lives in flake.nix)
-├── modules/{common,darwin,nixos}/
+├── hosts/{mbp,tpad}/      # Per-host modules
+├── modules/darwin/
 ├── home/                  # User environment (home-manager)
 │   ├── claude-code/       # CLAUDE.md + statusline
 │   └── ...
