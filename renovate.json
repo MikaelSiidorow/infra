@@ -15,6 +15,17 @@
   },
   "customManagers": [
     {
+      "description": "CLIProxyAPI release binary and SHA-256 checksum",
+      "customType": "regex",
+      "managerFilePatterns": ["/^infra/nixos/hosts/hestia/cli-proxy-api\\.nix$/"],
+      "matchStrings": [
+        "release = \"(?<currentValue>v[0-9.]+)\";[\\s\\S]*?sha256 = \"(?<currentDigest>[a-f0-9]{64})\";"
+      ],
+      "depNameTemplate": "router-for-me/CLIProxyAPI",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
+    },
+    {
       "description": "k3s HelmChart manifests embedded in the k8s-server NixOS config",
       "customType": "regex",
       "managerFilePatterns": ["/^infra/nixos/hosts/k8s-server/k3s\\.nix$/"],
