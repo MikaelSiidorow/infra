@@ -58,7 +58,7 @@ systems/
     ├── workstations.yml     # Workstation flake checks and builds
     ├── deploy.yml           # Infra checks on PRs, deploys on push to main
     ├── update-flake-lock.yml # Lock update PRs per flake
-    ├── dependabot-auto-merge.yml
+    ├── renovate.yml         # Renovate (config in renovate.json), as mikael-systems-bot
     └── k8s-rollout.yml      # K8s rollout restart (reusable)
 ```
 
