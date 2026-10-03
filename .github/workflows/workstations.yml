@@ -1,11 +1,8 @@
 name: Workstations
 
 on:
-  pull_request:
-    branches: ["*"]
-    paths:
-      - "workstations/**"
-      - ".github/workflows/workstations.yml"
+  # Pull requests run this through ci.yml, which owns the required CI Summary.
+  workflow_call:
   push:
     branches: ["main"]
     paths:
@@ -20,10 +17,12 @@ defaults:
   run:
     working-directory: workstations
 
-# Cancel in-progress runs when a new commit is pushed (except on main/master)
+# Cancel in-progress runs when a new commit is pushed (except on main). The
+# group is spelled out because github.workflow is the caller's name in a
+# workflow_call.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+  group: workstations-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   check:
@@ -119,24 +118,3 @@ jobs:
           nix build .#homeConfigurations.\"mikaelsiidorow@tpad\".activationPackage \
             --show-trace \
             --fallback
-
-  summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
-    needs: [check, format, build-darwin, build-linux]
-    if: always()
-    # No checkout here, so workstations/ does not exist.
-    defaults:
-      run:
-        working-directory: .
-    steps:
-      - name: Check results
-        run: |
-          if [ "${{ needs.check.result }}" != "success" ] || \
-             [ "${{ needs.format.result }}" != "success" ] || \
-             [ "${{ needs.build-darwin.result }}" != "success" ] || \
-             [ "${{ needs.build-linux.result }}" != "success" ]; then
-            echo "❌ CI failed. Check the logs above."
-            exit 1
-          fi
-          echo "✅ All CI checks passed!"

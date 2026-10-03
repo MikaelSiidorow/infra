@@ -11,18 +11,9 @@ on:
           - nixos
           - k8s-terraform
           - terraform
-  pull_request:
-    branches: [main]
-    paths:
-      - "infra/nixos/**"
-      - "infra/openwrt/**"
-      - "infra/secrets/openwrt.yaml"
-      - ".sops.yaml"
-      - "infra/flake.nix"
-      - "infra/flake.lock"
-      - "terraform/**"
-      - ".github/workflows/deploy.yml"
-      - ".github/scripts/reconcile-wger.sh"
+  # Pull requests run this through ci.yml, which owns the required CI Summary;
+  # the changes job below picks which checks apply.
+  workflow_call:
   push:
     branches: [main]
     paths:

@@ -1,0 +1,61 @@
+name: CI
+
+# The single entry point for pull requests. Branch rules require only the
+# CI Summary job below, so which checks gate a merge is decided here.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+  # deploy.yml's nix-cache job asks for this on pushes to main; a called
+  # workflow cannot be granted more than its caller.
+  actions: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      workstations: ${{ steps.filter.outputs.workstations }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            workstations:
+              - 'workstations/**'
+              - '.github/workflows/workstations.yml'
+              - '.github/workflows/ci.yml'
+
+  workstations:
+    needs: changes
+    if: needs.changes.outputs.workstations == 'true'
+    uses: ./.github/workflows/workstations.yml
+
+  infra:
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+
+  summary:
+    name: CI Summary
+    needs: [changes, workstations, infra]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "* | *" cancelled "*)
+              echo "❌ CI failed. Check the logs above."
+              exit 1
+              ;;
+          esac
+          echo "✅ All CI checks passed!"
