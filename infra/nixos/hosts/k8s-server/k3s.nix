@@ -14,7 +14,7 @@ let
       repo: https://traefik.github.io/charts
       targetNamespace: traefik
       createNamespace: true
-      version: 39.0.2
+      version: 39.0.9
       valuesContent: |-
         ports:
           web:
