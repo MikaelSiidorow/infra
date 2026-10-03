@@ -58,8 +58,10 @@ jobs:
               - 'infra/flake.nix'
               - 'infra/flake.lock'
             terraform:
-              - 'terraform/**'
-              - '!terraform/k8s/**'
+              # Top-level files only; terraform/k8s/ is k8s_terraform. A '!' entry
+              # would match every other path, since the patterns are OR'd.
+              - 'terraform/*'
+              - '.github/workflows/deploy.yml'
             k8s_terraform:
               - 'terraform/k8s/**'
               - 'terraform/mail.tf'
