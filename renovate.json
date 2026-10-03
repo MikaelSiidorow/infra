@@ -44,8 +44,9 @@
       "automerge": false
     },
     {
-      "description": "Cluster, infra and cloud changes deploy on merge; never auto-merge",
+      "description": "Cluster, infra and cloud changes deploy on merge: wait for releases to settle and don't auto-merge (no-op Terraform plans are auto-merged by CI)",
       "matchFileNames": ["infra/**", "k8s/**", "terraform/**"],
+      "minimumReleaseAge": "3 days",
       "automerge": false
     }
   ]
