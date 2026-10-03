@@ -231,8 +231,11 @@ jobs:
         run: nix build ./infra#cerberus-firmware ./infra#hermes-firmware ./infra#cerberus-deploy ./infra#hermes-deploy --no-link
   terraform:
     needs: changes
+    # Dependabot PRs only get Dependabot secrets, so their plans cannot reach
+    # the cloud providers; an action version bump cannot change a plan anyway.
     if: |
-      (github.event_name == 'pull_request' && needs.changes.outputs.terraform == 'true') ||
+      (github.event_name == 'pull_request' && needs.changes.outputs.terraform == 'true' &&
+        github.event.pull_request.user.login != 'dependabot[bot]') ||
       (github.event_name == 'push' && needs.changes.outputs.terraform == 'true') ||
       (github.event_name == 'workflow_dispatch' && contains(fromJSON('["terraform", "all"]'), github.event.inputs.component))
     runs-on: ubuntu-latest
@@ -350,7 +353,8 @@ jobs:
       always() &&
       (needs.terraform.result == 'success' || needs.terraform.result == 'skipped') &&
       (needs.nixos.result == 'success' || needs.nixos.result == 'skipped') &&
-      ((github.event_name == 'pull_request' && needs.changes.outputs.k8s_terraform == 'true') ||
+      ((github.event_name == 'pull_request' && needs.changes.outputs.k8s_terraform == 'true' &&
+        github.event.pull_request.user.login != 'dependabot[bot]') ||
       (github.event_name == 'push' && needs.changes.outputs.k8s_terraform == 'true') ||
       (github.event_name == 'workflow_dispatch' && contains(fromJSON('["k8s-terraform", "all"]'), github.event.inputs.component)))
     runs-on: ubuntu-latest
