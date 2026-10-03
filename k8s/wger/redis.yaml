@@ -19,7 +19,7 @@ spec:
         fsGroup: 999
       containers:
         - name: redis
-          image: docker.io/redis:8.2.8-alpine
+          image: docker.io/redis:8.10.2-alpine
           command:
             - redis-server
             - /etc/redis/redis.conf
