@@ -1,0 +1,24 @@
+# Package manager policy shared across tool-specific modules.
+_:
+let
+  cooldownDays = 7;
+  minimumReleaseAgeExcludes = [
+    "create-mikstack"
+    "@mikstack/*"
+  ];
+in
+{
+  imports = [
+    ./bun.nix
+    ./pnpm.nix
+    ./uv.nix
+  ];
+
+  _module.args.packageManagerPolicy = {
+    inherit cooldownDays;
+    inherit minimumReleaseAgeExcludes;
+    cooldownMinutes = cooldownDays * 24 * 60;
+    cooldownSeconds = cooldownDays * 24 * 60 * 60;
+    cooldownDuration = "${toString cooldownDays} days";
+  };
+}

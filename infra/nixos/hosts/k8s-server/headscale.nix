@@ -1,28 +1,30 @@
 { config, pkgs, ... }:
 let
-  headscalePolicy = pkgs.writeText "headscale-policy.json" (builtins.toJSON {
-    # Personal devices remain user-owned. Infrastructure nodes are converted
-    # to tag ownership only after this policy has been deployed successfully.
-    tagOwners = {
-      "tag:infra" = [ "mikael@" ];
-      "tag:home-subnet-router" = [ "mikael@" ];
-    };
+  headscalePolicy = pkgs.writeText "headscale-policy.json" (
+    builtins.toJSON {
+      # Personal devices remain user-owned. Infrastructure nodes are converted
+      # to tag ownership only after this policy has been deployed successfully.
+      tagOwners = {
+        "tag:infra" = [ "mikael@" ];
+        "tag:home-subnet-router" = [ "mikael@" ];
+      };
 
-    autoApprovers.routes."192.168.67.0/24" = [ "tag:home-subnet-router" ];
+      autoApprovers.routes."192.168.67.0/24" = [ "tag:home-subnet-router" ];
 
-    acls = [
-      {
-        action = "accept";
-        src = [ "mikael@" ];
-        dst = [
-          "mikael@:*"
-          "tag:infra:*"
-          "tag:home-subnet-router:*"
-          "192.168.67.0/24:*"
-        ];
-      }
-    ];
-  });
+      acls = [
+        {
+          action = "accept";
+          src = [ "mikael@" ];
+          dst = [
+            "mikael@:*"
+            "tag:infra:*"
+            "tag:home-subnet-router:*"
+            "192.168.67.0/24:*"
+          ];
+        }
+      ];
+    }
+  );
 in
 {
   services.headscale = {
