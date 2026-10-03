@@ -53,7 +53,7 @@ let
       repo: https://argoproj.github.io/argo-helm
       targetNamespace: argocd
       createNamespace: true
-      version: 9.0.5
+      version: 9.7.1
       valuesContent: |-
         configs:
           params:
