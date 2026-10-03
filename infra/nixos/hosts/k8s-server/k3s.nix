@@ -36,7 +36,7 @@ let
       repo: https://charts.jetstack.io
       targetNamespace: cert-manager
       createNamespace: true
-      version: v1.19.4
+      version: v1.21.2
       valuesContent: |-
         crds:
           enabled: true
